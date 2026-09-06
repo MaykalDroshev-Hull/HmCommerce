@@ -201,7 +201,7 @@ export default function ProductCard({ product, isFavorited: initialIsFavorited }
               className="absolute top-3 left-3 z-10 px-2.5 py-1 text-[10px] sm:text-xs font-semibold rounded-md text-white tracking-wide"
               style={{ backgroundColor: '#b91c1c' }}
             >
-              ПРОМОЦИЯ{promoPercent > 0 ? ` −${promoPercent}%` : ''}
+              SALE{promoPercent > 0 ? ` −${promoPercent}%` : ''}
             </span>
           )}
           {showNewBadge && !showOutOfStockOverlay && (
@@ -209,7 +209,7 @@ export default function ProductCard({ product, isFavorited: initialIsFavorited }
               className="absolute bottom-3 left-3 z-10 px-2.5 py-1 text-[10px] sm:text-xs font-semibold rounded-md text-white"
               style={{ backgroundColor: theme.colors.primary }}
             >
-              {language === 'bg' ? 'Нов модел' : 'New'}
+              NEW
             </span>
           )}
           <button
@@ -220,7 +220,7 @@ export default function ProductCard({ product, isFavorited: initialIsFavorited }
               backgroundColor: 'rgba(255, 255, 255, 0.92)',
               color: isFavorited ? '#ef4444' : theme.colors.text
             }}
-            title={isFavorited ? t.removeFromFavorites : t.addToFavorites}
+            title={isFavorited ? 'Remove from favourites' : 'Add to favourites'}
           >
             <Heart size={18} fill={isFavorited ? '#ef4444' : 'none'} />
           </button>
@@ -232,7 +232,7 @@ export default function ProductCard({ product, isFavorited: initialIsFavorited }
             style={{ color: theme.colors.text }}
           >
             {productTitle}
-            {product.color ? ` ${language === 'bg' ? 'цвят' : ''} ${product.color}` : ''}
+            {product.color ? ` ${product.color}` : ''}
           </h3>
 
           {categoryLabel && (
@@ -249,7 +249,7 @@ export default function ProductCard({ product, isFavorited: initialIsFavorited }
             className="text-xs mb-3 transition-colors duration-300 hidden sm:block"
             style={{ color: theme.colors.textSecondary }}
           >
-            {t.available}:{' '}
+            In Stock:{' '}
             <span style={{ color: theme.colors.text }}>{stockDisplay}</span>
           </p>
 
@@ -257,8 +257,7 @@ export default function ProductCard({ product, isFavorited: initialIsFavorited }
             className="text-xs mb-3 transition-colors duration-300 sm:hidden"
             style={{ color: theme.colors.textSecondary }}
           >
-            {stockDisplay}{' '}
-            {language === 'bg' ? 'налични' : 'available'}
+            {stockDisplay} in stock
           </p>
 
           <div className="mt-auto">
@@ -268,13 +267,13 @@ export default function ProductCard({ product, isFavorited: initialIsFavorited }
                   className="text-xs sm:text-sm line-through transition-colors duration-300"
                   style={{ color: theme.colors.textSecondary }}
                 >
-                  €{cardPricing.original.toFixed(2)} / {originalBgnPrice.toFixed(2)} лв
+                  £{cardPricing.original.toFixed(2)}
                 </div>
                 <div
                   className="text-base sm:text-lg font-bold transition-colors duration-300"
                   style={{ color: '#b91c1c' }}
                 >
-                  €{displayPrice.toFixed(2)} / {bgnPrice.toFixed(2)} лв
+                  £{displayPrice.toFixed(2)}
                 </div>
               </>
             ) : (
@@ -282,14 +281,14 @@ export default function ProductCard({ product, isFavorited: initialIsFavorited }
                 className="text-base sm:text-lg font-bold transition-colors duration-300"
                 style={{ color: theme.colors.text }}
               >
-                €{product.price.toFixed(2)} / {bgnPrice.toFixed(2)} лв
+                £{product.price.toFixed(2)}
               </div>
             )}
             <div
               className="text-[10px] sm:text-xs mt-0.5 transition-colors duration-300"
               style={{ color: theme.colors.textSecondary }}
             >
-              {t.inclVAT}
+              Inclusive of all taxes
             </div>
           </div>
 

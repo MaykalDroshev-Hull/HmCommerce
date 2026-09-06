@@ -222,9 +222,6 @@ export class EmailService {
             <p>Телефон: <a href="tel:+359686700070" style="color: #ff7f11; text-decoration: none; font-weight: 700;">068 670 070</a></p>
             <p>Този имейл е изпратен автоматично. Моля, не отговаряйте на него.</p>
             <p>© 2025 Pizza Stop. Всички права запазени.</p>
-            <p style="margin-top: 10px; font-size: 12px;">
-              Изработка от <a href="https://www.hmwspro.com/bg" target="_blank" rel="noopener noreferrer" style="color: #ff7f11; text-decoration: none; font-weight: 700;">H&M WS Pro</a>
-            </p>
           </div>
         </div>
       </body>
@@ -374,9 +371,6 @@ export class EmailService {
             <p>Телефон: <a href="tel:+359686700070" style="color: #ff7f11; text-decoration: none; font-weight: 700;">068 670 070</a></p>
             <p>Този имейл е изпратен автоматично. Моля, не отговаряйте на него.</p>
             <p>© 2025 Pizza Stop. Всички права запазени.</p>
-            <p style="margin-top: 10px; font-size: 12px;">
-              Изработка от <a href="https://www.hmwspro.com/bg" target="_blank" rel="noopener noreferrer" style="color: #ff7f11; text-decoration: none; font-weight: 700;">H&M WS Pro</a>
-            </p>
           </div>
         </div>
       </body>
@@ -709,9 +703,6 @@ export class EmailService {
             <p>Телефон: <a href="tel:+359686700070" style="color: #ff7f11; text-decoration: none; font-weight: 700;">068 670 070</a></p>
             <p>Този имейл е изпратен автоматично. Моля, не отговаряйте на него.</p>
             <p>© 2025 Pizza Stop. Всички права запазени.</p>
-            <p style="margin-top: 10px; font-size: 12px;">
-              Изработка от <a href="https://www.hmwspro.com/bg" target="_blank" rel="noopener noreferrer" style="color: #ff7f11; text-decoration: none; font-weight: 700;">H&M WS Pro</a>
-            </p>
           </div>
         </div>
       </body>
@@ -999,9 +990,6 @@ export class EmailService {
             <p>Благодарим ви, че избрахте <span class="highlight">Pizza Stop</span>!</p>
             <p>Насладете се на вкусната храна! 🍕</p>
             <p>© 2025 Pizza Stop. Всички права запазени.</p>
-            <p style="margin-top: 10px; font-size: 12px; color: #666;">
-              Изработка от <a href="https://www.hmwspro.com/bg" target="_blank" rel="noopener noreferrer" style="color: #ff7f11; text-decoration: none; font-weight: 700;">H&M WS Pro</a>
-            </p>
           </div>
         </div>
       </body>
@@ -1244,9 +1232,6 @@ export class EmailService {
             <p>Телефон: <a href="tel:+359686700070" style="color: #d32f2f; text-decoration: none; font-weight: 700;">068 670 070</a></p>
             <p>Този имейл е изпратен автоматично. Моля, не отговаряйте на него.</p>
             <p>© 2025 Pizza Stop. Всички права запазени.</p>
-            <p style="margin-top: 10px; font-size: 12px; color: #888;">
-              Изработка от <a href="https://www.hmwspro.com/bg" target="_blank" rel="noopener noreferrer" style="color: #d32f2f; text-decoration: none; font-weight: 700;">H&M WS Pro</a>
-            </p>
           </div>
         </div>
       </body>

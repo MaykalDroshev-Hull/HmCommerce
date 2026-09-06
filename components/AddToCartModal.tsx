@@ -520,18 +520,18 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ isOpen, onClose, produc
                       {quantity} ×{' '}
                       {promo ? (
                         <>
-                          <span className="line-through mr-1">€{originalUnit.toFixed(2)}</span>
-                          <span style={{ color: '#b91c1c' }}>€{unit.toFixed(2)}</span>
+                          <span className="line-through mr-1">£{originalUnit.toFixed(2)}</span>
+                          <span style={{ color: '#b91c1c' }}>£{unit.toFixed(2)}</span>
                         </>
                       ) : (
-                        <>€{unit.toFixed(2)}</>
+                        <>£{unit.toFixed(2)}</>
                       )}
                     </span>
                     <span
                       className="text-lg font-bold"
                       style={{ color: promo ? '#b91c1c' : theme.colors.text }}
                     >
-                      €{(unit * quantity).toFixed(2)}
+                      £{(unit * quantity).toFixed(2)}
                     </span>
                   </div>
                 );

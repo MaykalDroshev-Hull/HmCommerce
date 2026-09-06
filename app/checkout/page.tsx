@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef, useMemo, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import PublicPageLayout from '@/components/PublicPageLayout';
+import LoadingScreen from '@/components/LoadingScreen';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useCart } from '@/context/CartContext';
@@ -10,11 +11,13 @@ import { useStoreSettings } from '@/context/StoreSettingsContext';
 import { useAuth } from '@/context/AuthContext';
 import { useCheckoutStore, type DeliveryType, type CityOption } from '@/store/checkoutStore';
 import { translations } from '@/lib/translations';
-import { ShoppingBag, Truck, MapPin, Package } from 'lucide-react';
+import { ShoppingBag, Truck, MapPin, Package, ShieldCheck } from 'lucide-react';
 import FomoBadge, { type FomoMessage } from '@/components/FomoBadge';
 import { trackStoreEvent } from '@/lib/vercel-analytics';
+import { ApplePayIcon, PayPalIcon, KlarnaBadgeIcon, PaymentBadgesRow } from '@/components/PaymentIcons';
 
-export default function CheckoutPage() {
+function CheckoutContent() {
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { language } = useLanguage();
   const { theme } = useTheme();
@@ -22,6 +25,19 @@ export default function CheckoutPage() {
   const { settings } = useStoreSettings();
   const { user, isAuthenticated } = useAuth();
   const t = translations[language];
+  const searchMethod = searchParams.get('paymentMethod');
+  const [paymentMethod, setPaymentMethod] = useState<'applepay' | 'paypal' | 'card' | 'klarna'>(
+    searchMethod === 'paypal' ? 'paypal' :
+    searchMethod === 'card' ? 'card' :
+    searchMethod === 'klarna' ? 'klarna' : 'applepay'
+  );
+
+  useEffect(() => {
+    if (searchMethod === 'paypal') setPaymentMethod('paypal');
+    else if (searchMethod === 'card') setPaymentMethod('card');
+    else if (searchMethod === 'klarna') setPaymentMethod('klarna');
+    else if (searchMethod === 'applepay') setPaymentMethod('applepay');
+  }, [searchMethod]);
 
   useEffect(() => {
     const pageTitle = t.checkout || (language === 'bg' ? 'Поръчка' : 'Checkout');
@@ -436,6 +452,9 @@ export default function CheckoutPage() {
           value: appliedDiscount.value,
           amount: appliedDiscount.discountAmount,
         } : null,
+        payment: {
+          method: paymentMethod,
+        },
       };
 
       // Submit order
@@ -623,7 +642,62 @@ export default function CheckoutPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left Column - Form (Desktop) / Top (Mobile) */}
-            <div className="order-1 lg:order-1">
+            <div className="order-1 lg:order-1 space-y-6">
+              {/* Express Checkout Section */}
+              <div
+                className="rounded-2xl border p-5 sm:p-6"
+                style={{
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  boxShadow: theme.effects.shadow,
+                }}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <h2
+                    className="font-serif-display text-lg sm:text-xl font-bold"
+                    style={{ color: theme.colors.text }}
+                  >
+                    Express Checkout
+                  </h2>
+                  <span className="text-xs text-neutral-500 font-medium">1-Click Fast Pay</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('applepay')}
+                    className={`h-12 rounded-xl flex items-center justify-center gap-1.5 transition-all border ${
+                      paymentMethod === 'applepay'
+                        ? 'border-black bg-black text-white ring-2 ring-neutral-400'
+                        : 'border-neutral-300 bg-black text-white hover:bg-neutral-900'
+                    }`}
+                  >
+                    <span className="text-xs font-medium mr-1">Pay with</span>
+                    <ApplePayIcon className="h-5 w-auto" variant="light" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('paypal')}
+                    className={`h-12 rounded-xl flex items-center justify-center transition-all border ${
+                      paymentMethod === 'paypal'
+                        ? 'border-[#003087] bg-[#FFC439] ring-2 ring-[#003087]'
+                        : 'border-neutral-300 bg-[#FFC439] hover:bg-[#f2ba36]'
+                    }`}
+                  >
+                    <PayPalIcon className="h-5 w-auto" />
+                  </button>
+                </div>
+
+                <div className="relative flex py-1 items-center">
+                  <div className="flex-grow border-t border-neutral-200"></div>
+                  <span className="flex-shrink mx-3 text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+                    Or pay with card / Klarna below
+                  </span>
+                  <div className="flex-grow border-t border-neutral-200"></div>
+                </div>
+              </div>
+
               <div
                 className="rounded-2xl border p-5 sm:p-6"
                 style={{
@@ -691,7 +765,7 @@ export default function CheckoutPage() {
                           ✓ {appliedDiscount.description || `${appliedDiscount.code} ${t.discountApplied}`}
                           {appliedDiscount.type === 'percentage'
                             ? ` (${appliedDiscount.value}% ${t.amountOff})`
-                            : ` (€${appliedDiscount.discountAmount.toFixed(2)} ${t.amountOff})`
+                            : ` (£${appliedDiscount.discountAmount.toFixed(2)} ${t.amountOff})`
                           }
                         </p>
                         <button
@@ -1010,6 +1084,118 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* Payment Method Selection */}
+                  <div className="pt-6 border-t border-neutral-200">
+                    <h3 className="text-base font-bold text-neutral-950 mb-3">
+                      Payment Method
+                    </h3>
+                    <div className="space-y-3">
+                      {/* Apple Pay */}
+                      <label
+                        onClick={() => setPaymentMethod('applepay')}
+                        className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition-all ${
+                          paymentMethod === 'applepay'
+                            ? 'border-neutral-950 bg-neutral-50 ring-1 ring-neutral-950'
+                            : 'border-neutral-200 hover:border-neutral-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            name="checkout_payment_method"
+                            checked={paymentMethod === 'applepay'}
+                            onChange={() => setPaymentMethod('applepay')}
+                            className="accent-neutral-950 w-4 h-4"
+                          />
+                          <div>
+                            <span className="font-semibold text-sm text-neutral-950 block">Apple Pay</span>
+                            <span className="text-xs text-neutral-500">Fast and secure with Face ID or Touch ID</span>
+                          </div>
+                        </div>
+                        <ApplePayIcon className="h-5 w-auto" variant="dark" />
+                      </label>
+
+                      {/* PayPal */}
+                      <label
+                        onClick={() => setPaymentMethod('paypal')}
+                        className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition-all ${
+                          paymentMethod === 'paypal'
+                            ? 'border-neutral-950 bg-neutral-50 ring-1 ring-neutral-950'
+                            : 'border-neutral-200 hover:border-neutral-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            name="checkout_payment_method"
+                            checked={paymentMethod === 'paypal'}
+                            onChange={() => setPaymentMethod('paypal')}
+                            className="accent-neutral-950 w-4 h-4"
+                          />
+                          <div>
+                            <span className="font-semibold text-sm text-neutral-950 block">PayPal</span>
+                            <span className="text-xs text-neutral-500">Pay via your PayPal balance or linked cards</span>
+                          </div>
+                        </div>
+                        <PayPalIcon className="h-4 w-auto" />
+                      </label>
+
+                      {/* Credit / Debit Card */}
+                      <label
+                        onClick={() => setPaymentMethod('card')}
+                        className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition-all ${
+                          paymentMethod === 'card'
+                            ? 'border-neutral-950 bg-neutral-50 ring-1 ring-neutral-950'
+                            : 'border-neutral-200 hover:border-neutral-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            name="checkout_payment_method"
+                            checked={paymentMethod === 'card'}
+                            onChange={() => setPaymentMethod('card')}
+                            className="accent-neutral-950 w-4 h-4"
+                          />
+                          <div>
+                            <span className="font-semibold text-sm text-neutral-950 block">Credit / Debit Card</span>
+                            <span className="text-xs text-neutral-500">Visa, Mastercard, American Express</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <img src="/payments/visa.svg" alt="Visa" className="h-5 w-auto object-contain rounded" />
+                          <img src="/payments/master.svg" alt="Mastercard" className="h-5 w-auto object-contain rounded" />
+                          <img src="/payments/american_express.svg" alt="Amex" className="h-5 w-auto object-contain rounded" />
+                        </div>
+                      </label>
+
+                      {/* Klarna Pay in 3 */}
+                      <label
+                        onClick={() => setPaymentMethod('klarna')}
+                        className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition-all ${
+                          paymentMethod === 'klarna'
+                            ? 'border-neutral-950 bg-neutral-50 ring-1 ring-neutral-950'
+                            : 'border-neutral-200 hover:border-neutral-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            name="checkout_payment_method"
+                            checked={paymentMethod === 'klarna'}
+                            onChange={() => setPaymentMethod('klarna')}
+                            className="accent-neutral-950 w-4 h-4"
+                          />
+                          <div>
+                            <span className="font-semibold text-sm text-neutral-950 block">Klarna Pay in 3</span>
+                            <span className="text-xs text-neutral-500">3 interest-free payments of £{(finalTotal / 3).toFixed(2)}</span>
+                          </div>
+                        </div>
+                        <KlarnaBadgeIcon className="h-4 w-auto" />
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1061,7 +1247,7 @@ export default function CheckoutPage() {
                             Qty: {item.quantity}
                           </span>
                           <span className="font-medium text-[#1a1a1a]">
-                            €{(item.price * item.quantity).toFixed(2)}
+                            £{(item.price * item.quantity).toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -1073,21 +1259,21 @@ export default function CheckoutPage() {
                 <div className="border-t pt-4 space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-[#6b6b6b]">{t.total}:</span>
-                    <span className="font-medium">€{totalPrice.toFixed(2)}</span>
+                    <span className="font-medium">£{totalPrice.toFixed(2)}</span>
                   </div>
                   {appliedDiscount && (
                     <div className="flex justify-between text-sm" style={{ color: theme.colors.primary }}>
                       <span>{t.discountOrderSummary} ({appliedDiscount.code}):</span>
-                      <span>-€{appliedDiscount.discountAmount.toFixed(2)}</span>
+                      <span>-£{appliedDiscount.discountAmount.toFixed(2)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm">
                     <span className="text-[#6b6b6b]">{t.delivery} ({deliveryTypeLabels[formData.deliveryType]}):</span>
-                    <span className="font-medium">€{deliveryCost.toFixed(2)}</span>
+                    <span className="font-medium">£{deliveryCost.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-lg font-bold pt-2 border-t">
                     <span>{t.orderTotal}:</span>
-                    <span>€{finalTotal.toFixed(2)}</span>
+                    <span>£{finalTotal.toFixed(2)}</span>
                   </div>
                 </div>
 
@@ -1133,9 +1319,20 @@ export default function CheckoutPage() {
                       {t.placingOrder}
                     </>
                   ) : (
-                    t.placeOrder
+                    paymentMethod === 'applepay'
+                      ? `Pay £${finalTotal.toFixed(2)} with Apple Pay`
+                      : paymentMethod === 'paypal'
+                      ? `Pay £${finalTotal.toFixed(2)} with PayPal`
+                      : paymentMethod === 'klarna'
+                      ? `Pay £${finalTotal.toFixed(2)} with Klarna (3x £${(finalTotal / 3).toFixed(2)})`
+                      : `Place Order · £${finalTotal.toFixed(2)}`
                   )}
                 </button>
+
+                <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-neutral-500">
+                  <ShieldCheck size={14} className="text-neutral-700" />
+                  <span>256-Bit SSL Encrypted &amp; Protected Payment</span>
+                </div>
 
                 {/* FOMO Badge - Checkout Page */}
                 <div className="mt-4 flex justify-center">
@@ -1156,5 +1353,13 @@ export default function CheckoutPage() {
           </div>
         </div>
     </PublicPageLayout>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <CheckoutContent />
+    </Suspense>
   );
 }

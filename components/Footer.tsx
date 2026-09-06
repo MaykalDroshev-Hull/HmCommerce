@@ -1,246 +1,123 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
-import { usePathname } from 'next/navigation';
-import { useLanguage } from '@/context/LanguageContext';
-import { useTheme } from '@/context/ThemeContext';
 import { useStoreSettings } from '@/context/StoreSettingsContext';
-import { translations } from '@/lib/translations';
-import { FaTiktok } from 'react-icons/fa6';
-
-const TIKTOK_URL = 'https://www.tiktok.com/@.modabox.bg';
+import { ShieldCheck, Truck, RotateCcw } from 'lucide-react';
+import { PaymentBadgesRow } from './PaymentIcons';
 
 export default function Footer() {
-  const { language } = useLanguage();
-  const { theme } = useTheme();
   const { settings } = useStoreSettings();
-  const pathname = usePathname();
-  const t = translations[language];
+  const storeName = settings?.storename || 'M-B Something';
+  const currentYear = new Date().getFullYear();
 
-  const stripHtml = (html: string): string =>
-    html
-      .replace(/<[^>]*>/g, '')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/\s+/g, ' ')
-      .trim();
-
-  // Brand description - use aboutustext if available, otherwise default
-  const brandDescription = settings?.aboutustext 
-    ? (() => {
-        const cleaned = stripHtml(settings.aboutustext);
-        return cleaned.length > 150 ? cleaned.substring(0, 150) + '...' : cleaned;
-      })()
-    : t.footerTagline;
-
-  // Social — TikTok only
-  const tiktokUrl = TIKTOK_URL;
-
-  // Categories navigation links
-  const secondaryLinks = [
-    { 
-      id: 'for-him', 
-      label: t.forHim, 
-      path: '/for-him' 
-    },
-    { 
-      id: 'for-her', 
-      label: t.forHer, 
-      path: '/for-her' 
-    },
-    { 
-      id: 'accessories', 
-      label: t.accessories, 
-      path: '/accessories' 
-    }
+  const footerNav = [
+    { label: 'Shop', href: '/#product' },
+    { label: 'Features', href: '/#features' },
+    { label: 'Size Guide', href: '/#size-guide' },
+    { label: 'Verified Reviews', href: '/#reviews' },
+    { label: 'FAQ', href: '/#faq' },
   ];
 
-  // Contact information - address and legal registration are optional placeholders
-  // These can be added to store_settings table in the future
-  const contactInfo = {
-    phone: settings?.telephonenumber,
-    email: settings?.email,
-    address: null as string | null, // Placeholder for future address field
-    legalRegistration: null as string | null // Placeholder for future legal registration field
-  };
-
-  // Copyright text
-  const copyrightText = settings?.yearofcreation 
-    ? `© ${settings.yearofcreation}${new Date().getFullYear() !== settings.yearofcreation ? `-${new Date().getFullYear()}` : ''} ${settings?.storename || 'Store'}. ${t.copyright || 'All rights reserved'}.`
-    : `© ${new Date().getFullYear()} ${settings?.storename || 'Store'}. ${t.copyright || 'All rights reserved'}.`;
-
   return (
-    <footer 
-      className="mt-8 sm:mt-16 border-t transition-colors duration-300"
-      style={{ 
-        backgroundColor: theme.colors.footerBg || '#fafafa',
-        borderColor: theme.colors.border
-      }}
-    >
-      {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-        {/* 3-Column Grid - Stacked on Mobile */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
-          
-          {/* Column 1: Brand */}
-          <div className="space-y-4 text-center md:text-left">
-            <h3 className="sr-only">Brand</h3>
-            {/* Logo */}
-            {settings?.logourl ? (
-              <Link href="/" className="inline-block mx-auto md:mx-0">
-                <Image
-                  src={settings.logourl}
-                  alt={settings?.storename || 'Store Logo'}
-                  width={360}
-                  height={120}
-                  className="h-20 w-auto object-contain"
-                />
-              </Link>
-            ) : (
-              <Link 
-                href="/"
-                className="text-xl font-semibold transition-colors duration-300 hover:opacity-80"
-                style={{ color: theme.colors.text }}
-              >
-                {settings?.storename || 'Store'}
-              </Link>
-            )}
-            
-            {/* Description */}
-            <p 
-              className="text-sm leading-relaxed"
-              style={{ color: theme.colors.textSecondary }}
-            >
-              {brandDescription}
-            </p>
-          </div>
-
-          {/* Column 2: Categories */}
-          <div className="text-center md:text-left">
-            <h3 
-              className="text-sm font-semibold mb-4 tracking-wide uppercase"
-              style={{ color: theme.colors.text }}
-            >
-              {language === 'bg' ? 'Категории' : 'Categories'}
-            </h3>
-            <nav className="flex flex-col items-center md:items-start space-y-3">
-              {secondaryLinks.map(item => (
-                <Link
-                  key={item.id}
-                  href={item.path}
-                  className="text-sm transition-colors duration-300 hover:opacity-70"
-                  style={{
-                    color: pathname === item.path
-                      ? theme.colors.primary
-                      : theme.colors.textSecondary
-                  }}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-
-          {/* Column 3: Contacts */}
-          <div className="text-center md:text-left">
-            <h3 
-              className="text-sm font-semibold mb-4 tracking-wide uppercase"
-              style={{ color: theme.colors.text }}
-            >
-              {language === 'bg' ? 'Свържете се с нас' : 'Contact Us'}
-            </h3>
-            <div className="flex flex-col items-center md:items-start space-y-3">
-              {contactInfo.phone && (
-                <a
-                  href={`tel:${contactInfo.phone}`}
-                  className="text-sm transition-colors duration-300 hover:opacity-70"
-                  style={{ color: theme.colors.textSecondary }}
-                >
-                  {contactInfo.phone}
-                </a>
-              )}
-              {contactInfo.email && (
-                <a
-                  href={`mailto:${contactInfo.email}`}
-                  className="text-sm transition-colors duration-300 hover:opacity-70"
-                  style={{ color: theme.colors.textSecondary }}
-                >
-                  {contactInfo.email}
-                </a>
-              )}
-              {contactInfo.address && (
-                <p 
-                  className="text-sm leading-relaxed"
-                  style={{ color: theme.colors.textSecondary }}
-                >
-                  {contactInfo.address}
-                </p>
-              )}
-              {contactInfo.legalRegistration && (
-                <p 
-                  className="text-sm"
-                  style={{ color: theme.colors.textSecondary }}
-                >
-                  {contactInfo.legalRegistration}
-                </p>
-              )}
+    <footer className="bg-neutral-950 text-neutral-300 border-t border-neutral-800 transition-colors">
+      {/* Top Value Props in Footer */}
+      <div className="border-b border-neutral-800/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center md:text-left">
+            <div className="flex items-center justify-center md:justify-start gap-3">
+              <Truck size={22} className="text-neutral-400 shrink-0" strokeWidth={1.5} />
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-white">Free UK Tracked Delivery</h4>
+                <p className="text-xs text-neutral-400">On all orders over £30 via Royal Mail</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-center md:justify-start gap-3">
+              <RotateCcw size={22} className="text-neutral-400 shrink-0" strokeWidth={1.5} />
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-white">30-Day Hassle-Free Returns</h4>
+                <p className="text-xs text-neutral-400">Simple, prepaid exchanges and returns</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-center md:justify-start gap-3">
+              <ShieldCheck size={22} className="text-neutral-400 shrink-0" strokeWidth={1.5} />
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-white">2-Year Adventure Warranty</h4>
+                <p className="text-xs text-neutral-400">Engineered to withstand all weather conditions</p>
+              </div>
             </div>
           </div>
-        </div>
-
-        <div className="flex justify-center mt-10">
-          <a
-            href={tiktokUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="transition-all duration-300 hover:scale-110 hover:opacity-80"
-            style={{ color: theme.colors.textSecondary }}
-            aria-label="TikTok"
-          >
-            <FaTiktok size={28} />
-          </a>
         </div>
       </div>
 
-      {/* Bottom Bar */}
-      <div 
-        className="border-t py-6 transition-colors duration-300"
-        style={{ borderColor: theme.colors.border }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            {/* Copyright - Left Aligned */}
-            <div 
-              className="text-xs sm:text-sm text-center sm:text-left"
-              style={{ color: theme.colors.textSecondary }}
-            >
-              {copyrightText}
+      {/* Main Footer Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12">
+          {/* Brand Column */}
+          <div className="md:col-span-6 space-y-4">
+            <Link href="/" className="inline-block">
+              <span className="text-xl font-bold tracking-[0.16em] uppercase text-white hover:opacity-90 transition-opacity">
+                {storeName}
+              </span>
+            </Link>
+            <p className="text-xs leading-relaxed text-neutral-400 max-w-md">
+              Minimalist, high-performance canine gear engineered for durability, comfort, and everyday adventure across the British countryside and city walks.
+            </p>
+            <div className="pt-2">
+              <p className="text-[11px] text-neutral-400">
+                Pay in 3 interest-free installments with Klarna. 18+, UK residents only. Credit subject to status.
+              </p>
             </div>
-            
-            {/* Credit - Right Aligned */}
-            <div 
-              className="text-xs sm:text-sm text-center sm:text-right"
-              style={{ color: theme.colors.textSecondary }}
-            >
-              {language === 'bg' ? 'Създадено от' : 'Created by'}{' '}
-              <a
-                href="https://hmwspro.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium transition-colors duration-300 hover:opacity-70"
-                style={{ color: theme.colors.primary }}
-              >
-                H&M WsPro
-              </a>
+          </div>
+
+          {/* Quick Links */}
+          <div className="md:col-span-3 space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-[0.14em] text-white">
+              Navigation
+            </h4>
+            <ul className="space-y-2 text-xs">
+              {footerNav.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    className="text-neutral-400 hover:text-white transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Customer Care */}
+          <div className="md:col-span-3 space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-[0.14em] text-white">
+              Customer Support
+            </h4>
+            <div className="space-y-2 text-xs text-neutral-400">
+              <p>Email: support@mb-something.co.uk</p>
+              <p>Monday – Friday: 9am – 5pm GMT</p>
+              <p>Dispatch location: United Kingdom</p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Legal / Copyright Bar */}
+      <div className="border-t border-neutral-800/80 py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4 text-[11px] text-neutral-400">
+          <div>
+            © {currentYear} {storeName}. All rights reserved. Registered in the United Kingdom.
+          </div>
+          <div className="flex items-center gap-2">
+            <PaymentBadgesRow theme="dark" />
+          </div>
+          <div className="flex items-center gap-6">
+            <span className="hover:text-white transition-colors cursor-pointer">Privacy Policy</span>
+            <span className="hover:text-white transition-colors cursor-pointer">Terms of Service</span>
+            <span className="hover:text-white transition-colors cursor-pointer">Shipping &amp; Returns</span>
           </div>
         </div>
       </div>
     </footer>
   );
 }
-

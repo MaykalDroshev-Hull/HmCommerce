@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Sparkles, X } from 'lucide-react';
+import { Sparkles, X, Cookie } from 'lucide-react';
 import { useCookieConsent } from '@/context/CookieConsentContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { translations } from '@/lib/translations';
@@ -191,8 +191,9 @@ export default function SiteWelcomeBanners() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                    🍪 {t.cookieConsentTitle}
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                    <Cookie size={20} className="text-gray-700 dark:text-gray-200" />
+                    <span>{t.cookieConsentTitle}</span>
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-300 max-w-3xl">
                     {t.cookieConsentMessage}

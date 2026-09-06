@@ -11,31 +11,30 @@ const serifDisplay = DM_Serif_Display({
 })
 
 const inter = Inter({
-  subsets: ['latin', 'cyrillic'],
+  subsets: ['latin'],
   variable: '--font-sans',
   display: 'swap',
 })
 
-const SITE_URL = 'https://modabox.eu';
-const OG_IMAGE = 'https://static-b2c.loropiana.com/cms/resource/image/440282/portrait_ratio3x4/768/1024/fb215413f1cad8636d48b2f0c1eaa1ce/62B14DD519AB6DBA760C9CE121E9F924/lp-assouline-book-1080x1350-14-.jpg';
+const SITE_URL = 'https://mb-something.co.uk';
+const OG_IMAGE = 'https://rrpmpvffewatuldyytqf.supabase.co/storage/v1/object/public/products/collar-graphite-grey.jpg';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'ModaBox – Луксозна мода онлайн | Дрехи, обувки, аксесоари',
-    template: '%s | ModaBox',
+    default: 'M-B Something | Premium Adventure Dog Collars',
+    template: '%s | M-B Something',
   },
   description:
-    'ModaBox.eu – онлайн магазин за луксозна мода. Открийте изключителни дрехи, обувки и аксесоари за жени и мъже. Бърза доставка в България и Европа.',
+    'M-B Something – Minimalist, high-performance canine gear engineered for durability, comfort, and everyday adventure. Free UK tracked delivery on orders over £30. Klarna Pay in 3 available.',
   keywords: [
-    'мода', 'дрехи', 'обувки', 'аксесоари', 'луксозна мода', 'онлайн магазин',
-    'мъжка мода', 'дамска мода', 'modabox', 'fashion', 'clothes', 'shoes',
-    'accessories', 'luxury fashion', 'Bulgaria', 'online shop',
+    'dog collar', 'adventure dog collar', 'tactical dog collar', 'waterproof dog collar',
+    'ripstop webbing collar', 'UK dog gear', 'premium pet accessories', 'M-B Something',
   ],
-  authors: [{ name: 'ModaBox', url: SITE_URL }],
-  creator: 'ModaBox',
-  publisher: 'ModaBox',
-  category: 'fashion',
+  authors: [{ name: 'M-B Something', url: SITE_URL }],
+  creator: 'M-B Something',
+  publisher: 'M-B Something',
+  category: 'pets',
   robots: {
     index: true,
     follow: true,
@@ -43,39 +42,31 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: 'website',
-    locale: 'bg_BG',
-    alternateLocale: 'en_US',
+    locale: 'en_GB',
     url: SITE_URL,
-    siteName: 'ModaBox',
-    title: 'ModaBox – Луксозна мода онлайн | Дрехи, обувки, аксесоари',
+    siteName: 'M-B Something',
+    title: 'M-B Something | Premium Adventure Dog Collars',
     description:
-      'Открийте изключителни дрехи, обувки и аксесоари за жени и мъже. Бърза доставка в България и Европа.',
+      'Minimalist, high-performance canine gear engineered for durability and all-weather comfort. Free UK tracked delivery.',
     images: [
       {
         url: OG_IMAGE,
-        width: 768,
-        height: 1024,
-        alt: 'ModaBox – луксозна мода',
+        width: 1200,
+        height: 1200,
+        alt: 'M-B Something Daydrift Adventure Dog Collar',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    site: '@modabox_eu',
-    title: 'ModaBox – Луксозна мода онлайн',
+    site: '@mb_something',
+    title: 'M-B Something | Premium Adventure Dog Collars',
     description:
-      'Дрехи, обувки и аксесоари за жени и мъже. Бърза доставка в България.',
+      'Minimalist, high-performance canine gear engineered for durability and all-weather comfort.',
     images: [OG_IMAGE],
   },
   alternates: {
     canonical: SITE_URL,
-    languages: {
-      'bg': SITE_URL,
-      'en': `${SITE_URL}/en`,
-    },
-  },
-  verification: {
-    google: 'modabox-google-site-verification',
   },
   icons: {
     icon: '/favicon.ico',
@@ -85,22 +76,19 @@ export const metadata: Metadata = {
 
 const jsonLd = {
   '@context': 'https://schema.org',
-  '@type': 'ClothingStore',
-  name: 'ModaBox',
+  '@type': 'OnlineStore',
+  name: 'M-B Something',
   url: SITE_URL,
-  logo: `${SITE_URL}/logo.png`,
   image: OG_IMAGE,
   description:
-    'Онлайн магазин за луксозна мода – дрехи, обувки и аксесоари за жени и мъже.',
+    'Minimalist, high-performance canine gear engineered for durability and all-weather comfort.',
   address: {
     '@type': 'PostalAddress',
-    addressCountry: 'BG',
+    addressCountry: 'GB',
   },
-  sameAs: ['https://www.tiktok.com/@.modabox.bg'],
-  priceRange: '€€',
-  currenciesAccepted: 'EUR, BGN',
-  paymentAccepted: 'Cash, Credit Card',
-  openingHours: 'Mo-Su 00:00-24:00',
+  priceRange: '££',
+  currenciesAccepted: 'GBP',
+  paymentAccepted: 'Credit Card, Klarna, Debit Card',
 };
 
 export default function RootLayout({
@@ -111,7 +99,7 @@ export default function RootLayout({
   const jsonLdScript = JSON.stringify(jsonLd)
 
   return (
-    <html lang="bg" suppressHydrationWarning>
+    <html lang="en-GB" suppressHydrationWarning>
       <body className={`${serifDisplay.variable} ${inter.variable} antialiased`}>
         {/* In body to avoid head injection from browser extensions; valid for schema.org */}
         <script
@@ -126,4 +114,3 @@ export default function RootLayout({
     </html>
   )
 }
-

@@ -10,6 +10,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useCart } from '@/context/CartContext';
 import { translations } from '@/lib/translations';
 import Link from 'next/link';
+import { ExpressCheckoutButtons, PaymentBadgesRow } from './PaymentIcons';
 
 function unlockBodyScroll(savedScrollY: number) {
   document.body.style.position = '';
@@ -39,13 +40,25 @@ const CartDrawer: React.FC = () => {
 
   const formatPrice = (price: number | undefined | null) => {
     const n = Number(price);
-    return `€${(Number.isFinite(n) ? n : 0).toFixed(2)}`;
+    return `£${(Number.isFinite(n) ? n : 0).toFixed(2)}`;
   };
 
   const handleCheckout = useCallback(() => {
     unlockBodyScroll(scrollYRef.current);
     closeCart();
     router.push('/checkout');
+  }, [closeCart, router]);
+
+  const handleApplePayCheckout = useCallback(() => {
+    unlockBodyScroll(scrollYRef.current);
+    closeCart();
+    router.push('/checkout?paymentMethod=applepay');
+  }, [closeCart, router]);
+
+  const handlePayPalCheckout = useCallback(() => {
+    unlockBodyScroll(scrollYRef.current);
+    closeCart();
+    router.push('/checkout?paymentMethod=paypal');
   }, [closeCart, router]);
 
   useEffect(() => {
@@ -247,6 +260,12 @@ const CartDrawer: React.FC = () => {
               </span>
             </div>
 
+            {/* Express Checkout (Apple Pay & PayPal) */}
+            <ExpressCheckoutButtons
+              onApplePay={handleApplePayCheckout}
+              onPayPal={handlePayPalCheckout}
+            />
+
             <div className="flex gap-3">
               <button
                 type="button"
@@ -271,6 +290,10 @@ const CartDrawer: React.FC = () => {
               >
                 {t.checkout}
               </button>
+            </div>
+
+            <div className="pt-1 flex justify-center">
+              <PaymentBadgesRow />
             </div>
 
             <button

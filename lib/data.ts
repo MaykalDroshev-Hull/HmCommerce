@@ -2,6 +2,7 @@
 // This will be gradually replaced with the new schema
 export interface Product {
   id: string | number; // UUID from Supabase (string) or temporary number for new products
+  name?: string;
   category: 'clothes' | 'shoes' | 'accessories';
   brand: string;
   model: string;
@@ -71,7 +72,7 @@ export const initialProducts: Product[] = [
   {
     id: 4,
     category: 'clothes',
-    brand: 'H&M',
+    brand: 'M-B Something',
     model: 'Cotton T-Shirt',
     type: 'T-Shirt',
     color: 'Black',
