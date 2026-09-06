@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { createServerClient } from '@/lib/supabase';
 
-const SITE_URL = 'https://modabox.eu';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://mb-something.co.uk';
+
 const OG_IMAGE = 'https://static-b2c.loropiana.com/cms/resource/image/440282/portrait_ratio3x4/768/1024/fb215413f1cad8636d48b2f0c1eaa1ce/62B14DD519AB6DBA760C9CE121E9F924/lp-assouline-book-1080x1350-14-.jpg';
 
 async function fetchProduct(id: string) {
@@ -50,16 +51,16 @@ export async function generateMetadata(
 
   if (!product) {
     return {
-      title: 'Продукт не е намерен',
+      title: 'Product Not Found',
       robots: { index: false, follow: false },
     };
   }
 
-  const name: string = product.name || 'Продукт';
-  const brand: string = product.brand || '';
+  const name: string = product.name || 'Product';
+  const brand: string = product.brand || 'M-B Something';
   const description: string =
     product.description ||
-    `${brand ? `${brand} – ` : ''}${name} | Луксозна мода от ModaBox.eu`;
+    `${brand ? `${brand} – ` : ''}${name} | Premium Lifestyle from M-B Something`;
 
   const rawImages: unknown = product.images;
   const firstImage: string | null =
@@ -81,10 +82,10 @@ export async function generateMetadata(
     url: canonical,
     offers: {
       '@type': 'Offer',
-      priceCurrency: 'EUR',
+      priceCurrency: 'GBP',
       availability: 'https://schema.org/InStock',
       url: canonical,
-      seller: { '@type': 'Organization', name: 'ModaBox' },
+      seller: { '@type': 'Organization', name: 'M-B Something' },
     },
   };
 
@@ -94,13 +95,14 @@ export async function generateMetadata(
     alternates: { canonical },
     openGraph: {
       type: 'website',
-      locale: 'bg_BG',
+      locale: 'en_GB',
       url: canonical,
       title,
       description,
-      siteName: 'ModaBox',
+      siteName: 'M-B Something',
       images: [{ url: ogImage, alt: title }],
     },
+
     twitter: {
       card: 'summary_large_image',
       title,

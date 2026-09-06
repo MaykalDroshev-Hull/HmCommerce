@@ -1,4 +1,4 @@
-const DEFAULT_STOREFRONT_URL = 'https://www.modabox.eu';
+const DEFAULT_STOREFRONT_URL = 'https://mb-something.co.uk';
 
 /** Public storefront origin for customer-facing links (never admin). */
 export function getStorefrontBaseUrl(): string {

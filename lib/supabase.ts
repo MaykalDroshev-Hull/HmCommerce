@@ -1,15 +1,19 @@
 import { createClient } from '@supabase/supabase-js'
 import { logger } from './logger'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const FALLBACK_URL = 'https://placeholder.supabase.co'
+const FALLBACK_KEY = 'placeholder-anon-key'
+const FALLBACK_SERVICE_KEY = 'placeholder-service-key'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || FALLBACK_KEY
 
 function createSupabaseClient() {
-  const client = createClient(supabaseUrl || '', supabaseAnonKey || '')
+  const client = createClient(supabaseUrl, supabaseAnonKey)
 
   if (process.env.NODE_ENV === 'development') {
     logger.debug('Supabase client connected', {
-      hasAnonKey: !!supabaseAnonKey,
+      hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       storageAvailable: !!client.storage,
     })
   }
@@ -18,29 +22,31 @@ function createSupabaseClient() {
 }
 
 // Client-side Supabase client (for browser use)
-// Only throws error on client-side, not during SSR
+// Safe during build time and SSR even if env vars are missing
 export const supabase = createSupabaseClient()
 
 // Server-side Supabase client (for API routes - bypasses RLS)
 export function createServerClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing required Supabase environment variables for server operations')
-  }
-  
-  const client = createClient(supabaseUrl, supabaseServiceKey, {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_URL
+  const serviceKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    FALLBACK_SERVICE_KEY
+
+  const client = createClient(url, serviceKey, {
     auth: {
       autoRefreshToken: false,
-      persistSession: false
-    }
+      persistSession: false,
+    },
   })
-  
+
   if (process.env.NODE_ENV === 'development') {
-    logger.debug('Supabase server client connected', { hasServiceKey: !!supabaseServiceKey })
+    logger.debug('Supabase server client connected', {
+      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    })
   }
-  
+
   return client
 }
+
 

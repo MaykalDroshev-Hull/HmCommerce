@@ -1,16 +1,17 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'За нас – ModaBox',
+  title: 'About Us | M-B Something',
   description:
-    'Научете повече за ModaBox – вашият онлайн магазин за луксозна мода. Мисия, ценности и нашата история.',
-  alternates: { canonical: 'https://modabox.eu/about' },
+    'Learn more about M-B Something – precision craftsmanship, minimalist design, and premium adventure essentials.',
+  alternates: { canonical: 'https://mb-something.co.uk/about' },
   openGraph: {
-    title: 'За нас | ModaBox',
+    title: 'About Us | M-B Something',
     description:
-      'Научете повече за ModaBox – луксозна мода за жени и мъже.',
+      'Learn more about M-B Something – precision craftsmanship and minimalist lifestyle.',
   },
 };
+
 
 export default function AboutLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;

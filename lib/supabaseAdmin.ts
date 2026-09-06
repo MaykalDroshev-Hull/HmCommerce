@@ -1,15 +1,17 @@
 import 'server-only';
 import { createClient } from '@supabase/supabase-js';
 
+const FALLBACK_URL = 'https://placeholder.supabase.co';
+const FALLBACK_SERVICE_KEY = 'placeholder-service-key';
+
 // Create a function to get the admin client instead of creating it at module level
 export function getSupabaseAdmin() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
-  }
-  
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_URL;
+  const supabaseServiceKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    FALLBACK_SERVICE_KEY;
+
   return createClient(
     supabaseUrl,
     supabaseServiceKey,
@@ -19,4 +21,5 @@ export function getSupabaseAdmin() {
 
 // Export the admin client for backward compatibility
 export const supabaseAdmin = getSupabaseAdmin();
+
 

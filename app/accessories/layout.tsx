@@ -3,18 +3,19 @@ import type { Metadata } from 'next';
 const OG_IMAGE = 'https://static-b2c.loropiana.com/cms/resource/image/440282/portrait_ratio3x4/768/1024/fb215413f1cad8636d48b2f0c1eaa1ce/62B14DD519AB6DBA760C9CE121E9F924/lp-assouline-book-1080x1350-14-.jpg';
 
 export const metadata: Metadata = {
-  title: 'Аксесоари – чанти, колани, шалове и още',
+  title: 'Accessories | M-B Something',
   description:
-    'Луксозни аксесоари от ModaBox – чанти, колани, шалове, бижута и още. Перфектното допълнение към всяка визия.',
-  keywords: ['аксесоари', 'чанти', 'колани', 'шалове', 'бижута', 'луксозни аксесоари', 'мода'],
-  alternates: { canonical: 'https://modabox.eu/accessories' },
+    'Premium accessories by M-B Something – high-durability hardware, minimalist leads, and adventure essentials.',
+  keywords: ['accessories', 'dog accessories', 'leashes', 'collars', 'minimalist pet gear'],
+  alternates: { canonical: 'https://mb-something.co.uk/accessories' },
   openGraph: {
-    title: 'Аксесоари | ModaBox',
+    title: 'Accessories | M-B Something',
     description:
-      'Луксозни аксесоари – чанти, шалове, бижута и още от ModaBox.',
-    images: [{ url: OG_IMAGE, alt: 'ModaBox – аксесоари' }],
+      'Premium accessories and lifestyle gear by M-B Something.',
+    images: [{ url: OG_IMAGE, alt: 'M-B Something – Accessories' }],
   },
 };
+
 
 export default function AccessoriesLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;

@@ -1,14 +1,16 @@
 import { MetadataRoute } from 'next';
 import { createClient } from '@supabase/supabase-js';
 
-const SITE_URL = 'https://modabox.eu';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://mb-something.co.uk';
 
 async function getPublishedProductIds(): Promise<string[]> {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !key) return [];
+
+    const supabase = createClient(url, key);
+
     const { data } = await supabase
       .from('products')
       .select('id, updated_at')

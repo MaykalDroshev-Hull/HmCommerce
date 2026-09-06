@@ -14,4 +14,5 @@ Allow: /for-him/
 Allow: /accessories/
 Allow: /about/
 
-Sitemap: https://modabox.eu/sitemap.xml
+Sitemap: https://mb-something.co.uk/sitemap.xml
+
