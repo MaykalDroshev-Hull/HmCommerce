@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "tsc --noEmit",
     "clean": "rimraf .next node_modules/.cache",
     "convert-econt": "node scripts/convert-econt-offices.js"
   },
