@@ -8,6 +8,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useStoreSettings } from '@/context/StoreSettingsContext';
 import { CheckCircle, Package, Truck, MapPin, Mail, ArrowRight } from 'lucide-react';
+import { KlarnaBadgeIcon } from '@/components/PaymentIcons';
 
 interface OrderItem {
   id: string;
@@ -240,6 +241,13 @@ function CheckoutSuccessContent() {
           >
             Thank you for your order! We have received your purchase and will dispatch your items promptly. A confirmation email has been sent to you.
           </p>
+
+          {Boolean(searchParams.get('session_id') || order.paymentmethod === 'klarna') && (
+            <div className="mt-4 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-neutral-50 border border-neutral-200 text-xs font-semibold text-neutral-800">
+              <KlarnaBadgeIcon className="h-3.5 w-auto" />
+              <span>Payment Authorized with Klarna Pay in 3</span>
+            </div>
+          )}
         </div>
 
         <div 

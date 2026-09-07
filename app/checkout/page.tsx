@@ -519,11 +519,48 @@ function CheckoutContent() {
         }
       }
 
-      // Redirect to success page with order ID using window.location for immediate redirect
-      // This ensures the redirect happens before any state updates that might prevent navigation
+      // If Klarna payment method is selected, initialize Stripe Klarna Checkout Session
+      if (paymentMethod === 'klarna') {
+        const stripeRes = await fetch('/api/stripe/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: orderResult.orderId,
+            customer: orderData.customer,
+            delivery: orderData.delivery,
+            items: items.map(item => ({
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity,
+              size: item.size,
+            })),
+            totals: orderData.totals,
+            discount: orderData.discount,
+          }),
+        });
+
+        const stripeData = await stripeRes.json();
+
+        if (stripeData.success && stripeData.url) {
+          clearCart();
+          resetForm();
+          window.location.href = stripeData.url;
+          return;
+        } else if (stripeData.isConfigError) {
+          setError(
+            'Klarna (Stripe) is ready for your API keys. Please add STRIPE_SECRET_KEY to .env.local and enable Klarna in your Stripe Dashboard.'
+          );
+          setSubmitting(false);
+          return;
+        } else {
+          throw new Error(stripeData.error || 'Failed to initialize Klarna checkout session');
+        }
+      }
+
+      // Default redirect to success page
       window.location.href = `/checkout/success?orderId=${orderResult.orderId}`;
       
-      // Clear cart and form after redirect (these won't execute if redirect works, but that's fine)
       clearCart();
       resetForm();
 
