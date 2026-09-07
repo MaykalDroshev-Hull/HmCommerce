@@ -11,23 +11,23 @@ export default function TrustBar() {
   const trustItems = [
     {
       icon: Truck,
-      title: language === 'bg' ? 'Бърза доставка' : 'Fast delivery',
-      subtitle: language === 'bg' ? '1-2 работни дни' : '1-2 business days',
+      title: 'Fast Delivery',
+      subtitle: 'Free on orders over £50',
     },
     {
       icon: RotateCcw,
-      title: language === 'bg' ? 'Лесно връщане' : 'Easy returns',
-      subtitle: language === 'bg' ? '14 дни право на връщане' : '14-day return policy',
+      title: 'Easy Returns',
+      subtitle: '30-day return policy',
     },
     {
       icon: Lock,
-      title: language === 'bg' ? 'Сигурно плащане' : 'Secure payment',
-      subtitle: language === 'bg' ? '100% защитени плащания' : '100% protected payments',
+      title: 'Secure Payment',
+      subtitle: '100% encrypted checkout',
     },
     {
       icon: Headphones,
-      title: language === 'bg' ? 'Клиентска грижа' : 'Customer care',
-      subtitle: language === 'bg' ? 'На разположение' : 'Always available',
+      title: 'Customer Care',
+      subtitle: 'Dedicated support team',
     },
   ];
 

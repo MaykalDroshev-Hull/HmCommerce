@@ -104,13 +104,13 @@ export async function GET(
                 variant.product_variant_property_values.forEach((pvv: any) => {
                   const propName = pvv.properties?.name?.toLowerCase();
                   const value = pvv.value;
-                  if (propName?.includes('color') || propName?.includes('цвят')) {
+                  if (propName?.includes('color')) {
                     productInfo.color = value;
-                  } else if (propName?.includes('size') || propName?.includes('размер')) {
+                  } else if (propName?.includes('size')) {
                     productInfo.size = value;
-                  } else if (propName?.includes('brand') || propName?.includes('марка')) {
+                  } else if (propName?.includes('brand')) {
                     productInfo.brand = value;
-                  } else if (propName?.includes('model') || propName?.includes('модел')) {
+                  } else if (propName?.includes('model')) {
                     productInfo.model = value;
                   }
                 });

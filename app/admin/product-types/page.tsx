@@ -26,7 +26,7 @@ export default function ProductTypesPage() {
   const [productTypes, setProductTypes] = useState<ProductTypeRow[]>([]);
 
   useEffect(() => {
-    document.title = t.productTypes || (language === 'bg' ? 'Категории' : 'Product Types');
+    document.title = t.productTypes || ('Product Types');
   }, [language, t]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -270,9 +270,7 @@ export default function ProductTypesPage() {
       const failed = results.filter((item) => !item.ok);
       if (failed.length > 0) {
         alert(
-          language === 'bg'
-            ? `Неуспешно изтриване за ${failed.length} категории.`
-            : `Failed to delete ${failed.length} categories.`
+          `Failed to delete ${failed.length} categories.`
         );
         setSelectedProductTypeIds(failed.map((item) => item.id));
       } else {
@@ -293,7 +291,7 @@ export default function ProductTypesPage() {
         return;
       }
     } catch (error) {
-      alert(language === 'bg' ? 'Неуспешно масово изтриване' : 'Bulk delete failed');
+      alert('Bulk delete failed');
     } finally {
       setBulkDeleting(false);
     }
@@ -323,7 +321,7 @@ export default function ProductTypesPage() {
     <AdminLayout currentPath="/admin/product-types">
       <AdminPage className="space-y-6">
         <PageHeader
-          title={language === 'bg' ? 'Категории' : 'Categories'}
+          title={'Categories'}
           actions={
             <div className="flex flex-wrap items-center gap-2">
               {selectedProductTypeIds.length > 0 && (
@@ -332,9 +330,7 @@ export default function ProductTypesPage() {
                   className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 active:bg-red-800 transition-colors touch-manipulation text-sm sm:text-base"
                 >
                   <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                  {language === 'bg'
-                    ? `Изтрий избрани (${selectedProductTypeIds.length})`
-                    : `Delete selected (${selectedProductTypeIds.length})`}
+                  {`Delete selected (${selectedProductTypeIds.length})`}
                 </button>
               )}
               <button
@@ -356,18 +352,18 @@ export default function ProductTypesPage() {
         {loading ? (
           <div className="text-center py-8 sm:py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-            <p className="mt-2 text-sm sm:text-base text-gray-500">{language === 'bg' ? 'Зареждане...' : 'Loading...'}</p>
+            <p className="mt-2 text-sm sm:text-base text-gray-500">{'Loading...'}</p>
           </div>
         ) : (
           <>
           <Section
-            title={language === 'bg' ? 'Списък с категории' : 'Categories List'}
-            description={language === 'bg' ? 'Управлявайте категориите на артикулите' : 'Manage product categories'}
+            title={'Categories List'}
+            description={'Manage product categories'}
           >
             {productTypes.length === 0 ? (
               <EmptyState
-                title={language === 'bg' ? 'Няма категории' : 'No Categories'}
-                description={language === 'bg' ? 'Създайте първата категория, за да започнете да организирате артикулите си.' : 'Create your first category to start organizing your items.'}
+                title={'No Categories'}
+                description={'Create your first category to start organizing your items.'}
                 action={
                   <button
                   onClick={() => {
@@ -398,14 +394,14 @@ export default function ProductTypesPage() {
                             checked={allSelectedOnPage}
                             onChange={toggleSelectAllProductTypesOnPage}
                             className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                            aria-label={language === 'bg' ? 'Избери всички' : 'Select all'}
+                            aria-label={'Select all'}
                           />
                         </TableHeaderCell>
                         <TableHeaderCell>{t.name}</TableHeaderCell>
                         <TableHeaderCell>
-                          {language === 'bg' ? 'Характеристики' : 'Characteristics'}
+                          {'Characteristics'}
                         </TableHeaderCell>
-                        <TableHeaderCell align="center">{language === 'bg' ? 'Артикули' : 'Items'}</TableHeaderCell>
+                        <TableHeaderCell align="center">{'Items'}</TableHeaderCell>
                         <TableHeaderCell align="right">{t.actions}</TableHeaderCell>
                       </TableHeaderRow>
                     </TableHeader>
@@ -424,7 +420,7 @@ export default function ProductTypesPage() {
                                 checked={selectedProductTypeIds.includes(pt.producttypeid)}
                                 onChange={() => toggleProductTypeSelection(pt.producttypeid)}
                                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                aria-label={language === 'bg' ? 'Избери категория' : 'Select category'}
+                                aria-label={'Select category'}
                               />
                             </TableCell>
                             <TableCell>
@@ -481,7 +477,7 @@ export default function ProductTypesPage() {
                                 <button
                                   onClick={() => handleDeleteClick(pt)}
                                   className="p-1.5 sm:p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition-colors touch-manipulation"
-                                  title={language === 'bg' ? 'Изтрий' : 'Delete'}
+                                  title={'Delete'}
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </button>
@@ -509,7 +505,7 @@ export default function ProductTypesPage() {
                     onChange={toggleSelectAllProductTypesOnPage}
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
-                  {language === 'bg' ? 'Избери всички на страницата' : 'Select all on page'}
+                  {'Select all on page'}
                 </label>
               </div>
               <div className="space-y-4">
@@ -529,7 +525,7 @@ export default function ProductTypesPage() {
                             checked={selectedProductTypeIds.includes(pt.producttypeid)}
                             onChange={() => toggleProductTypeSelection(pt.producttypeid)}
                             className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 flex-shrink-0"
-                            aria-label={language === 'bg' ? 'Избери категория' : 'Select category'}
+                            aria-label={'Select category'}
                           />
                           <h3 className="text-base font-semibold text-gray-900 flex-1 min-w-0">
                             {pt.parent_producttypeid ? (
@@ -565,7 +561,7 @@ export default function ProductTypesPage() {
                         <div className="grid grid-cols-2 gap-3">
                           <div className={`px-3 py-2 rounded-md ${highlightProducts ? 'bg-yellow-50 border border-yellow-200' : 'bg-gray-50'}`}>
                             <div className="text-xs text-gray-600 mb-0.5">
-                              {language === 'bg' ? 'Артикули' : 'Items'}
+                              {'Items'}
                             </div>
                             <div className={`text-lg font-bold ${highlightProducts ? 'text-yellow-800' : 'text-gray-900'}`}>
                               {productsCount}
@@ -573,7 +569,7 @@ export default function ProductTypesPage() {
                           </div>
                           <div className="px-3 py-2 rounded-md bg-gray-50">
                             <div className="text-xs text-gray-600 mb-0.5">
-                              {language === 'bg' ? 'Характеристики' : 'Characteristics'}
+                              {'Characteristics'}
                             </div>
                             <div className="text-lg font-bold text-gray-900">
                               {propertiesCount}
@@ -602,7 +598,7 @@ export default function ProductTypesPage() {
                           <button
                             onClick={() => handleDeleteClick(pt)}
                             className="px-4 py-2.5 text-red-600 hover:text-red-700 hover:bg-red-50 active:bg-red-100 rounded-md transition-colors touch-manipulation border border-red-200"
-                            title={language === 'bg' ? 'Изтрий' : 'Delete'}
+                            title={'Delete'}
                           >
                             <Trash2 className="w-5 h-5" />
                           </button>
@@ -645,7 +641,7 @@ export default function ProductTypesPage() {
                 <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between w-full">
                   <div>
                     <p className="text-xs sm:text-sm text-gray-700">
-                      {t.showingTransactions || 'Showing'} <span className="font-medium">{startIndex + 1}</span> {language === 'bg' ? 'до' : 'to'} <span className="font-medium">{Math.min(endIndex, productTypes.length)}</span> {language === 'bg' ? 'от' : 'of'} <span className="font-medium">{productTypes.length}</span> {language === 'bg' ? 'категории' : 'categories'}
+                      {t.showingTransactions || 'Showing'} <span className="font-medium">{startIndex + 1}</span> {'to'} <span className="font-medium">{Math.min(endIndex, productTypes.length)}</span> {'of'} <span className="font-medium">{productTypes.length}</span> {'categories'}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -716,8 +712,8 @@ export default function ProductTypesPage() {
           }}
           title={editingProductType ? t.editProductType : t.addProductType}
           subheader={editingProductType
-            ? (language === 'bg' ? 'Редактирайте информацията за типа продукт' : 'Edit the product type information')
-            : (language === 'bg' ? 'Създайте нова категория за категоризиране' : 'Create a new category for categorization')
+            ? ('Edit the product type information')
+            : ('Create a new category for categorization')
           }
           maxWidth="max-w-2xl"
           minWidth={520}
@@ -740,19 +736,17 @@ export default function ProductTypesPage() {
               </div>
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                  {language === 'bg' ? 'Родителска категория (опционално)' : 'Parent Category (optional)'}
+                  {'Parent Category (optional)'}
                 </label>
                 <p className="text-xs text-gray-500 mb-2">
-                  {language === 'bg'
-                    ? 'Изберете родителска категория, за да създадете подкатегория. Оставете празно за категория от второ ниво.'
-                    : 'Select a parent category to create a subcategory. Leave empty for a level 2 category.'}
+                  {'Select a parent category to create a subcategory. Leave empty for a level 2 category.'}
                 </p>
                 <select
                   value={formData.parent_producttypeid}
                   onChange={(e) => setFormData({ ...formData, parent_producttypeid: e.target.value })}
                   className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="">{language === 'bg' ? '-- Без родител --' : '-- No Parent --'}</option>
+                  <option value="">{'-- No Parent --'}</option>
                   {productTypes
                     .filter(pt => {
                       // Only show categories that don't have a parent (level 2 categories)
@@ -773,20 +767,18 @@ export default function ProductTypesPage() {
               {!editingProductType && (
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                    {language === 'bg' ? 'Характеристики' : 'Characteristics'}
+                    {'Characteristics'}
                   </label>
                   <p className="text-xs text-gray-500 mb-2">
-                    {language === 'bg'
-                      ? 'Изберете характеристики (може повече от една)'
-                      : 'Select characteristics (multi-select)'}
+                    {'Select characteristics (multi-select)'}
                   </p>
                   {loadingProperties ? (
                     <div className="text-xs text-gray-500">
-                      {language === 'bg' ? 'Зареждане...' : 'Loading...'}
+                      {'Loading...'}
                     </div>
                   ) : availableProperties.length === 0 ? (
                     <div className="text-xs text-gray-500">
-                      {language === 'bg' ? 'Няма налични характеристики' : 'No characteristics available'}
+                      {'No characteristics available'}
                     </div>
                   ) : (
                     <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-md p-2 space-y-1">
@@ -859,10 +851,8 @@ export default function ProductTypesPage() {
               setShowDeleteCompleteAnimation(false);
             }
           }}
-          title={language === 'bg' ? 'Потвърди изтриване' : 'Confirm Delete'}
-          subheader={language === 'bg' 
-            ? 'Сигурни ли сте, че искате да изтриете тази категория? Артикулите и характеристиките към нея също ще бъдат изтрити. Това действие не може да бъде отменено.'
-            : 'Are you sure you want to delete this product type? Products and characteristics linked to it will also be deleted. This action cannot be undone.'}
+          title={'Confirm Delete'}
+          subheader={'Are you sure you want to delete this product type? Products and characteristics linked to it will also be deleted. This action cannot be undone.'}
           maxWidth="max-w-md"
           minWidth={400}
           minHeight={550}
@@ -872,7 +862,7 @@ export default function ProductTypesPage() {
             {productTypeToDelete && (
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="text-sm font-medium text-gray-900 mb-1">
-                  {language === 'bg' ? 'Категория:' : 'Category:'}
+                  {'Category:'}
                 </p>
                 <p className="text-sm text-gray-700">{productTypeToDelete.name}</p>
               </div>
@@ -880,16 +870,16 @@ export default function ProductTypesPage() {
             <div className="space-y-3">
               <div>
                 <p className="text-sm font-medium text-gray-900 mb-1">
-                  {language === 'bg' ? 'Характеристики' : 'Characteristics'}
+                  {'Characteristics'}
                   {deleteDependencies.properties.length > 0 ? ` (${deleteDependencies.properties.length})` : ''}
                 </p>
                 {deleteDependencies.loading ? (
                   <p className="text-xs text-gray-500">
-                    {language === 'bg' ? 'Зареждане...' : 'Loading...'}
+                    {'Loading...'}
                   </p>
                 ) : deleteDependencies.properties.length === 0 ? (
                   <p className="text-xs text-gray-500">
-                    {language === 'bg' ? 'Няма' : 'None'}
+                    {'None'}
                   </p>
                 ) : (
                   <div className="max-h-32 overflow-y-auto rounded border border-gray-200 bg-white">
@@ -903,16 +893,16 @@ export default function ProductTypesPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-900 mb-1">
-                  {language === 'bg' ? 'Артикули' : 'Products'}
+                  {'Products'}
                   {deleteDependencies.products.length > 0 ? ` (${deleteDependencies.products.length})` : ''}
                 </p>
                 {deleteDependencies.loading ? (
                   <p className="text-xs text-gray-500">
-                    {language === 'bg' ? 'Зареждане...' : 'Loading...'}
+                    {'Loading...'}
                   </p>
                 ) : deleteDependencies.products.length === 0 ? (
                   <p className="text-xs text-gray-500">
-                    {language === 'bg' ? 'Няма' : 'None'}
+                    {'None'}
                   </p>
                 ) : (
                   <div className="max-h-32 overflow-y-auto rounded border border-gray-200 bg-white">
@@ -946,7 +936,7 @@ export default function ProductTypesPage() {
                 disabled={deleting || showDeleteCompleteAnimation}
                 className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base bg-red-600 text-white rounded hover:bg-red-700 active:bg-red-800 transition-colors touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {deleting ? (language === 'bg' ? 'Изтриване...' : 'Deleting...') : (language === 'bg' ? 'Изтрий' : 'Delete')}
+                {deleting ? ('Deleting...') : ('Delete')}
               </button>
             </div>
             </div>
@@ -968,10 +958,8 @@ export default function ProductTypesPage() {
               setShowBulkDeleteCompleteAnimation(false);
             }
           }}
-          title={language === 'bg' ? 'Потвърди масово изтриване' : 'Confirm Bulk Delete'}
-          subheader={language === 'bg'
-            ? 'Избраните категории и всички свързани артикули и характеристики ще бъдат изтрити. Това действие не може да бъде отменено.'
-            : 'Selected categories and all related products and characteristics will be deleted. This action cannot be undone.'}
+          title={'Confirm Bulk Delete'}
+          subheader={'Selected categories and all related products and characteristics will be deleted. This action cannot be undone.'}
           maxWidth="max-w-md"
           minWidth={400}
           minHeight={360}
@@ -980,7 +968,7 @@ export default function ProductTypesPage() {
             <div className={`space-y-4 transition-all duration-300 ${showBulkDeleteCompleteAnimation ? 'blur-sm pointer-events-none' : ''}`}>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-sm font-medium text-gray-900 mb-1">
-                {language === 'bg' ? 'Избрани категории:' : 'Selected categories:'}
+                {'Selected categories:'}
               </p>
               <p className="text-sm text-gray-700">
                 {selectedProductTypeIds.length}
@@ -1006,7 +994,7 @@ export default function ProductTypesPage() {
                 disabled={bulkDeleting || showBulkDeleteCompleteAnimation}
                 className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base bg-red-600 text-white rounded hover:bg-red-700 active:bg-red-800 transition-colors touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {bulkDeleting ? (language === 'bg' ? 'Изтриване...' : 'Deleting...') : (language === 'bg' ? 'Изтрий избраните' : 'Delete selected')}
+                {bulkDeleting ? ('Deleting...') : ('Delete selected')}
               </button>
             </div>
             </div>

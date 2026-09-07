@@ -258,9 +258,7 @@ export default function StorePage({ products, currentPage }: StorePageProps) {
     if (activeCategoryFilter !== 'all') {
       const productType = productTypes.find(type => type.producttypeid === activeCategoryFilter);
       if (productType) {
-        return language === 'bg'
-          ? `${productType.name} в наличност`
-          : `${productType.name} in Stock`;
+        return `${productType.name} in Stock`;
       }
     }
 
@@ -270,8 +268,8 @@ export default function StorePage({ products, currentPage }: StorePageProps) {
     if (currentPage === 'accessories') return t.accessoriesInStock;
     
     // Default titles for main sections
-    if (currentPage === 'for-him') return language === 'bg' ? 'За него' : 'For Him';
-    if (currentPage === 'for-her') return language === 'bg' ? 'За нея' : 'For Her';
+    if (currentPage === 'for-him') return 'For Him';
+    if (currentPage === 'for-her') return 'For Her';
     if (currentPage === 'accessories') return t.accessoriesInStock;
     
     return t.ourCurrentStock;
@@ -299,10 +297,10 @@ export default function StorePage({ products, currentPage }: StorePageProps) {
                     className="cursor-pointer hover:underline"
                     onClick={() => { window.location.href = `/${currentPage}`; }}
                   >
-                    {currentPage === 'for-him' ? (language === 'bg' ? 'За него' : 'For Him') :
-                     currentPage === 'for-her' ? (language === 'bg' ? 'За нея' : 'For Her') :
-                     currentPage === 'accessories' ? (language === 'bg' ? 'Аксесоари' : 'Accessories') :
-                     language === 'bg' ? 'Продукти' : 'Products'}
+                    {currentPage === 'for-him' ? 'For Him' :
+                     currentPage === 'for-her' ? 'For Her' :
+                     currentPage === 'accessories' ? 'Accessories' :
+                     'Products'}
                   </span>
                   {categoryPath.map((cat, index) => (
                     <span key={cat.producttypeid} className="flex items-center gap-2">

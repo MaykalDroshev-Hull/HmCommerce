@@ -24,7 +24,7 @@ export default function AnalyticsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    document.title = t.analytics || (language === 'bg' ? 'Анализи' : 'Analytics');
+    document.title = t.analytics || ('Analytics');
   }, [language, t]);
   const [isLoading, setIsLoading] = useState(true);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);

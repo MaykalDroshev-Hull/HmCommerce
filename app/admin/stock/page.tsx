@@ -26,7 +26,7 @@ export default function StockPage() {
   const router = useRouter();
   const { language } = useLanguage();
   const { theme } = useTheme();
-  const lang = (language === 'bg' ? 'bg' : 'en') as 'bg' | 'en';
+  const lang = ('en') as 'bg' | 'en';
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -372,9 +372,7 @@ export default function StockPage() {
 
     if (largeReductions.length > 0) {
       const confirmed = window.confirm(
-        lang === 'bg'
-          ? `Ще намалите наличността с ${LARGE_REDUCTION_THRESHOLD}+ бр. за ${largeReductions.length} вариант(а). Продължавате ли?`
-          : `You are reducing stock by ${LARGE_REDUCTION_THRESHOLD}+ for ${largeReductions.length} variant(s). Continue?`
+        `You are reducing stock by ${LARGE_REDUCTION_THRESHOLD}+ for ${largeReductions.length} variant(s). Continue?`
       );
       if (!confirmed) return;
     }
@@ -383,14 +381,14 @@ export default function StockPage() {
       if (update.quantity !== undefined && update.quantity < 0) {
         setSaveMessage({
           type: 'error',
-          text: lang === 'bg' ? 'Наличността не може да бъде отрицателна' : 'Stock cannot be negative',
+          text: 'Stock cannot be negative',
         });
         return;
       }
       if (update.price !== undefined && update.price < 0) {
         setSaveMessage({
           type: 'error',
-          text: lang === 'bg' ? 'Цената не може да бъде отрицателна' : 'Price cannot be negative',
+          text: 'Price cannot be negative',
         });
         return;
       }
@@ -402,9 +400,7 @@ export default function StockPage() {
         setSaveMessage({
           type: 'error',
           text:
-            lang === 'bg'
-              ? 'Промо цената трябва да е по-ниска от обикновената цена'
-              : 'Promo price must be lower than regular price',
+            'Promo price must be lower than regular price',
         });
         return;
       }
@@ -417,9 +413,7 @@ export default function StockPage() {
         setSaveMessage({
           type: 'error',
           text:
-            lang === 'bg'
-              ? 'Промо цената трябва да е по-ниска от обикновената цена'
-              : 'Promo price must be lower than regular price',
+            'Promo price must be lower than regular price',
         });
         return;
       }
@@ -439,7 +433,7 @@ export default function StockPage() {
       if (!result.success) {
         setSaveMessage({
           type: 'error',
-          text: result.error || (lang === 'bg' ? 'Неуспешно запазване' : 'Failed to save'),
+          text: result.error || ('Failed to save'),
         });
         return;
       }
@@ -460,12 +454,12 @@ export default function StockPage() {
       applyLocalVariantUpdates(updates);
       setSaveMessage({
         type: 'success',
-        text: lang === 'bg' ? 'Промените са запазени успешно' : 'Changes saved successfully',
+        text: 'Changes saved successfully',
       });
     } catch (error) {
       setSaveMessage({
         type: 'error',
-        text: lang === 'bg' ? 'Неуспешно запазване' : 'Failed to save',
+        text: 'Failed to save',
       });
     } finally {
       setIsSaving(false);
@@ -486,18 +480,14 @@ export default function StockPage() {
         setSaveMessage({
           type: 'error',
           text:
-            lang === 'bg'
-              ? 'Наличността не може да стане отрицателна'
-              : 'Stock cannot become negative',
+            'Stock cannot become negative',
         });
         return;
       }
 
       if (bulkQuantity >= LARGE_REDUCTION_THRESHOLD) {
         const confirmed = window.confirm(
-          lang === 'bg'
-            ? `Ще премахнете ${bulkQuantity} бр. от ${variantIds.length} избрани варианта. Продължавате ли?`
-            : `Remove ${bulkQuantity} from ${variantIds.length} selected variants. Continue?`
+          `Remove ${bulkQuantity} from ${variantIds.length} selected variants. Continue?`
         );
         if (!confirmed) return;
       }
@@ -521,7 +511,7 @@ export default function StockPage() {
       if (!result.success) {
         setSaveMessage({
           type: 'error',
-          text: result.error || (lang === 'bg' ? 'Неуспешно запазване' : 'Failed to update'),
+          text: result.error || ('Failed to update'),
         });
         return;
       }
@@ -535,12 +525,12 @@ export default function StockPage() {
       applyLocalVariantUpdates(updates);
       setSaveMessage({
         type: 'success',
-        text: lang === 'bg' ? 'Промените са запазени успешно' : 'Changes saved successfully',
+        text: 'Changes saved successfully',
       });
     } catch (error) {
       setSaveMessage({
         type: 'error',
-        text: lang === 'bg' ? 'Неуспешно запазване' : 'Failed to update',
+        text: 'Failed to update',
       });
     } finally {
       setIsSaving(false);
@@ -616,19 +606,17 @@ export default function StockPage() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: theme.colors.text }}>
-                {lang === 'bg' ? 'Наличности' : 'Stock Management'}
+                {'Stock Management'}
               </h1>
               <p className="mt-1 sm:mt-2 text-sm sm:text-base" style={{ color: theme.colors.textSecondary }}>
-                {lang === 'bg'
-                  ? 'Управление на наличностите по продукти и варианти'
-                  : 'Manage stock by product and variant'}
+                {'Manage stock by product and variant'}
               </p>
               <Link
                 href="/admin/stock-in"
                 className="inline-block mt-3 text-sm font-medium underline touch-manipulation min-h-[44px] py-2"
                 style={{ color: theme.colors.primary }}
               >
-                {lang === 'bg' ? '→ Заприхождаване' : '→ Receive stock'}
+                {'→ Receive stock'}
               </Link>
             </div>
             <ProductBulkControls
@@ -644,30 +632,30 @@ export default function StockPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
           {[
             {
-              label: lang === 'bg' ? 'Продукти' : 'Products',
+              label: 'Products',
               value: summary.totalProducts,
             },
             {
-              label: lang === 'bg' ? 'Варианти' : 'Variants',
+              label: 'Variants',
               value: summary.totalVariants,
             },
             {
-              label: lang === 'bg' ? 'В наличност' : 'In stock',
+              label: 'In stock',
               value: summary.inStockCount,
               color: 'text-green-600 dark:text-green-400',
             },
             {
-              label: lang === 'bg' ? 'Ниска наличност' : 'Low stock',
+              label: 'Low stock',
               value: summary.lowStockCount,
               color: 'text-yellow-600 dark:text-yellow-400',
             },
             {
-              label: lang === 'bg' ? 'Изчерпани' : 'Out of stock',
+              label: 'Out of stock',
               value: summary.outOfStockCount,
               color: 'text-red-600 dark:text-red-400',
             },
             {
-              label: lang === 'bg' ? 'Отрицателна' : 'Negative',
+              label: 'Negative',
               value: summary.negativeStockCount,
               color: 'text-purple-600 dark:text-purple-400',
             },
@@ -699,9 +687,7 @@ export default function StockPage() {
             <input
               type="text"
               placeholder={
-                lang === 'bg'
-                  ? 'Търсене по продукт, SKU, размер или цвят...'
-                  : 'Search by product, SKU, size or color...'
+                'Search by product, SKU, size or color...'
               }
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -727,10 +713,10 @@ export default function StockPage() {
                   border: `1px solid ${theme.colors.border}`,
                 }}
               >
-                {filter === 'all' && (lang === 'bg' ? 'Всички' : 'All')}
-                {filter === 'low' && (lang === 'bg' ? 'Ниска наличност' : 'Low stock')}
-                {filter === 'out' && (lang === 'bg' ? 'Изчерпани' : 'Out of stock')}
-                {filter === 'negative' && (lang === 'bg' ? 'Претоварване' : 'Oversold')}
+                {filter === 'all' && ('All')}
+                {filter === 'low' && ('Low stock')}
+                {filter === 'out' && ('Out of stock')}
+                {filter === 'negative' && ('Oversold')}
               </button>
             ))}
           </div>
@@ -744,12 +730,12 @@ export default function StockPage() {
           }}
         >
           <h2 className="font-semibold text-sm sm:text-base" style={{ color: theme.colors.text }}>
-            {lang === 'bg' ? 'Бързо зареждане' : 'Quick stock update'}
+            {'Quick stock update'}
           </h2>
           <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-start sm:items-end">
             <div>
               <label className="block text-xs mb-1" style={{ color: theme.colors.textSecondary }}>
-                {lang === 'bg' ? 'Количество' : 'Quantity'}
+                {'Quantity'}
               </label>
               <input
                 type="number"
@@ -775,7 +761,7 @@ export default function StockPage() {
                   borderColor: theme.colors.border,
                 }}
               >
-                {lang === 'bg' ? 'Добави' : 'Add'}
+                {'Add'}
               </button>
               <button
                 type="button"
@@ -787,7 +773,7 @@ export default function StockPage() {
                   borderColor: theme.colors.border,
                 }}
               >
-                {lang === 'bg' ? 'Премахни' : 'Remove'}
+                {'Remove'}
               </button>
             </div>
             <button
@@ -798,12 +784,8 @@ export default function StockPage() {
               style={{ backgroundColor: theme.colors.primary, color: '#ffffff' }}
             >
               {bulkAction === 'add'
-                ? lang === 'bg'
-                  ? 'Добави към избраните'
-                  : 'Add to selected'
-                : lang === 'bg'
-                  ? 'Премахни от избраните'
-                  : 'Remove from selected'}{' '}
+                ? 'Add to selected'
+                : 'Remove from selected'}{' '}
               ({selectedVariantIds.size})
             </button>
             <button
@@ -812,7 +794,7 @@ export default function StockPage() {
               className="text-sm underline"
               style={{ color: theme.colors.primary }}
             >
-              {lang === 'bg' ? 'Изчисти избора' : 'Clear selection'}
+              {'Clear selection'}
             </button>
           </div>
         </div>
@@ -835,9 +817,7 @@ export default function StockPage() {
               )}
               <span style={{ color: theme.colors.text }}>
                 {saveMessage?.text ||
-                  (lang === 'bg'
-                    ? `${pendingUpdates.length} незапазени промени`
-                    : `${pendingUpdates.length} unsaved changes`)}
+                  (`${pendingUpdates.length} unsaved changes`)}
               </span>
             </div>
             {pendingUpdates.length > 0 && (
@@ -850,12 +830,8 @@ export default function StockPage() {
               >
                 <Save size={16} />
                 {isSaving
-                  ? lang === 'bg'
-                    ? 'Запазване...'
-                    : 'Saving...'
-                  : lang === 'bg'
-                    ? 'Запази всички промени'
-                    : 'Save all changes'}
+                  ? 'Saving...'
+                  : 'Save all changes'}
               </button>
             )}
           </div>
@@ -867,7 +843,7 @@ export default function StockPage() {
           </div>
         ) : filteredProducts.length === 0 ? (
           <div className="p-8 text-center" style={{ color: theme.colors.textSecondary }}>
-            {lang === 'bg' ? 'Няма намерени продукти' : 'No products found'}
+            {'No products found'}
           </div>
         ) : (
           <div className="space-y-4">
@@ -883,13 +859,11 @@ export default function StockPage() {
                   style={{ color: theme.colors.text }}
                 >
                   {allSelectedOnPage ? <CheckSquare size={18} /> : <Square size={18} />}
-                  {lang === 'bg' ? 'Избери всички на страницата' : 'Select all on page'}
+                  {'Select all on page'}
                 </button>
                 {selectedProductIds.length > 0 && (
                   <span className="text-sm">
-                    {lang === 'bg'
-                      ? `${selectedProductIds.length} избрани продукта`
-                      : `${selectedProductIds.length} products selected`}
+                    {`${selectedProductIds.length} products selected`}
                   </span>
                 )}
               </div>

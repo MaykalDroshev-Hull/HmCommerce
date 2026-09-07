@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: `Невалидно потвърждение. Изпрати JSON: { "confirm": "${CONFIRM_PHRASE}" }`,
+          error: `Invalid confirmation. Send JSON: { "confirm": "${CONFIRM_PHRASE}" }`,
         },
         { status: 400 }
       );

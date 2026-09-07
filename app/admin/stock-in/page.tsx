@@ -75,7 +75,7 @@ export default function StockInPage() {
     e.preventDefault();
     setMessage(null);
     if (!selectedId || qty < 1) {
-      setMessage({ type: 'err', text: language === 'bg' ? 'Избери вариант и количество.' : 'Select variant and quantity.' });
+      setMessage({ type: 'err', text: 'Select variant and quantity.' });
       return;
     }
     setSaving(true);
@@ -94,9 +94,7 @@ export default function StockInPage() {
         setMessage({
           type: 'ok',
           text:
-            language === 'bg'
-              ? `Заприходено. Нова наличност: ${data.newQuantity ?? ''}`
-              : `Received. New quantity: ${data.newQuantity ?? ''}`,
+            `Received. New quantity: ${data.newQuantity ?? ''}`,
         });
         setVariants((prev) =>
           prev.map((v) =>
@@ -109,7 +107,7 @@ export default function StockInPage() {
         setMessage({ type: 'err', text: data.error || 'Error' });
       }
     } catch {
-      setMessage({ type: 'err', text: language === 'bg' ? 'Мрежова грешка' : 'Network error' });
+      setMessage({ type: 'err', text: 'Network error' });
     } finally {
       setSaving(false);
     }
@@ -129,12 +127,10 @@ export default function StockInPage() {
       <div className="p-3 sm:p-4 lg:p-6 max-w-2xl mx-auto space-y-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: theme.colors.text }}>
-            {language === 'bg' ? 'Заприхождаване' : 'Receive stock'}
+            {'Receive stock'}
           </h1>
           <p className="mt-2 text-sm sm:text-base" style={{ color: theme.colors.textSecondary }}>
-            {language === 'bg'
-              ? 'Добави количество към съществуващ вариант. За нов артикул със снимка използвай Артикули.'
-              : 'Add quantity to an existing variant. For a new product with images use Items.'}
+            {'Add quantity to an existing variant. For a new product with images use Items.'}
           </p>
         </div>
 
@@ -143,14 +139,14 @@ export default function StockInPage() {
           className="flex items-center gap-2 text-sm font-medium touch-manipulation min-h-[44px]"
           style={{ color: theme.colors.primary }}
         >
-          {language === 'bg' ? 'Отвори Артикули за нов продукт' : 'Open Items for new product'}
+          {'Open Items for new product'}
           <ArrowRight className="w-4 h-4" />
         </Link>
 
         <form onSubmit={submit} className="space-y-4 rounded-xl border p-4 sm:p-6" style={{ borderColor: theme.colors.border, backgroundColor: theme.colors.surface }}>
           <div>
             <label className="block text-sm font-medium mb-1" style={{ color: theme.colors.text }}>
-              {language === 'bg' ? 'Търсене' : 'Search'}
+              {'Search'}
             </label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: theme.colors.textSecondary }} />
@@ -159,14 +155,14 @@ export default function StockInPage() {
                 style={{ borderColor: theme.colors.border, color: theme.colors.text, backgroundColor: theme.colors.cardBg }}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder={language === 'bg' ? 'Артикул, SKU, цвят…' : 'Product, SKU, color…'}
+                placeholder={'Product, SKU, color…'}
               />
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-1" style={{ color: theme.colors.text }}>
-              {language === 'bg' ? 'Вариант' : 'Variant'}
+              {'Variant'}
             </label>
             <select
               required
@@ -175,7 +171,7 @@ export default function StockInPage() {
               value={selectedId}
               onChange={(e) => setSelectedId(e.target.value)}
             >
-              <option value="">{language === 'bg' ? '— избери —' : '— choose —'}</option>
+              <option value="">{'— choose —'}</option>
               {filtered.map((v) => (
                 <option key={v.productvariantid} value={v.productvariantid}>
                   {v.product_name} · {v.characteristics.map((c) => `${c.property_name}: ${c.value}`).join(', ') || v.sku || v.productvariantid.slice(0, 8)} · Q:{v.quantity}
@@ -202,7 +198,7 @@ export default function StockInPage() {
                   {selected.product_name}
                 </p>
                 <p>
-                  {language === 'bg' ? 'Текуща наличност' : 'Current stock'}: <strong>{selected.quantity}</strong>
+                  {'Current stock'}: <strong>{selected.quantity}</strong>
                 </p>
               </div>
             </div>
@@ -210,7 +206,7 @@ export default function StockInPage() {
 
           <div>
             <label className="block text-sm font-medium mb-1" style={{ color: theme.colors.text }}>
-              {language === 'bg' ? 'Бройка' : 'Quantity'}
+              {'Quantity'}
             </label>
             <input
               type="number"
@@ -224,7 +220,7 @@ export default function StockInPage() {
 
           <div>
             <label className="block text-sm font-medium mb-1" style={{ color: theme.colors.text }}>
-              {language === 'bg' ? 'Бележка (по избор)' : 'Note (optional)'}
+              {'Note (optional)'}
             </label>
             <textarea
               className="w-full py-3 px-3 rounded-lg border text-base min-h-[88px]"
@@ -244,7 +240,7 @@ export default function StockInPage() {
             className="w-full py-3.5 rounded-lg font-semibold text-white min-h-[48px] touch-manipulation disabled:opacity-60"
             style={{ backgroundColor: theme.colors.primary }}
           >
-            {saving ? '…' : language === 'bg' ? 'Заприходи' : 'Receive stock'}
+            {saving ? '…' : 'Receive stock'}
           </button>
         </form>
       </div>

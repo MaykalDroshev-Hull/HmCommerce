@@ -81,7 +81,7 @@ export default function ProductBulkControls({
 }: ProductBulkControlsProps) {
   const selectedCount = selectedProductIds.length;
   const selectFirstTitle =
-    language === 'bg' ? 'Изберете артикули' : 'Select items first';
+    'Select items first';
 
   const [bulkVisibilityModal, setBulkVisibilityModal] = useState<BulkVisibilityMode | null>(null);
   const [bulkRestockModal, setBulkRestockModal] = useState<BulkRestockMode | null>(null);
@@ -121,9 +121,7 @@ export default function ProductBulkControls({
       const result = await response.json();
       if (!response.ok || !result.success) {
         alert(
-          language === 'bg'
-            ? `Грешка: ${result.error || 'Неуспешна промяна'}`
-            : `Error: ${result.error || 'Update failed'}`
+          `Error: ${result.error || 'Update failed'}`
         );
         return;
       }
@@ -137,7 +135,7 @@ export default function ProductBulkControls({
       }, 1200);
     } catch {
       alert(
-        language === 'bg' ? 'Неуспешна промяна на видимостта' : 'Failed to update visibility'
+        'Failed to update visibility'
       );
     } finally {
       setBulkUpdatingVisibility(false);
@@ -159,9 +157,7 @@ export default function ProductBulkControls({
       const result = await response.json();
       if (!response.ok || !result.success) {
         alert(
-          language === 'bg'
-            ? `Грешка: ${result.error || 'Неуспешна промяна'}`
-            : `Error: ${result.error || 'Update failed'}`
+          `Error: ${result.error || 'Update failed'}`
         );
         return;
       }
@@ -175,9 +171,7 @@ export default function ProductBulkControls({
       }, 1200);
     } catch {
       alert(
-        language === 'bg'
-          ? 'Неуспешна промяна на статуса „изчерпана наличност“'
-          : 'Failed to update out-of-stock display status'
+        'Failed to update out-of-stock display status'
       );
     } finally {
       setBulkUpdatingRestock(false);
@@ -203,9 +197,7 @@ export default function ProductBulkControls({
 
       if (failed.length > 0) {
         alert(
-          language === 'bg'
-            ? `Неуспешно изтриване за ${failed.length} продукта.`
-            : `Failed to delete ${failed.length} products.`
+          `Failed to delete ${failed.length} products.`
         );
       }
 
@@ -216,19 +208,19 @@ export default function ProductBulkControls({
         );
       }
     } catch {
-      alert(language === 'bg' ? 'Неуспешно масово изтриване' : 'Bulk delete failed');
+      alert('Bulk delete failed');
     } finally {
       setBulkDeleting(false);
     }
   };
 
-  const cancelLabel = language === 'bg' ? 'Отказ' : 'Cancel';
+  const cancelLabel = 'Cancel';
 
   return (
     <>
       <div className={`flex flex-wrap items-center gap-2 ${className}`}>
         {headerActionButton({
-          label: language === 'bg' ? 'Скрий избрани' : 'Hide selected',
+          label: 'Hide selected',
           variant: 'outline-orange',
           onClick: () => setBulkVisibilityModal('hide'),
           badge: selectedCount > 0 ? selectedCount : undefined,
@@ -236,7 +228,7 @@ export default function ProductBulkControls({
           title: selectedCount > 0 ? undefined : selectFirstTitle,
         })}
         {headerActionButton({
-          label: language === 'bg' ? 'Покажи избрани' : 'Show selected',
+          label: 'Show selected',
           variant: 'outline-green',
           onClick: () => setBulkVisibilityModal('show'),
           badge: selectedCount > 0 ? selectedCount : undefined,
@@ -244,7 +236,7 @@ export default function ProductBulkControls({
           title: selectedCount > 0 ? undefined : selectFirstTitle,
         })}
         {headerActionButton({
-          label: language === 'bg' ? 'Изчерпана наличност' : 'Out of stock',
+          label: 'Out of stock',
           variant: 'solid-slate',
           onClick: () => setBulkRestockModal('mark'),
           badge: selectedCount > 0 ? selectedCount : undefined,
@@ -252,7 +244,7 @@ export default function ProductBulkControls({
           title: selectedCount > 0 ? undefined : selectFirstTitle,
         })}
         {headerActionButton({
-          label: language === 'bg' ? 'Премахни „изчерпан“' : 'Clear out of stock',
+          label: 'Clear out of stock',
           variant: 'solid-teal',
           onClick: () => setBulkRestockModal('clear'),
           badge: selectedCount > 0 ? selectedCount : undefined,
@@ -260,7 +252,7 @@ export default function ProductBulkControls({
           title: selectedCount > 0 ? undefined : selectFirstTitle,
         })}
         {headerActionButton({
-          label: language === 'bg' ? 'Изтрий избрани' : 'Delete selected',
+          label: 'Delete selected',
           variant: 'solid-red',
           onClick: () => setShowBulkDeleteModal(true),
           badge: selectedCount > 0 ? selectedCount : undefined,
@@ -279,21 +271,13 @@ export default function ProductBulkControls({
         }}
         title={
           bulkRestockModal === 'mark'
-            ? language === 'bg'
-              ? 'Маркирай като изчерпана наличност'
-              : 'Mark as out of stock'
-            : language === 'bg'
-              ? 'Премахни статуса „изчерпана наличност“'
-              : 'Clear out-of-stock display'
+            ? 'Mark as out of stock'
+            : 'Clear out-of-stock display'
         }
         subheader={
           bulkRestockModal === 'mark'
-            ? language === 'bg'
-              ? 'Избраните артикули ще се показват посивени с надпис „Изчерпана наличност / Очакваме зареждане скоро“.'
-              : 'Selected products will appear greyed out with “Out of stock / Restock coming soon”.'
-            : language === 'bg'
-              ? 'Избраните артикули ще се показват нормално (ако имат наличност).'
-              : 'Selected products will display normally (if they have stock).'
+            ? 'Selected products will appear greyed out with “Out of stock / Restock coming soon”.'
+            : 'Selected products will display normally (if they have stock).'
         }
         maxWidth="max-w-md"
         minWidth={400}
@@ -307,7 +291,7 @@ export default function ProductBulkControls({
           >
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-sm font-medium text-gray-900 mb-1">
-                {language === 'bg' ? 'Избрани артикули:' : 'Selected items:'}
+                {'Selected items:'}
               </p>
               <p className="text-sm text-gray-700">{selectedCount}</p>
             </div>
@@ -336,16 +320,10 @@ export default function ProductBulkControls({
                 }`}
               >
                 {bulkUpdatingRestock
-                  ? language === 'bg'
-                    ? 'Запазване...'
-                    : 'Saving...'
+                  ? 'Saving...'
                   : bulkRestockModal === 'mark'
-                    ? language === 'bg'
-                      ? 'Маркирай'
-                      : 'Mark selected'
-                    : language === 'bg'
-                      ? 'Премахни статуса'
-                      : 'Clear status'}
+                    ? 'Mark selected'
+                    : 'Clear status'}
               </button>
             </div>
           </div>
@@ -367,21 +345,13 @@ export default function ProductBulkControls({
         }}
         title={
           bulkVisibilityModal === 'hide'
-            ? language === 'bg'
-              ? 'Скрий избраните от магазина'
-              : 'Hide selected from shop'
-            : language === 'bg'
-              ? 'Покажи избраните в магазина'
-              : 'Show selected in shop'
+            ? 'Hide selected from shop'
+            : 'Show selected in shop'
         }
         subheader={
           bulkVisibilityModal === 'hide'
-            ? language === 'bg'
-              ? 'Избраните артикули няма да се виждат от клиентите. Можете да ги покажете отново по всяко време.'
-              : 'Selected products will be hidden from customers. You can show them again anytime.'
-            : language === 'bg'
-              ? 'Избраните артикули ще станат видими в онлайн магазина.'
-              : 'Selected products will become visible in the online shop.'
+            ? 'Selected products will be hidden from customers. You can show them again anytime.'
+            : 'Selected products will become visible in the online shop.'
         }
         maxWidth="max-w-md"
         minWidth={400}
@@ -395,7 +365,7 @@ export default function ProductBulkControls({
           >
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-sm font-medium text-gray-900 mb-1">
-                {language === 'bg' ? 'Избрани артикули:' : 'Selected items:'}
+                {'Selected items:'}
               </p>
               <p className="text-sm text-gray-700">{selectedCount}</p>
             </div>
@@ -424,16 +394,10 @@ export default function ProductBulkControls({
                 }`}
               >
                 {bulkUpdatingVisibility
-                  ? language === 'bg'
-                    ? 'Запазване...'
-                    : 'Saving...'
+                  ? 'Saving...'
                   : bulkVisibilityModal === 'hide'
-                    ? language === 'bg'
-                      ? 'Скрий'
-                      : 'Hide'
-                    : language === 'bg'
-                      ? 'Покажи'
-                      : 'Show'}
+                    ? 'Hide'
+                    : 'Show'}
               </button>
             </div>
           </div>
@@ -453,11 +417,9 @@ export default function ProductBulkControls({
             setShowBulkDeleteCompleteAnimation(false);
           }
         }}
-        title={language === 'bg' ? 'Потвърди масово изтриване' : 'Confirm Bulk Delete'}
+        title={'Confirm Bulk Delete'}
         subheader={
-          language === 'bg'
-            ? 'Избраните артикули ще бъдат изтрити. Това действие не може да бъде отменено.'
-            : 'Selected products will be deleted. This action cannot be undone.'
+          'Selected products will be deleted. This action cannot be undone.'
         }
         maxWidth="max-w-md"
         minWidth={400}
@@ -471,7 +433,7 @@ export default function ProductBulkControls({
           >
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-sm font-medium text-gray-900 mb-1">
-                {language === 'bg' ? 'Избрани артикули:' : 'Selected items:'}
+                {'Selected items:'}
               </p>
               <p className="text-sm text-gray-700">{selectedCount}</p>
             </div>
@@ -496,12 +458,8 @@ export default function ProductBulkControls({
                 className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base bg-danger text-danger-foreground rounded hover:opacity-90 active:opacity-80 transition-opacity touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {bulkDeleting
-                  ? language === 'bg'
-                    ? 'Изтриване...'
-                    : 'Deleting...'
-                  : language === 'bg'
-                    ? 'Изтрий избраните'
-                    : 'Delete selected'}
+                  ? 'Deleting...'
+                  : 'Delete selected'}
               </button>
             </div>
           </div>

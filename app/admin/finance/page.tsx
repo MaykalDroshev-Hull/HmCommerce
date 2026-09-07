@@ -39,7 +39,7 @@ export default function FinancePage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    document.title = t.finance || (language === 'bg' ? 'Финанси' : 'Finance');
+    document.title = t.finance || ('Finance');
   }, [language, t]);
   const [isLoading, setIsLoading] = useState(true);
   const [financeData, setFinanceData] = useState<FinancialData | null>(null);

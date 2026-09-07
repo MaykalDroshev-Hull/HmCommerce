@@ -196,7 +196,7 @@ export default function Dashboard() {
               className="block text-xs sm:text-sm font-medium mb-2"
               style={{ color: theme.colors.text }}
             >
-              {language === 'bg' ? 'Период' : 'Period'}
+              {'Period'}
             </label>
             <select
               value={dateFilter}
@@ -208,12 +208,12 @@ export default function Dashboard() {
                 color: theme.colors.text
               }}
             >
-              <option value="thisWeek">{language === 'bg' ? 'Тази седмица' : 'This Week'}</option>
-              <option value="lastWeek">{language === 'bg' ? 'Миналата седмица' : 'Last Week'}</option>
-              <option value="thisMonth">{language === 'bg' ? 'Този месец' : 'This Month'}</option>
-              <option value="lastMonth">{language === 'bg' ? 'Миналия месец' : 'Last Month'}</option>
-              <option value="thisYear">{language === 'bg' ? 'Тази година' : 'This Year'}</option>
-              <option value="lastYear">{language === 'bg' ? 'Миналата година' : 'Last Year'}</option>
+              <option value="thisWeek">{'This Week'}</option>
+              <option value="lastWeek">{'Last Week'}</option>
+              <option value="thisMonth">{'This Month'}</option>
+              <option value="lastMonth">{'Last Month'}</option>
+              <option value="thisYear">{'This Year'}</option>
+              <option value="lastYear">{'Last Year'}</option>
             </select>
           </div>
         }
@@ -221,8 +221,8 @@ export default function Dashboard() {
 
       {/* Key Metrics */}
       <Section
-        title={language === 'bg' ? 'Ключови показатели' : 'Key Metrics'}
-        description={language === 'bg' ? 'Общ преглед на продажбите и дейността' : 'Overview of sales and activity'}
+        title={'Key Metrics'}
+        description={'Overview of sales and activity'}
       >
         <SectionSurface tone="soft" padding="md">
           {loading ? (
@@ -286,7 +286,7 @@ export default function Dashboard() {
             }}
           >
           <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
-            {language === 'bg' ? 'Поръчки за миналата седмица' : 'Orders Last Week'}
+            {'Orders Last Week'}
           </h3>
           <div className="h-48 sm:h-56 lg:h-64 flex items-end justify-between gap-1 sm:gap-2 min-w-[280px]">
             {dashboardData.weeklySales.map((day, index) => {
@@ -301,7 +301,7 @@ export default function Dashboard() {
                       height: `${heightPercentage}%`,
                       minHeight: day.sales > 0 ? '16px' : '4px'
                     }}
-                    title={`${day.sales} ${language === 'bg' ? 'поръчки' : 'orders'}`}
+                    title={`${day.sales} ${'orders'}`}
                   >
                     {day.sales > 0 && (
                       <span className="absolute -top-5 sm:-top-6 left-1/2 transform -translate-x-1/2 text-[10px] sm:text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
@@ -330,7 +330,7 @@ export default function Dashboard() {
             }}
           >
           <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
-            {language === 'bg' ? 'Поръчки по Категория' : 'Orders by Category'}
+            {'Orders by Category'}
           </h3>
           <div className="space-y-3 sm:space-y-4">
             {dashboardData.productTypePerformance && dashboardData.productTypePerformance.length > 0 ? (
@@ -345,7 +345,7 @@ export default function Dashboard() {
                           className="text-[10px] sm:text-xs"
                           style={{ color: theme.colors.textSecondary }}
                         >
-                          ({productType.orders} {language === 'bg' ? 'поръчки' : 'orders'})
+                          ({productType.orders} {'orders'})
                         </span>
                       </div>
                       <div className="text-left sm:text-right">
@@ -372,7 +372,7 @@ export default function Dashboard() {
                 className="text-center py-6 sm:py-8 text-xs sm:text-sm"
                 style={{ color: theme.colors.textSecondary }}
               >
-                {language === 'bg' ? 'Няма данни за категории' : 'No product type data available'}
+                {'No product type data available'}
               </div>
             )}
           </div>
@@ -436,7 +436,7 @@ export default function Dashboard() {
                 className="text-center py-6 sm:py-8 text-xs sm:text-sm"
                 style={{ color: theme.colors.textSecondary }}
               >
-                {language === 'bg' ? 'Няма поръчки' : 'No orders yet'}
+                {'No orders yet'}
               </div>
             )}
           </div>
@@ -514,7 +514,7 @@ export default function Dashboard() {
                 className="text-center py-6 sm:py-8 text-xs sm:text-sm"
                 style={{ color: theme.colors.textSecondary }}
               >
-                {language === 'bg' ? 'Няма продажби' : 'No sales yet'}
+                {'No sales yet'}
               </div>
             )}
           </div>

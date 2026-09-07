@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import PublicPageLayout from '@/components/PublicPageLayout';
 import LoadingScreen from '@/components/LoadingScreen';
@@ -15,6 +15,35 @@ import { ShoppingBag, Truck, MapPin, Package, ShieldCheck } from 'lucide-react';
 import FomoBadge, { type FomoMessage } from '@/components/FomoBadge';
 import { trackStoreEvent } from '@/lib/vercel-analytics';
 import { ApplePayIcon, PayPalIcon, KlarnaBadgeIcon, PaymentBadgesRow } from '@/components/PaymentIcons';
+import PayPalButtons from '@/components/PayPalButtons';
+import GoogleAddressAutocomplete from '@/components/GoogleAddressAutocomplete';
+
+const CHECKOUT_FOMO_MESSAGES: FomoMessage[] = [
+  {
+    text: 'Your items are not reserved until checkout is completed',
+    tone: 'warning'
+  },
+  {
+    text: 'Stock is limited — complete your order soon',
+    tone: 'warning'
+  },
+  {
+    text: 'Customers completed checkout in the last 10 minutes',
+    tone: 'success'
+  },
+  {
+    text: 'Fast checkout — most orders complete in under 1 minute',
+    tone: 'success'
+  },
+  {
+    text: 'Order now to dispatch promptly',
+    tone: 'neutral'
+  },
+  {
+    text: 'Checkout now for faster delivery',
+    tone: 'neutral'
+  }
+];
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
@@ -40,7 +69,7 @@ function CheckoutContent() {
   }, [searchMethod]);
 
   useEffect(() => {
-    const pageTitle = t.checkout || (language === 'bg' ? 'Поръчка' : 'Checkout');
+    const pageTitle = t.checkout || 'Checkout';
     const storeName = settings?.storename || '';
     document.title = storeName ? `${pageTitle} - ${storeName}` : pageTitle;
   }, [language, t, settings?.storename]);
@@ -74,7 +103,7 @@ function CheckoutContent() {
     email?: string;
     street?: string;
     streetNumber?: string;
-    econtOfficeId?: string;
+    city?: string;
   }>({});
   const [showCityDropdown, setShowCityDropdown] = useState<boolean>(false);
   const cityDropdownRef = useRef<HTMLDivElement>(null);
@@ -118,7 +147,7 @@ function CheckoutContent() {
     trackStoreEvent('Begin Checkout', {
       itemCount: totalItems,
       cartValue: Math.round(totalPrice * 100) / 100,
-      currency: 'EUR',
+      currency: 'GBP',
     });
   }, [hasHydrated, totalItems, totalPrice]);
 
@@ -150,7 +179,7 @@ function CheckoutContent() {
         let street = user.preferredStreet || '';
         let streetNumber = user.preferredStreetNumber || '';
 
-        // Normalize city name - if it's in display format like "Пловдив [4000]", keep it for the form
+        // Normalize city name - if it's in display format like "London [EC1A]", keep it for the form
         // but we'll handle matching in the office selection logic
         if (city) {
           // Keep the city as saved, but ensure it's trimmed
@@ -190,16 +219,10 @@ function CheckoutContent() {
           deliveryType: deliveryType,
         };
 
-        // Add delivery-specific fields based on delivery type
-        if (deliveryType === 'office') {
-          formUpdate.econtOfficeId = user.preferredEcontOfficeId || '';
-        } else if (deliveryType === 'address') {
-          formUpdate.street = street;
-          formUpdate.streetNumber = streetNumber;
-          formUpdate.entrance = user.preferredEntrance || '';
-          formUpdate.floor = user.preferredFloor || '';
-          formUpdate.apartment = user.preferredApartment || '';
-        }
+        // Add delivery-specific fields for UK address
+        formUpdate.street = street;
+        formUpdate.streetNumber = streetNumber;
+        formUpdate.entrance = user.preferredEntrance || '';
 
         // Update form data
         updateFormData(formUpdate);
@@ -208,59 +231,43 @@ function CheckoutContent() {
   }, [isAuthenticated, user, formData.firstName, formData.email, formData.telephone, updateFormData]);
 
   const loadCities = async () => {
-    // This would typically come from an API, but for now we'll use static data
-    const bulgarianCities: CityOption[] = [
-      { name: 'Пловдив', postcode: '4000', displayName: 'Пловдив [4000]' },
-      { name: 'Варна', postcode: '9000', displayName: 'Варна [9000]' },
-      { name: 'Бургас', postcode: '8000', displayName: 'Бургас [8000]' },
-      { name: 'Русе', postcode: '7000', displayName: 'Русе [7000]' },
-      { name: 'Стара Загора', postcode: '6000', displayName: 'Стара Загора [6000]' },
-      { name: 'Плевен', postcode: '5800', displayName: 'Плевен [5800]' },
-      { name: 'Сливен', postcode: '8800', displayName: 'Сливен [8800]' },
-      { name: 'Добрич', postcode: '9300', displayName: 'Добрич [9300]' },
-      { name: 'Шумен', postcode: '9700', displayName: 'Шумен [9700]' },
-      { name: 'Перник', postcode: '2300', displayName: 'Перник [2300]' },
-      { name: 'Хасково', postcode: '6300', displayName: 'Хасково [6300]' },
-      { name: 'Ямбол', postcode: '8600', displayName: 'Ямбол [8600]' },
-      { name: 'Пазарджик', postcode: '4400', displayName: 'Пазарджик [4400]' },
-      { name: 'Благоевград', postcode: '2700', displayName: 'Благоевград [2700]' },
-      { name: 'Велико Търново', postcode: '5000', displayName: 'Велико Търново [5000]' },
-      { name: 'Враца', postcode: '3000', displayName: 'Враца [3000]' },
-      { name: 'Габрово', postcode: '5300', displayName: 'Габрово [5300]' },
-      { name: 'Асеновград', postcode: '4230', displayName: 'Асеновград [4230]' },
-      { name: 'Видин', postcode: '3700', displayName: 'Видин [3700]' },
-      { name: 'Кърджали', postcode: '6600', displayName: 'Кърджали [6600]' },
-      { name: 'Кюстендил', postcode: '2500', displayName: 'Кюстендил [2500]' },
-      { name: 'Ловеч', postcode: '5500', displayName: 'Ловеч [5500]' },
-      { name: 'Монтана', postcode: '3400', displayName: 'Монтана [3400]' },
-      { name: 'Търговище', postcode: '7700', displayName: 'Търговище [7700]' },
-      { name: 'Разград', postcode: '7200', displayName: 'Разград [7200]' },
-      { name: 'Силистра', postcode: '7500', displayName: 'Силистра [7500]' },
-      { name: 'Смолян', postcode: '4700', displayName: 'Смолян [4700]' }
+    const ukCities: CityOption[] = [
+      { name: 'London', postcode: 'SW1A', displayName: 'London' },
+      { name: 'Manchester', postcode: 'M1', displayName: 'Manchester' },
+      { name: 'Birmingham', postcode: 'B1', displayName: 'Birmingham' },
+      { name: 'Leeds', postcode: 'LS1', displayName: 'Leeds' },
+      { name: 'Glasgow', postcode: 'G1', displayName: 'Glasgow' },
+      { name: 'Edinburgh', postcode: 'EH1', displayName: 'Edinburgh' },
+      { name: 'Liverpool', postcode: 'L1', displayName: 'Liverpool' },
+      { name: 'Bristol', postcode: 'BS1', displayName: 'Bristol' },
+      { name: 'Sheffield', postcode: 'S1', displayName: 'Sheffield' },
+      { name: 'Newcastle upon Tyne', postcode: 'NE1', displayName: 'Newcastle upon Tyne' },
+      { name: 'Cardiff', postcode: 'CF10', displayName: 'Cardiff' },
+      { name: 'Belfast', postcode: 'BT1', displayName: 'Belfast' },
+      { name: 'Nottingham', postcode: 'NG1', displayName: 'Nottingham' },
+      { name: 'Southampton', postcode: 'SO14', displayName: 'Southampton' },
+      { name: 'Brighton', postcode: 'BN1', displayName: 'Brighton' },
+      { name: 'Oxford', postcode: 'OX1', displayName: 'Oxford' },
+      { name: 'Cambridge', postcode: 'CB1', displayName: 'Cambridge' },
+      { name: 'York', postcode: 'YO1', displayName: 'York' },
+      { name: 'Bath', postcode: 'BA1', displayName: 'Bath' },
+      { name: 'Exeter', postcode: 'EX1', displayName: 'Exeter' },
+      { name: 'Norwich', postcode: 'NR1', displayName: 'Norwich' },
+      { name: 'Plymouth', postcode: 'PL1', displayName: 'Plymouth' },
+      { name: 'Leicester', postcode: 'LE1', displayName: 'Leicester' },
+      { name: 'Coventry', postcode: 'CV1', displayName: 'Coventry' },
+      { name: 'Aberdeen', postcode: 'AB10', displayName: 'Aberdeen' },
+      { name: 'Swansea', postcode: 'SA1', displayName: 'Swansea' }
     ];
 
-    setCities(bulgarianCities);
+    setCities(ukCities);
   };
 
   // Validation functions
-  const validateBulgarianPhone = (phone: string): boolean => {
+  const validatePhone = (phone: string): boolean => {
     if (!phone || phone.trim() === '') return false;
-    
-    // Remove spaces and dashes
-    const cleaned = phone.replace(/[\s-]/g, '');
-    
-    // Bulgarian phone formats:
-    // 1. 10 digits starting with 0 (e.g., 0888123456)
-    // 2. +359 followed by 9 digits (e.g., +359888123456)
-    // 3. 00359 followed by 9 digits (e.g., 00359888123456)
-    
-    const patterns = [
-      /^0\d{9}$/,                    // 0888123456
-      /^\+359\d{9}$/,                // +359888123456
-      /^00359\d{9}$/                 // 00359888123456
-    ];
-    
-    return patterns.some(pattern => pattern.test(cleaned));
+    const cleaned = phone.replace(/[\s\-()]/g, '');
+    return /^(\+?[0-9]{8,15})$/.test(cleaned);
   };
 
   const validateEmail = (email: string): boolean => {
@@ -290,7 +297,7 @@ function CheckoutContent() {
     if (field === 'telephone') {
       if (!value || value.trim() === '') {
         error = t.phoneRequired;
-      } else if (!validateBulgarianPhone(value)) {
+      } else if (!validatePhone(value)) {
         error = t.invalidPhone;
       }
     } else if (field === 'email') {
@@ -319,12 +326,11 @@ function CheckoutContent() {
   };
 
   const handleDeliveryTypeChange = (deliveryType: DeliveryType) => {
-    updateFormData({ deliveryType, econtOfficeId: '' });
+    updateFormData({ deliveryType });
     
     // Clear validation errors when delivery type changes
     setValidationErrors(prev => {
       const newErrors = { ...prev };
-      delete newErrors.econtOfficeId;
       delete newErrors.street;
       delete newErrors.streetNumber;
       return newErrors;
@@ -332,17 +338,9 @@ function CheckoutContent() {
   };
 
   const getDeliveryCost = (deliveryType: DeliveryType) => {
-    // Simple delivery cost calculation based on type
-    switch (deliveryType) {
-      case 'office':
-        return 4.50;
-      case 'address':
-        return 6.90;
-      case 'econtomat':
-        return 3.20;
-      default:
-        return 4.50;
-    }
+    // UK Tracked Delivery: Free over £50, else £3.99
+    if (totalPrice >= 50) return 0.0;
+    return 3.99;
   };
 
   const deliveryCost = getDeliveryCost(formData.deliveryType);
@@ -352,7 +350,7 @@ function CheckoutContent() {
     // Validate phone and email before submission
     const phoneError = !formData.telephone || formData.telephone.trim() === '' 
       ? t.phoneRequired 
-      : !validateBulgarianPhone(formData.telephone) 
+      : !validatePhone(formData.telephone) 
         ? t.invalidPhone 
         : undefined;
     
@@ -377,34 +375,23 @@ function CheckoutContent() {
       return;
     }
 
-    // Validate Econt office for office delivery
-    if (
-      formData.deliveryType === 'office' &&
-      (!formData.econtOfficeId || !formData.econtOfficeId.trim())
-    ) {
-      setValidationErrors(prev => ({ ...prev, econtOfficeId: t.selectEcontOffice }));
-      setError(t.selectEcontOffice);
-      scrollToCheckoutIssue();
-      return;
+    // Validate UK address fields
+    const addressErrors: any = {};
+    if (!formData.street || !formData.street.trim()) {
+      addressErrors.street = 'Address Line 1 is required';
+    }
+    if (!formData.streetNumber || !formData.streetNumber.trim()) {
+      addressErrors.streetNumber = 'Postcode is required';
+    }
+    if (!formData.city || !formData.city.trim()) {
+      addressErrors.city = 'Town / City is required';
     }
 
-    // Validate address fields for address delivery
-    if (formData.deliveryType === 'address') {
-      const addressErrors: any = {};
-      
-      if (!formData.street || !formData.street.trim()) {
-        addressErrors.street = t.required;
-      }
-      if (!formData.streetNumber || !formData.streetNumber.trim()) {
-        addressErrors.streetNumber = t.required;
-      }
-      
-      if (Object.keys(addressErrors).length > 0) {
-        setValidationErrors(prev => ({ ...prev, ...addressErrors }));
-        setError(t.pleaseFillAllRequiredFields || 'Please fill all required fields');
-        scrollToCheckoutIssue();
-        return;
-      }
+    if (Object.keys(addressErrors).length > 0) {
+      setValidationErrors(prev => ({ ...prev, ...addressErrors }));
+      setError('Please fill in all required address fields');
+      scrollToCheckoutIssue();
+      return;
     }
 
     // Temporarily commented out stock validation
@@ -489,7 +476,7 @@ function CheckoutContent() {
         orderId: String(orderResult.orderId),
         itemCount: totalItems,
         value: Math.round(finalTotal * 100) / 100,
-        currency: 'EUR',
+        currency: 'GBP',
         deliveryType: formData.deliveryType,
         hasDiscount: Boolean(appliedDiscount),
       });
@@ -558,7 +545,7 @@ function CheckoutContent() {
       <PublicPageLayout isAdmin={isAdmin} setIsAdmin={handleSetIsAdmin}>
         <div className="flex-1 flex items-center justify-center py-24">
           <p style={{ color: theme.colors.textSecondary }}>
-            {language === 'bg' ? 'Зареждане...' : 'Loading...'}
+            Loading...
           </p>
         </div>
       </PublicPageLayout>
@@ -569,60 +556,7 @@ function CheckoutContent() {
     return null; // Will redirect in useEffect
   }
 
-  const deliveryTypeIcons = {
-    office: Truck,
-    address: MapPin,
-    econtomat: Package,
-  };
 
-  const deliveryTypeLabels = {
-    office: t.deliveryOffice,
-    address: t.deliveryAddress,
-    econtomat: t.deliveryEcontomat,
-  };
-
-  // Memoize FOMO messages to prevent recreation on every render
-  const checkoutFomoMessages = useMemo(() => {
-    const messages: FomoMessage[] = [
-      {
-        text: language === 'bg'
-          ? 'Вашите артикули не са резервирани до завършване на поръчката'
-          : 'Your items are not reserved until checkout is completed',
-        tone: 'warning'
-      },
-      {
-        text: language === 'bg'
-          ? 'Наличността е ограничена — завършете поръчката скоро'
-          : 'Stock is limited — complete your order soon',
-        tone: 'warning'
-      },
-      {
-        text: language === 'bg'
-          ? 'Клиенти завършиха поръчка в последните 10 минути'
-          : 'Customers completed checkout in the last 10 minutes',
-        tone: 'success'
-      },
-      {
-        text: language === 'bg'
-          ? 'Бърза поръчка — повечето поръчки се завършват за под 1 минута'
-          : 'Fast checkout — most orders complete in under 1 minute',
-        tone: 'success'
-      },
-      {
-        text: language === 'bg'
-          ? 'Поръчайте сега за изпращане днес'
-          : 'Order now to ship today',
-        tone: 'neutral'
-      },
-      {
-        text: language === 'bg'
-          ? 'Поръчайте сега за по-бърза доставка'
-          : 'Checkout now for faster delivery',
-        tone: 'neutral'
-      }
-    ];
-    return messages;
-  }, [language]);
 
   return (
     <PublicPageLayout isAdmin={isAdmin} setIsAdmin={handleSetIsAdmin}>
@@ -858,232 +792,125 @@ function CheckoutContent() {
                     </div>
                   </div>
 
-                  {/* Country and City */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
-                        {t.country} *
-                      </label>
-                      <select
-                        value={formData.country}
-                        onChange={(e) => handleInputChange('country', e.target.value)}
-                        className="w-full px-3 py-2 border border-[#e8e4dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7d8461]/25 focus:border-[#7d8461]"
-                      >
-                        <option value="Bulgaria">{t.bulgaria}</option>
-                      </select>
+                  {/* Delivery Method Card (Only Address) */}
+                  <div className="p-4 bg-neutral-50/80 border border-neutral-200 rounded-xl flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-neutral-900 text-white flex items-center justify-center shrink-0">
+                        <Truck size={18} />
+                      </div>
+                      <div>
+                        <div className="font-bold text-sm text-neutral-950">
+                          Direct Tracked Delivery
+                        </div>
+                        <div className="text-xs text-neutral-500">
+                          {totalPrice >= 50 ? 'Free Delivery (orders over £50)' : 'Standard Tracked Delivery (£3.99)'} · Direct to your door
+                        </div>
+                      </div>
                     </div>
+                    <span className="text-xs font-bold text-neutral-900">
+                      {totalPrice >= 50 ? 'FREE' : '£3.99'}
+                    </span>
+                  </div>
+
+                  {/* UK Delivery Address Details */}
+                  <div className="space-y-4 pt-2">
+                    <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
+                      <h3 className="text-base font-bold text-neutral-950">UK Delivery Address</h3>
+                      <span className="text-[11px] font-semibold text-neutral-600 bg-neutral-100 px-2.5 py-0.5 rounded border border-neutral-200">
+                        United Kingdom
+                      </span>
+                    </div>
+
+                    {/* Address Line 1 with Google Autocomplete */}
                     <div>
-                      <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
-                        {t.city} *
+                      <label className="block text-xs font-semibold text-neutral-900 mb-1.5">
+                        Address Line 1 (Street &amp; House Number) *
                       </label>
-                      <div className="relative" ref={cityDropdownRef}>
+                      <GoogleAddressAutocomplete
+                        value={formData.street || ''}
+                        onChange={(value) => handleInputChange('street', value)}
+                        onAddressSelect={(fields) => {
+                          updateFormData({
+                            street: fields.street,
+                            entrance: fields.addressLine2 || formData.entrance || '',
+                            city: fields.city || formData.city || '',
+                            streetNumber: fields.postcode || formData.streetNumber || '',
+                          });
+                          setValidationErrors((prev) => {
+                            const n = { ...prev };
+                            delete n.street;
+                            delete n.streetNumber;
+                            delete n.city;
+                            return n;
+                          });
+                        }}
+                        placeholder="e.g. 10 High Street or start typing..."
+                        required
+                        hasError={Boolean(validationErrors.street)}
+                      />
+                      {validationErrors.street && (
+                        <p className="text-red-500 text-xs mt-1" data-checkout-field-error>{validationErrors.street}</p>
+                      )}
+                    </div>
+
+                    {/* Address Line 2 (Optional) */}
+                    <div>
+                      <label className="block text-xs font-semibold text-neutral-900 mb-1.5">
+                        Address Line 2 (Flat, suite, unit, etc. - Optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.entrance || ''}
+                        onChange={(e) => handleInputChange('entrance', e.target.value)}
+                        placeholder="e.g. Flat 3B or Building C"
+                        autoComplete="shipping address-line2"
+                        className="w-full px-3.5 py-2.5 text-xs border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:border-neutral-950 transition-all"
+                      />
+                    </div>
+
+                    {/* Town/City and Postcode */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-neutral-900 mb-1.5">
+                          Town / City *
+                        </label>
                         <input
                           type="text"
-                          value={formData.city}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            handleInputChange('city', value);
-                            setShowCityDropdown(true);
-                            if (formData.deliveryType === 'office') {
-                              updateFormData({ econtOfficeId: '' });
-                            }
-                          }}
-                          onFocus={() => setShowCityDropdown(true)}
-                          placeholder={t.selectCity}
-                          className="w-full px-3 py-2 border border-[#e8e4dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7d8461]/25 focus:border-[#7d8461]"
+                          value={formData.city || ''}
+                          onChange={(e) => handleInputChange('city', e.target.value)}
+                          placeholder="e.g. London"
+                          autoComplete="shipping address-level2"
                           required
+                          className={`w-full px-3.5 py-2.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:border-neutral-950 transition-all ${
+                            validationErrors.city ? 'border-red-500' : 'border-neutral-300'
+                          }`}
                         />
-                        {showCityDropdown && (
-                          <div className="absolute z-50 w-full mt-1 bg-white border border-[#e8e4dc] rounded-xl shadow-lg max-h-60 overflow-y-auto">
-                            {cities
-                              .filter((city) => 
-                                city.name.toLowerCase().includes((formData.city || '').toLowerCase()) ||
-                                city.displayName.toLowerCase().includes((formData.city || '').toLowerCase()) ||
-                                city.postcode.includes(formData.city || '')
-                              )
-                              .map((city) => (
-                                <button
-                                  key={city.displayName}
-                                  type="button"
-                                  onClick={() => {
-                                    handleInputChange('city', city.displayName);
-                                    setShowCityDropdown(false);
-                                    if (formData.deliveryType === 'office') {
-                                      updateFormData({ econtOfficeId: '' });
-                                    }
-                                  }}
-                                  className="w-full text-left px-3 py-2 focus:outline-none transition-colors"
-                                  style={{ color: theme.colors.text }}
-                                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.colors.secondary; }}
-                                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                                >
-                                  {city.displayName}
-                                </button>
-                              ))}
-                          </div>
+                        {validationErrors.city && (
+                          <p className="text-red-500 text-xs mt-1" data-checkout-field-error>{validationErrors.city}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-neutral-900 mb-1.5">
+                          Postcode *
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.streetNumber || ''}
+                          onChange={(e) => handleInputChange('streetNumber', e.target.value.toUpperCase())}
+                          placeholder="e.g. SW1A 1AA"
+                          autoComplete="shipping postal-code"
+                          required
+                          className={`w-full px-3.5 py-2.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:border-neutral-950 uppercase transition-all ${
+                            validationErrors.streetNumber ? 'border-red-500' : 'border-neutral-300'
+                          }`}
+                        />
+                        {validationErrors.streetNumber && (
+                          <p className="text-red-500 text-xs mt-1" data-checkout-field-error>{validationErrors.streetNumber}</p>
                         )}
                       </div>
                     </div>
                   </div>
-
-                  {/* Delivery Type */}
-                  <div>
-                    <label className="block text-sm font-medium text-[#1a1a1a] mb-4">
-                      {t.deliveryType} *
-                    </label>
-                    <div className="space-y-3">
-                      {(['office', 'address', 'econtomat'] as DeliveryType[]).map((type) => {
-                        const Icon = deliveryTypeIcons[type];
-                        const isDisabled = type === 'econtomat';
-                        return (
-                          <label
-                            key={type}
-                            className={`flex items-center p-4 border rounded-xl transition-all ${
-                              isDisabled
-                                ? 'cursor-not-allowed opacity-50'
-                                : 'cursor-pointer'
-                            } ${
-                              formData.deliveryType === type
-                                ? 'border-[#7d8461] bg-[#f9f7f2]'
-                                : 'border-[#e8e4dc] hover:border-[#7d8461]/40'
-                            }`}
-                            style={isDisabled ? { backgroundColor: theme.colors.secondary } : undefined}
-                          >
-                            <input
-                              type="radio"
-                              name="deliveryType"
-                              value={type}
-                              checked={formData.deliveryType === type}
-                              onChange={() => handleDeliveryTypeChange(type)}
-                              disabled={isDisabled}
-                              className="mr-3"
-                            />
-                            <Icon size={20} className="mr-3 text-[#6b6b6b]" />
-                            <div>
-                              <div className="font-medium text-[#1a1a1a]">
-                                {deliveryTypeLabels[type]}
-                              </div>
-                              <div className="text-sm text-[#6b6b6b]">
-                                €{getDeliveryCost(type).toFixed(2)}
-                              </div>
-                            </div>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Econt Office - free text when office delivery is selected */}
-                  {formData.deliveryType === 'office' && formData.city && (
-                    <div>
-                      <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
-                        {t.econtOffice} *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.econtOfficeId || ''}
-                        onChange={(e) => handleInputChange('econtOfficeId', e.target.value)}
-                        placeholder={language === 'bg'
-                          ? 'Напр. Еконт офис Център, ул. Примерна 10'
-                          : 'e.g. Econt office Center, Example St 10'}
-                        className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7d8461]/25 focus:border-[#7d8461] ${
-                          validationErrors.econtOfficeId ? 'border-red-500' : 'border-[#e8e4dc]'
-                        }`}
-                      />
-                      {validationErrors.econtOfficeId && (
-                        <p className="text-red-500 text-xs mt-1" data-checkout-field-error>{validationErrors.econtOfficeId}</p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Address Fields - Only show if address delivery is selected */}
-                  {formData.deliveryType === 'address' && (
-                    <div>
-                      <h3 className="text-lg font-medium text-[#1a1a1a] mb-4">{t.addressDetails}</h3>
-                      
-                      <div className="space-y-4">
-                        {/* Street and Number */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          <div className="sm:col-span-2">
-                            <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
-                              {t.street} *
-                            </label>
-                            <input
-                              type="text"
-                              value={formData.street || ''}
-                          onChange={(e) => handleInputChange('street', e.target.value)}
-                              placeholder="ул. Васил Левски"
-                              className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7d8461]/25 focus:border-[#7d8461] ${
-                                validationErrors.street ? 'border-red-500' : 'border-[#e8e4dc]'
-                              }`}
-                              required
-                            />
-                            {validationErrors.street && (
-                              <p className="text-red-500 text-xs mt-1">{validationErrors.street}</p>
-                            )}
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
-                              {t.streetNumber} *
-                            </label>
-                            <input
-                              type="text"
-                              value={formData.streetNumber || ''}
-                              onChange={(e) => handleInputChange('streetNumber', e.target.value)}
-                              placeholder="123"
-                              className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7d8461]/25 focus:border-[#7d8461] ${
-                                validationErrors.streetNumber ? 'border-red-500' : 'border-[#e8e4dc]'
-                              }`}
-                              required
-                            />
-                            {validationErrors.streetNumber && (
-                              <p className="text-red-500 text-xs mt-1">{validationErrors.streetNumber}</p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Entrance, Floor, Apartment */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
-                              {t.entrance}
-                            </label>
-                            <input
-                              type="text"
-                              value={formData.entrance || ''}
-                              onChange={(e) => handleInputChange('entrance', e.target.value)}
-                              placeholder="A"
-                              className="w-full px-3 py-2 border border-[#e8e4dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7d8461]/25 focus:border-[#7d8461]"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
-                              {t.floor}
-                            </label>
-                            <input
-                              type="text"
-                              value={formData.floor || ''}
-                              onChange={(e) => handleInputChange('floor', e.target.value)}
-                              placeholder="5"
-                              className="w-full px-3 py-2 border border-[#e8e4dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7d8461]/25 focus:border-[#7d8461]"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
-                              {t.apartment}
-                            </label>
-                            <input
-                              type="text"
-                              value={formData.apartment || ''}
-                              onChange={(e) => handleInputChange('apartment', e.target.value)}
-                              placeholder="12"
-                              className="w-full px-3 py-2 border border-[#e8e4dc] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7d8461]/25 focus:border-[#7d8461]"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Payment Method Selection */}
                   <div className="pt-6 border-t border-neutral-200">
@@ -1116,7 +943,7 @@ function CheckoutContent() {
                         <ApplePayIcon className="h-5 w-auto" variant="dark" />
                       </label>
 
-                      {/* PayPal */}
+                      {/* PayPal & Pay Later */}
                       <label
                         onClick={() => setPaymentMethod('paypal')}
                         className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition-all ${
@@ -1134,8 +961,8 @@ function CheckoutContent() {
                             className="accent-neutral-950 w-4 h-4"
                           />
                           <div>
-                            <span className="font-semibold text-sm text-neutral-950 block">PayPal</span>
-                            <span className="text-xs text-neutral-500">Pay via your PayPal balance or linked cards</span>
+                            <span className="font-semibold text-sm text-neutral-950 block">PayPal &amp; Pay Later</span>
+                            <span className="text-xs text-neutral-500">Pay in full or 3 interest-free payments via PayPal</span>
                           </div>
                         </div>
                         <PayPalIcon className="h-4 w-auto" />
@@ -1268,7 +1095,7 @@ function CheckoutContent() {
                     </div>
                   )}
                   <div className="flex justify-between text-sm">
-                    <span className="text-[#6b6b6b]">{t.delivery} ({deliveryTypeLabels[formData.deliveryType]}):</span>
+                    <span className="text-[#6b6b6b]">{t.delivery} (Direct Tracked Delivery):</span>
                     <span className="font-medium">£{deliveryCost.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-lg font-bold pt-2 border-t">
@@ -1284,50 +1111,86 @@ function CheckoutContent() {
                   </div>
                 )}
 
-                {/* Place Order Button */}
-                <button
-                  ref={placeOrderButtonRef}
-                  type="button"
-                  onClick={handleSubmitOrder}
-                  disabled={isSubmitting || isValidatingStock}
-                  className={`w-full mt-6 px-6 py-3.5 text-white rounded-xl transition-opacity font-medium flex items-center justify-center ${
-                    isSubmitting || isValidatingStock
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:opacity-90'
-                  }`}
-                  style={{
-                    backgroundColor:
+                {/* Place Order Button / PayPal Live Buttons */}
+                {paymentMethod === 'paypal' ? (
+                  <div className="mt-6">
+                    <PayPalButtons
+                      mode="checkout"
+                      checkoutData={{
+                        items,
+                        totals: {
+                          subtotal: totalPrice,
+                          delivery: deliveryCost,
+                          discount: appliedDiscount?.discountAmount || 0,
+                          total: finalTotal,
+                        },
+                        discount: appliedDiscount,
+                        providedShippingAddress: {
+                          recipientName: `${formData.firstName} ${formData.lastName}`.trim(),
+                          line1: formData.street || '',
+                          line2: formData.streetNumber || undefined,
+                          city: formData.city || 'United Kingdom',
+                          postalCode: formData.streetNumber || '',
+                          countryCode: 'GB',
+                        },
+                      }}
+                      onValidate={() => {
+                        if (!isFormValid()) {
+                          scrollToCheckoutIssue();
+                          return 'Please fill in all required delivery details before proceeding with PayPal.';
+                        }
+                        return true;
+                      }}
+                      onSuccess={(orderId) => {
+                        clearCart();
+                        resetForm();
+                        window.location.href = `/checkout/success?orderId=${orderId}`;
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <button
+                    ref={placeOrderButtonRef}
+                    type="button"
+                    onClick={handleSubmitOrder}
+                    disabled={isSubmitting || isValidatingStock}
+                    className={`w-full mt-6 px-6 py-3.5 text-white rounded-xl transition-opacity font-medium flex items-center justify-center ${
                       isSubmitting || isValidatingStock
-                        ? theme.colors.textSecondary
-                        : theme.colors.buttonPrimary,
-                  }}
-                >
-                  {isValidatingStock ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Checking Stock...
-                    </>
-                  ) : isSubmitting ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      {t.placingOrder}
-                    </>
-                  ) : (
-                    paymentMethod === 'applepay'
-                      ? `Pay £${finalTotal.toFixed(2)} with Apple Pay`
-                      : paymentMethod === 'paypal'
-                      ? `Pay £${finalTotal.toFixed(2)} with PayPal`
-                      : paymentMethod === 'klarna'
-                      ? `Pay £${finalTotal.toFixed(2)} with Klarna (3x £${(finalTotal / 3).toFixed(2)})`
-                      : `Place Order · £${finalTotal.toFixed(2)}`
-                  )}
-                </button>
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'hover:opacity-90'
+                    }`}
+                    style={{
+                      backgroundColor:
+                        isSubmitting || isValidatingStock
+                          ? theme.colors.textSecondary
+                          : theme.colors.buttonPrimary,
+                    }}
+                  >
+                    {isValidatingStock ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Checking Stock...
+                      </>
+                    ) : isSubmitting ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        {t.placingOrder}
+                      </>
+                    ) : (
+                      paymentMethod === 'applepay'
+                        ? `Pay £${finalTotal.toFixed(2)} with Apple Pay`
+                        : paymentMethod === 'klarna'
+                        ? `Pay £${finalTotal.toFixed(2)} with Klarna (3x £${(finalTotal / 3).toFixed(2)})`
+                        : `Place Order · £${finalTotal.toFixed(2)}`
+                    )}
+                  </button>
+                )}
 
                 <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-neutral-500">
                   <ShieldCheck size={14} className="text-neutral-700" />
@@ -1337,7 +1200,7 @@ function CheckoutContent() {
                 {/* FOMO Badge - Checkout Page */}
                 <div className="mt-4 flex justify-center">
                   <FomoBadge
-                    messages={checkoutFomoMessages}
+                    messages={CHECKOUT_FOMO_MESSAGES}
                     rotationInterval={12000}
                     enabled={true}
                   />

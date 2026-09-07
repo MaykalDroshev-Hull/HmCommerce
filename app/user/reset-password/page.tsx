@@ -41,7 +41,7 @@ function ResetPasswordContent() {
   // Check if token exists
   useEffect(() => {
     if (!token) {
-      setError(language === 'bg' ? 'Невалиден или липсващ токен' : 'Invalid or missing token')
+      setError('Invalid or missing token')
     }
   }, [token, language])
 
@@ -57,12 +57,12 @@ function ResetPasswordContent() {
     e.preventDefault()
     
     if (!token) {
-      setError(language === 'bg' ? 'Невалиден или липсващ токен' : 'Invalid or missing token')
+      setError('Invalid or missing token')
       return
     }
 
     if (!passwordData.password) {
-      setError(language === 'bg' ? 'Моля, въведете нова парола' : 'Please enter a new password')
+      setError('Please enter a new password')
       return
     }
 
@@ -99,13 +99,13 @@ function ResetPasswordContent() {
 
       if (!response.ok) {
         // Translate error messages
-        let errorMessage = data.error || (language === 'bg' ? 'Грешка при възстановяването' : 'Error resetting password')
+        let errorMessage = data.error || ('Error resetting password')
         if (errorMessage === 'Invalid or expired token' || errorMessage === 'Token not found' || errorMessage === 'Token expired') {
-          errorMessage = language === 'bg' ? 'Невалиден или изтекъл токен. Моля, заявете нова заявка за възстановяване на парола.' : 'Invalid or expired token. Please request a new password reset.'
+          errorMessage = 'Invalid or expired token. Please request a new password reset.'
         } else if (errorMessage === 'Internal server error') {
-          errorMessage = language === 'bg' ? 'Вътрешна грешка на сървъра. Моля, опитайте отново.' : 'Internal server error. Please try again.'
+          errorMessage = 'Internal server error. Please try again.'
         } else if (errorMessage.includes('Invalid') || errorMessage.includes('invalid')) {
-          errorMessage = language === 'bg' ? 'Невалидни данни' : 'Invalid data'
+          errorMessage = 'Invalid data'
         }
         throw new Error(errorMessage)
       }
@@ -118,9 +118,9 @@ function ResetPasswordContent() {
 
     } catch (err: any) {
       // Translate error messages
-      let errorMessage = err.message || (language === 'bg' ? 'Грешка при възстановяването' : 'Error resetting password')
+      let errorMessage = err.message || ('Error resetting password')
       if (errorMessage === 'Internal server error' || errorMessage.includes('fetch')) {
-        errorMessage = language === 'bg' ? 'Възникна грешка. Моля, опитайте отново.' : 'An error occurred. Please try again.'
+        errorMessage = 'An error occurred. Please try again.'
       }
       setError(errorMessage)
     } finally {
@@ -188,11 +188,11 @@ function ResetPasswordContent() {
               className={styles.btn}
               disabled={isLoading || !token}
             >
-              {isLoading ? (language === 'bg' ? 'Възстановявам...' : 'Resetting...') : t.resetPasswordButton}
+              {isLoading ? ('Resetting...') : t.resetPasswordButton}
             </button>
 
             <div className={styles.linkTxt}>
-              <p>{language === 'bg' ? 'Помните си паролата?' : 'Remember your password?'} <a href="/user" className={styles.linkBtn}>{t.login}</a></p>
+              <p>{'Remember your password?'} <a href="/user" className={styles.linkBtn}>{t.login}</a></p>
             </div>
           </form>
         </div>

@@ -25,7 +25,7 @@ export function uid() {
 
 export function isSizeProperty(name: string): boolean {
   const n = name.toLowerCase();
-  return n.includes('size') || n.includes('размер');
+  return n.includes('size');
 }
 
 export function getVariantOptionLabel(v: StockVariant): string {
@@ -54,33 +54,27 @@ export function sortVariantsForPicker(list: StockVariant[]): StockVariant[] {
     if (!Number.isNaN(numA) && !Number.isNaN(numB) && sizeA !== '' && sizeB !== '') {
       return numA - numB;
     }
-    return getVariantOptionLabel(a).localeCompare(getVariantOptionLabel(b), 'bg', { numeric: true });
+    return getVariantOptionLabel(a).localeCompare(getVariantOptionLabel(b), 'en', { numeric: true });
   });
 }
 
 export function stockWarningBg(language: string, available: number, lineQty: number): string | null {
   if (available < 0) {
-    return language === 'bg'
-      ? 'Внимание: този артикул в момента няма наличност. Можеш да продължиш, ако очакваш доставка.'
-      : 'Warning: no stock. You can continue if delivery is expected.';
+    return 'Warning: this item is currently out of stock. You may proceed if incoming stock is expected.';
   }
   if (available < lineQty) {
-    return language === 'bg'
-      ? 'Внимание: няма достатъчна наличност за този артикул/размер. Можеш да продължиш, ако очакваш доставка.'
-      : 'Warning: insufficient stock. You can continue if delivery is expected.';
+    return 'Warning: insufficient stock for this item/size. You may proceed if incoming stock is expected.';
   }
   const after = available - lineQty;
   if (after === 1) {
-    return language === 'bg'
-      ? 'Внимание: след тази поръчка ще остане само 1 бройка от този артикул.'
-      : 'Warning: only 1 piece will remain after this order.';
+    return 'Warning: after this order only 1 item will remain in stock.';
   }
   return null;
 }
 
 export function splitCustomerName(fullName: string): { first: string; last: string } {
   const t = fullName.trim();
-  if (!t) return { first: 'Клиент', last: '' };
+  if (!t) return { first: 'Customer', last: '' };
   const parts = t.split(/\s+/);
   if (parts.length === 1) return { first: parts[0], last: '' };
   return { first: parts[0], last: parts.slice(1).join(' ') };

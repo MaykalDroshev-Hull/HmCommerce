@@ -23,7 +23,7 @@ export default function CategoryPage() {
     const productType = productTypes.find(type =>
       type.producttypeid === category || type.code === category
     );
-    const pageTitle = productType?.name || t.products || (language === 'bg' ? 'Артикули' : 'Items');
+    const pageTitle = productType?.name || t.products || 'Products';
     const storeName = settings?.storename || '';
     document.title = storeName ? `${pageTitle} - ${storeName}` : pageTitle;
   }, [category, productTypes, language, t, settings?.storename]);

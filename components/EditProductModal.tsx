@@ -48,7 +48,7 @@ function SelectAllCheckbox({
         className="text-xs sm:text-sm transition-colors duration-300"
         style={{ color: theme.colors.text }}
       >
-        {language === 'bg' ? 'Избери всички' : 'Select all'}
+        {'Select all'}
       </span>
     </label>
   );
@@ -392,7 +392,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
 
   const handleImageUpload = async (file: File) => {
     if (!file.type.startsWith('image/')) {
-      alert(language === 'bg' ? 'Моля изберете снимка (JPG, PNG, etc.)' : 'Please select an image (JPG, PNG, etc.)');
+      alert('Please select an image (JPG, PNG, etc.)');
       return;
     }
 
@@ -428,9 +428,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
             images: prev.images.filter(img => img !== tempPreviewUrl)
           }));
           URL.revokeObjectURL(tempPreviewUrl);
-          alert(language === 'bg' 
-            ? 'Грешка: URL не е върнат от сървъра' 
-            : 'Error: No URL returned from server');
+          alert('Error: No URL returned from server');
           return;
         }
 
@@ -455,9 +453,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
         }));
         URL.revokeObjectURL(tempPreviewUrl);
 
-        alert(language === 'bg' 
-          ? `Грешка при качване: ${result.error || 'Неуспешно качване'}` 
-          : `Upload error: ${result.error || 'Upload failed'}`);
+        alert(`Upload error: ${result.error || 'Upload failed'}`);
       }
     } catch {
       // Remove temporary preview on error
@@ -467,9 +463,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
       }));
       URL.revokeObjectURL(tempPreviewUrl);
 
-      alert(language === 'bg' 
-        ? 'Грешка при качване на снимка' 
-        : 'Error uploading image');
+      alert('Error uploading image');
     } finally {
       setUploadingImages(prev => prev.filter(id => id !== tempId));
     }
@@ -548,7 +542,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
             style={{ color: theme.colors.text }}
           >
             {isNewProduct 
-              ? (language === 'bg' ? 'Добави нов продукт' : 'Add New Product')
+              ? ('Add New Product')
               : t.editProduct}
           </h2>
           <button 
@@ -611,7 +605,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
                   className="block text-xs sm:text-sm font-medium mb-1.5 transition-colors duration-300"
                   style={{ color: theme.colors.text }}
                 >
-                  {language === 'bg' ? 'Категория' : 'Category'}
+                  {'Category'}
                 </label>
                 <select
                   value={formData.productTypeID || ''}
@@ -624,7 +618,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
                   }}
                 >
                   <option value="">
-                    {language === 'bg' ? 'Изберете тип' : 'Select type'}
+                    {'Select type'}
                   </option>
                   {productTypes.map((type) => (
                     <option key={type.producttypeid} value={type.producttypeid}>
@@ -682,14 +676,14 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
               >
                 {t.productSubtitle}
                 <span className="text-xs ml-1" style={{ color: theme.colors.textSecondary }}>
-                  ({language === 'bg' ? 'напр. тесен, свободен крой' : 'e.g., close fit, loose fit'})
+                  ({'e.g., close fit, loose fit'})
                 </span>
               </label>
               <input
                 type="text"
                 value={formData.subtitle || ''}
                 onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                placeholder={language === 'bg' ? 'Тесен крой' : 'Close fit'}
+                placeholder={'Close fit'}
                 className="w-full px-3 py-2.5 sm:py-2 text-sm border rounded-lg focus:ring-2 focus:border-transparent transition-colors duration-300"
                 style={{
                   backgroundColor: theme.colors.cardBg,
@@ -830,14 +824,14 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
                 className="font-medium text-sm sm:text-base transition-colors duration-300"
                 style={{ color: theme.colors.text }}
               >
-                {language === 'bg' ? 'Характеристики' : 'Properties'}
+                {'Properties'}
               </h3>
 
               {loadingProperties ? (
                 <div className="flex items-center justify-center py-4">
                   <Loader2 size={20} className="animate-spin" style={{ color: theme.colors.primary }} />
                   <span className="ml-2 text-sm" style={{ color: theme.colors.textSecondary }}>
-                    {language === 'bg' ? 'Зареждане...' : 'Loading...'}
+                    {'Loading...'}
                   </span>
                 </div>
               ) : (
@@ -908,7 +902,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
                               [property.propertyid]: value ? [value] : []
                             }));
                           }}
-                          placeholder={language === 'bg' ? `Въведете ${property.name.toLowerCase()}` : `Enter ${property.name.toLowerCase()}`}
+                          placeholder={'Enter ${property.name.toLowerCase()}'}
                           className="w-full px-3 py-2.5 sm:py-2 text-sm border rounded-lg focus:ring-2 focus:border-transparent transition-colors duration-300"
                           style={{
                             backgroundColor: theme.colors.cardBg,
@@ -996,7 +990,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
               className="font-medium text-sm sm:text-base transition-colors duration-300"
               style={{ color: theme.colors.text }}
             >
-              {language === 'bg' ? 'Снимки' : 'Images'}
+              {'Images'}
             </h3>
             
             {/* Drag & Drop Area */}
@@ -1023,9 +1017,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
                   className="text-xs sm:text-sm mb-2.5 sm:mb-3 transition-colors duration-300 px-2"
                   style={{ color: theme.colors.text }}
                 >
-                  {language === 'bg' 
-                    ? 'Плъзнете снимки тук или кликнете за избор' 
-                    : 'Drag images here or click to select'}
+                  {'Drag images here or click to select'}
                 </p>
                 <button
                   type="button"
@@ -1049,7 +1041,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
                   }}
                 >
                   <Upload size={14} className="sm:w-4 sm:h-4" />
-                  <span>{language === 'bg' ? 'Избери снимки' : 'Select Images'}</span>
+                  <span>{'Select Images'}</span>
                 </button>
                 <input
                   ref={fileInputRef}
@@ -1063,9 +1055,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
                   className="text-xs mt-2 transition-colors duration-300"
                   style={{ color: theme.colors.textSecondary }}
                 >
-                  {language === 'bg' 
-                    ? 'JPG, PNG, GIF до 10MB' 
-                    : 'JPG, PNG, GIF up to 10MB'}
+                  {'JPG, PNG, GIF up to 10MB'}
                 </p>
               </div>
             </div>
@@ -1077,9 +1067,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
                   className="text-xs transition-colors duration-300"
                   style={{ color: theme.colors.textSecondary }}
                 >
-                  {language === 'bg' 
-                    ? `Качени снимки: ${formData.images.length}` 
-                    : `Uploaded images: ${formData.images.length}`}
+                  {'Uploaded images: ${formData.images.length}'}
                 </p>
                 <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
                   {formData.images.map((image, index) => {
@@ -1109,7 +1097,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
                                 const errorDiv = document.createElement('div');
                                 errorDiv.className = 'w-full h-full flex flex-col items-center justify-center bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs p-2 text-center';
                                 errorDiv.innerHTML = `
-                                  <div>${language === 'bg' ? 'Грешка при зареждане' : 'Load error'}</div>
+                                  <div>${'Load error'}</div>
                                   <div class="text-[10px] mt-1 break-all">${image.substring(0, 30)}...</div>
                                 `;
                                 target.parentElement?.appendChild(errorDiv);
@@ -1119,7 +1107,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
                               type="button"
                               onClick={() => removeImage(index)}
                               className="absolute top-1 right-1 p-1.5 sm:p-2 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 sm:group-hover:opacity-100 active:opacity-100 transition-opacity duration-300 touch-manipulation z-10"
-                              aria-label={language === 'bg' ? 'Премахни снимка' : 'Remove image'}
+                              aria-label={'Remove image'}
                               onTouchStart={(e) => {
                                 e.currentTarget.style.opacity = '1';
                               }}
@@ -1167,7 +1155,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
               className="font-medium mb-3 sm:mb-4 text-sm sm:text-base transition-colors duration-300"
               style={{ color: theme.colors.text }}
             >
-              {language === 'bg' ? 'Избран продукт' : 'Featured Product'}
+              {'Featured Product'}
             </h3>
             <label className="flex items-center gap-3 cursor-pointer">
               <input
@@ -1183,17 +1171,13 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
                 className="text-xs sm:text-sm transition-colors duration-300"
                 style={{ color: theme.colors.text }}
               >
-                {language === 'bg'
-                  ? 'Показва се на началната страница'
-                  : 'Displayed on home page'
+                {'Displayed on home page'
                 }
               </span>
             </label>
             <p className="text-xs transition-colors duration-300 mt-1 ml-8"
                style={{ color: theme.colors.textSecondary }}>
-              {language === 'bg'
-                ? 'Максимум 4 избрани продукта ще се покажат на началната страница'
-                : 'Maximum 4 featured products will be displayed on the home page'
+              {'Maximum 4 featured products will be displayed on the home page'
               }
             </p>
           </div>
@@ -1212,9 +1196,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
                 className="text-xs transition-colors duration-300"
                 style={{ color: theme.colors.textSecondary }}
               >
-                {language === 'bg'
-                  ? 'Изберете артикули, които да се показват в секцията "Може да харесате" на страницата на артикула.'
-                  : 'Select products to display in the "You might like" section on the product page.'
+                {'Select products to display in the "You might like" section on the product page.'
                 }
               </p>
 
@@ -1284,7 +1266,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
                       className="text-sm py-4 text-center"
                       style={{ color: theme.colors.textSecondary }}
                     >
-                      {language === 'bg' ? 'Няма налични артикули' : 'No available items'}
+                      {'No available items'}
                     </p>
                   )}
                   
@@ -1293,7 +1275,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
                       className="text-xs"
                       style={{ color: theme.colors.textSecondary }}
                     >
-                      {relatedProductIds.length} {language === 'bg' ? 'избрани продукта' : 'products selected'}
+                      {relatedProductIds.length} {'products selected'}
                     </p>
                   )}
                 </div>

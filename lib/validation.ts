@@ -10,8 +10,8 @@ export class ValidationService {
     if (!email) {
       return {
         isValid: false,
-        errors: ['Имейлът е задължителен'],
-        details: { email: 'Имейлът е задължителен' }
+        errors: ['Email is required'],
+        details: { email: 'Email is required' }
       };
     }
 
@@ -19,8 +19,8 @@ export class ValidationService {
     if (!emailRegex.test(email)) {
       return {
         isValid: false,
-        errors: ['Невалиден формат на имейл адреса'],
-        details: { email: 'Имейлът трябва да е във валиден формат' }
+        errors: ['Invalid email format'],
+        details: { email: 'Email must be in a valid format' }
       };
     }
 
@@ -31,17 +31,19 @@ export class ValidationService {
     if (!phone) {
       return {
         isValid: false,
-        errors: ['Телефонът е задължителен'],
-        details: { phone: 'Телефонът е задължителен' }
+        errors: ['Phone number is required'],
+        details: { phone: 'Phone number is required' }
       };
     }
 
-    const phoneRegex = /^(\+359|0)[0-9]{9}$/;
-    if (!phoneRegex.test(phone)) {
+    // UK and international phone numbers (e.g. +44 7123 456789, 07123456789, etc.)
+    const cleanPhone = phone.replace(/[\s\-()]/g, '');
+    const phoneRegex = /^(\+?[0-9]{8,15})$/;
+    if (!phoneRegex.test(cleanPhone)) {
       return {
         isValid: false,
-        errors: ['Невалиден формат на телефонния номер'],
-        details: { phone: 'Използвайте формат: +359XXXXXXXXX или 0XXXXXXXXX' }
+        errors: ['Invalid phone number format'],
+        details: { phone: 'Please enter a valid phone number (e.g. +44 7123 456789 or 07123456789)' }
       };
     }
 
@@ -52,17 +54,17 @@ export class ValidationService {
     if (!name) {
       return {
         isValid: false,
-        errors: ['Името е задължително'],
-        details: { name: 'Името е задължително' }
+        errors: ['Name is required'],
+        details: { name: 'Name is required' }
       };
     }
 
-    const nameRegex = /^[а-яА-Яa-zA-Z\s]{2,50}$/;
+    const nameRegex = /^[a-zA-Z\s\-'.]{2,60}$/;
     if (!nameRegex.test(name.trim())) {
       return {
         isValid: false,
-        errors: ['Името трябва да е между 2 и 50 символа и да съдържа само букви'],
-        details: { name: 'Името трябва да е между 2 и 50 символа и да съдържа само букви' }
+        errors: ['Name must be between 2 and 60 characters'],
+        details: { name: 'Name must be between 2 and 60 characters and contain letters only' }
       };
     }
 
@@ -73,24 +75,24 @@ export class ValidationService {
     if (!password) {
       return {
         isValid: false,
-        errors: ['Паролата е задължителна'],
-        details: { password: 'Паролата е задължителна' }
+        errors: ['Password is required'],
+        details: { password: 'Password is required' }
       };
     }
 
     if (password.length < 8) {
       return {
         isValid: false,
-        errors: ['Паролата трябва да е поне 8 символа дълга'],
-        details: { password: 'Паролата трябва да е поне 8 символа дълга' }
+        errors: ['Password must be at least 8 characters long'],
+        details: { password: 'Password must be at least 8 characters long' }
       };
     }
 
     if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(password)) {
       return {
         isValid: false,
-        errors: ['Паролата трябва да съдържа поне една буква и една цифра'],
-        details: { password: 'Паролата трябва да съдържа поне една буква и една цифра' }
+        errors: ['Password must contain at least one letter and one number'],
+        details: { password: 'Password must contain at least one letter and one number' }
       };
     }
 

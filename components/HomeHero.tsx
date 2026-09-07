@@ -14,11 +14,8 @@ export default function HomeHero() {
   const { theme } = useTheme();
   const t = translations[language];
 
-  const newCollectionLabel = language === 'bg' ? 'Нова колекция' : 'New collection';
-  const heroAlt =
-    language === 'bg'
-      ? 'Добре дошли в нашия магазин – нова колекция дрехи, обувки и аксесоари'
-      : 'Welcome to our store – new collection of clothes, shoes and accessories';
+  const newCollectionLabel = 'New Collection';
+  const heroAlt = 'Welcome to MB-Paws – Premium dog collars and accessories';
 
   return (
     <section className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 pt-4 sm:pt-6 pb-2">
@@ -48,11 +45,11 @@ export default function HomeHero() {
               {newCollectionLabel}
             </p>
             <h1 className="font-serif-display text-[1.75rem] sm:text-4xl lg:text-5xl leading-[1.12] mb-3 sm:mb-4 text-white sm:text-[#1a1a1a]">
-              {t.welcomeToStore || 'Добре дошли в нашия магазин'}
+              {t.welcomeToStore || 'Welcome to MB-Paws'}
             </h1>
             <p className="text-sm sm:text-base leading-relaxed mb-5 sm:mb-6 max-w-md text-white/90 sm:text-[#6b6b6b]">
               {t.homeDescription ||
-                'Открийте нашата най-нова колекция от дрехи, обувки и аксесоари'}
+                'Discover our premium collection of technical collars and leads built for daily adventures.'}
             </p>
             <Link
               href="/products"
@@ -62,7 +59,7 @@ export default function HomeHero() {
                 color: '#ffffff',
               }}
             >
-              {t.shopNow || 'Пазарувайте сега'}
+              {t.shopNow || 'Shop Now'}
               <ArrowRight size={16} />
             </Link>
           </div>

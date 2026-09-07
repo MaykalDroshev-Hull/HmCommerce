@@ -108,15 +108,15 @@ function applyPropertyValues(
     )?.toLowerCase() || '';
     const value = pvv.value || '';
 
-    if (propName.includes('color') || propName.includes('colour') || propName.includes('цвят')) {
+    if (propName.includes('color') || propName.includes('colour')) {
       productInfo.color = value;
-    } else if (propName.includes('size') || propName.includes('размер')) {
+    } else if (propName.includes('size')) {
       productInfo.size = value;
-    } else if (propName.includes('brand') || propName.includes('марка')) {
+    } else if (propName.includes('brand')) {
       productInfo.brand = value;
-    } else if (propName.includes('model') || propName.includes('модел')) {
+    } else if (propName.includes('model')) {
       productInfo.model = value;
-    } else if (propName.includes('type') || propName.includes('тип')) {
+    } else if (propName.includes('type')) {
       productInfo.type = value;
     }
   });

@@ -16,24 +16,24 @@ const inter = Inter({
   display: 'swap',
 })
 
-const SITE_URL = 'https://mb-something.co.uk';
+const SITE_URL = 'https://mb-paws.co.uk';
 const OG_IMAGE = 'https://rrpmpvffewatuldyytqf.supabase.co/storage/v1/object/public/products/collar-graphite-grey.jpg';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'M-B Something | Premium Adventure Dog Collars',
-    template: '%s | M-B Something',
+    default: 'MB-Paws | Premium Adventure Dog Collars',
+    template: '%s | MB-Paws',
   },
   description:
-    'M-B Something – Minimalist, high-performance canine gear engineered for durability, comfort, and everyday adventure. Free UK tracked delivery on orders over £30. Klarna Pay in 3 available.',
+    'MB-Paws – Minimalist, high-performance canine gear engineered for durability, comfort, and everyday adventure. Free UK tracked delivery on orders over £30. Klarna Pay in 3 available.',
   keywords: [
     'dog collar', 'adventure dog collar', 'tactical dog collar', 'waterproof dog collar',
-    'ripstop webbing collar', 'UK dog gear', 'premium pet accessories', 'M-B Something',
+    'ripstop webbing collar', 'UK dog gear', 'premium pet accessories', 'MB-Paws', 'MB-paws.co.uk',
   ],
-  authors: [{ name: 'M-B Something', url: SITE_URL }],
-  creator: 'M-B Something',
-  publisher: 'M-B Something',
+  authors: [{ name: 'MB-Paws', url: SITE_URL }],
+  creator: 'MB-Paws',
+  publisher: 'MB-Paws',
   category: 'pets',
   robots: {
     index: true,
@@ -44,8 +44,8 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_GB',
     url: SITE_URL,
-    siteName: 'M-B Something',
-    title: 'M-B Something | Premium Adventure Dog Collars',
+    siteName: 'MB-Paws',
+    title: 'MB-Paws | Premium Adventure Dog Collars',
     description:
       'Minimalist, high-performance canine gear engineered for durability and all-weather comfort. Free UK tracked delivery.',
     images: [
@@ -53,14 +53,14 @@ export const metadata: Metadata = {
         url: OG_IMAGE,
         width: 1200,
         height: 1200,
-        alt: 'M-B Something Daydrift Adventure Dog Collar',
+        alt: 'MB-Paws Daydrift Adventure Dog Collar',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    site: '@mb_something',
-    title: 'M-B Something | Premium Adventure Dog Collars',
+    site: '@mb_paws',
+    title: 'MB-Paws | Premium Adventure Dog Collars',
     description:
       'Minimalist, high-performance canine gear engineered for durability and all-weather comfort.',
     images: [OG_IMAGE],
@@ -77,7 +77,7 @@ export const metadata: Metadata = {
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'OnlineStore',
-  name: 'M-B Something',
+  name: 'MB-Paws',
   url: SITE_URL,
   image: OG_IMAGE,
   description:

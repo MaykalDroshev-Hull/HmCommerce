@@ -14,44 +14,27 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const { settings } = useStoreSettings();
   
-  // Fixed initial value so server and client markup match; hydrate prefs after mount
-  const [language, setLanguageState] = useState<Language>('bg');
-  const [hasHydrated, setHasHydrated] = useState(false);
+  // MB-Paws is strictly en-GB for the British market
+  const [language, setLanguageState] = useState<Language>('en');
 
   useEffect(() => {
-    const savedLanguage = localStorage.getItem('language') as Language;
-    const userChoseLanguage = localStorage.getItem('language-user-preference') === 'true';
-
-    if (userChoseLanguage && (savedLanguage === 'en' || savedLanguage === 'bg')) {
-      setLanguageState(savedLanguage);
-    } else if (settings?.language === 'en' || settings?.language === 'bg') {
-      setLanguageState(settings.language);
-      localStorage.setItem('language', settings.language);
-    } else if (savedLanguage === 'en' || savedLanguage === 'bg') {
-      setLanguageState(savedLanguage);
+    // Clear any previous Bulgarian setting from legacy sessions
+    const savedLanguage = localStorage.getItem('language');
+    if (savedLanguage === 'bg') {
+      localStorage.setItem('language', 'en');
+      localStorage.removeItem('language-user-preference');
     }
-
-    setHasHydrated(true);
+    setLanguageState('en');
   }, [settings?.language]);
 
-  // Store default from DB only before the shopper picks a language
-  useEffect(() => {
-    if (!hasHydrated) return;
-    if (localStorage.getItem('language-user-preference') === 'true') return;
-    if (settings?.language === 'en' || settings?.language === 'bg') {
-      setLanguageState(settings.language);
-      localStorage.setItem('language', settings.language);
-    }
-  }, [settings?.language, hasHydrated]);
-
   const setLanguage = (lang: Language) => {
-    setLanguageState(lang);
-    localStorage.setItem('language', lang);
-    localStorage.setItem('language-user-preference', 'true');
+    // Force English site-wide
+    setLanguageState('en');
+    localStorage.setItem('language', 'en');
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage }}>
+    <LanguageContext.Provider value={{ language: 'en', setLanguage }}>
       {children}
     </LanguageContext.Provider>
   );
@@ -64,4 +47,3 @@ export function useLanguage() {
   }
   return context;
 }
-

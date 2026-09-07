@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
           {
             success: false,
             error:
-              'Таблицата за изгледи липсва. Изпълни migration-admin-inventory-order-workflow.sql в Supabase.',
+              'Tracking views table is missing. Run migration-admin-inventory-order-workflow.sql in Supabase.',
           },
           { status: 503 }
         );

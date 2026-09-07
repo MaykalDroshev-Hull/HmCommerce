@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Special Offers | M-B Something',
+  title: 'Special Offers | MB-Paws',
   description:
-    'Exclusive limited-edition offers and special releases by M-B Something.',
-  alternates: { canonical: 'https://mb-something.co.uk/super-promo' },
+    'Exclusive limited-edition offers and special releases by MB-Paws.',
+  alternates: { canonical: 'https://mb-paws.co.uk/super-promo' },
 };
 
 

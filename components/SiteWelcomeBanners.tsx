@@ -155,9 +155,7 @@ export default function SiteWelcomeBanners() {
                         {t.superPromoWelcomeTitle}
                       </h3>
                       <p className="text-xs sm:text-sm text-[#6b6b6b] mt-1">
-                        {language === 'bg'
-                          ? 'Специални оферти на избрани продукти и размери.'
-                          : 'Special offers on selected products and sizes.'}
+                        Special offers on selected products and sizes.
                       </p>
                     </div>
                   </div>

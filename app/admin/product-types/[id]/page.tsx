@@ -20,9 +20,9 @@ export default function ProductTypeDetailsPage() {
 
   useEffect(() => {
     if (productType) {
-      document.title = productType.name || t.productTypes || (language === 'bg' ? 'Категория' : 'Product Type');
+      document.title = productType.name || t.productTypes || ('Product Type');
     } else {
-      document.title = t.productTypes || (language === 'bg' ? 'Категория' : 'Product Type');
+      document.title = t.productTypes || ('Product Type');
     }
   }, [productType, language, t]);
   const [assignedProperties, setAssignedProperties] = useState<any[]>([]);
@@ -76,7 +76,7 @@ export default function ProductTypeDetailsPage() {
       : Array.from(selectedPropertyIds);
 
     if (propertyIds.length === 0) {
-      alert(language === 'bg' ? 'Моля, изберете поне една характеристика' : 'Please select at least one property');
+      alert('Please select at least one property');
       return;
     }
 
@@ -104,7 +104,7 @@ export default function ProductTypeDetailsPage() {
         alert('Error: ' + result.error);
       }
     } catch {
-      alert(language === 'bg' ? 'Грешка при добавяне на характеристики' : 'Failed to add properties');
+      alert('Failed to add properties');
     } finally {
       setAddingProperties(false);
     }
@@ -171,7 +171,7 @@ export default function ProductTypeDetailsPage() {
           <button
             onClick={() => router.push('/admin/product-types')}
             className="p-2 hover:bg-gray-200 active:bg-gray-300 rounded-lg transition-colors touch-manipulation"
-            aria-label={language === 'bg' ? 'Назад' : 'Back'}
+            aria-label={'Back'}
           >
             <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
@@ -183,7 +183,7 @@ export default function ProductTypeDetailsPage() {
           {/* Section Header */}
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
-              {language === 'bg' ? 'Присвоени характеристики' : 'Assigned Properties'}
+              {'Assigned Properties'}
             </h2>
             <button
               onClick={() => setShowAddModal(true)}
@@ -198,7 +198,7 @@ export default function ProductTypeDetailsPage() {
           {assignedProperties.length === 0 ? (
             <div className="text-center py-8 sm:py-12">
               <p className="text-gray-500 text-sm sm:text-base">
-                {language === 'bg' ? 'Няма присвоени характеристики все още.' : 'No properties assigned yet.'}
+                {'No properties assigned yet.'}
               </p>
             </div>
           ) : (
@@ -216,11 +216,11 @@ export default function ProductTypeDetailsPage() {
                   <button
                     onClick={() => handleRemoveProperty(ap.propertyid)}
                     className="flex items-center justify-center sm:justify-end gap-2 px-4 py-2.5 sm:px-3 sm:py-2 text-red-600 hover:text-red-700 hover:bg-red-50 active:bg-red-100 rounded-lg transition-colors touch-manipulation border border-red-200 sm:border-0 w-full sm:w-auto min-h-[44px] sm:min-h-0"
-                    aria-label={language === 'bg' ? 'Премахни характеристика' : 'Remove property'}
+                    aria-label={'Remove property'}
                   >
                     <Trash2 className="w-5 h-5 sm:w-4 sm:h-4" />
                     <span className="sm:hidden text-sm font-medium">
-                      {language === 'bg' ? 'Премахни' : 'Remove'}
+                      {'Remove'}
                     </span>
                   </button>
                 </div>
@@ -239,7 +239,7 @@ export default function ProductTypeDetailsPage() {
             }
           }}
           title={t.addProperty}
-          subheader={language === 'bg' ? 'Изберете характеристики за добавяне към тази категория' : 'Select properties to add to this category'}
+          subheader={'Select properties to add to this category'}
           maxWidth="max-w-md"
           minWidth={320}
           minHeight={300}
@@ -262,7 +262,7 @@ export default function ProductTypeDetailsPage() {
                     htmlFor="select-all-properties"
                     className="text-sm font-medium text-gray-700 cursor-pointer"
                   >
-                    {language === 'bg' ? 'Избери всички' : 'Select All'}
+                    {'Select All'}
                   </label>
                 </div>
                 <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -295,7 +295,7 @@ export default function ProductTypeDetailsPage() {
                     disabled={showCompleteAnimation}
                     className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 active:bg-gray-300 disabled:opacity-50 transition-colors touch-manipulation"
                   >
-                    {language === 'bg' ? 'Отказ' : 'Cancel'}
+                    {'Cancel'}
                   </button>
                   <button
                     onClick={() => handleAddProperty()}
@@ -305,14 +305,12 @@ export default function ProductTypeDetailsPage() {
                     {addingProperties ? (
                       <>
                         <span className="animate-spin">⏳</span>
-                        {language === 'bg' ? 'Добавяне...' : 'Adding...'}
+                        {'Adding...'}
                       </>
                     ) : (
                       <>
                         <Plus className="w-4 h-4" />
-                        {language === 'bg' 
-                          ? `Добави (${selectedPropertyIds.size})` 
-                          : `Add (${selectedPropertyIds.size})`}
+                        {`Add (${selectedPropertyIds.size})`}
                       </>
                     )}
                   </button>

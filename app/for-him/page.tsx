@@ -18,10 +18,10 @@ export default function ForHimPage() {
   const { theme } = useTheme();
 
   useEffect(() => {
-    const pageTitle = language === 'bg' ? 'За Него' : 'For Him';
+    const pageTitle = 'Collars';
     const storeName = settings?.storename || '';
     document.title = storeName ? `${pageTitle} - ${storeName}` : pageTitle;
-  }, [language, settings?.storename]);
+  }, [settings?.storename]);
 
   useEffect(() => {
     const adminState = localStorage.getItem('isAdmin');

@@ -200,11 +200,11 @@ export default function OrderEditModal({
     if (!order) return;
     setMsg(null);
     if (!fullName.trim() || !phone.trim() || !city.trim()) {
-      setMsg(language === 'bg' ? 'Попълни име, телефон и град.' : 'Fill name, phone and city.');
+      setMsg('Fill name, phone and city.');
       return;
     }
     if (!lines.length) {
-      setMsg(language === 'bg' ? 'Добави поне един ред.' : 'Add at least one line.');
+      setMsg('Add at least one line.');
       return;
     }
     setSaving(true);
@@ -245,7 +245,7 @@ export default function OrderEditModal({
         setMsg(data.error || 'Error');
       }
     } catch {
-      setMsg(language === 'bg' ? 'Мрежова грешка' : 'Network error');
+      setMsg('Network error');
     } finally {
       setSaving(false);
     }
@@ -260,7 +260,7 @@ export default function OrderEditModal({
     <AdminModal
       isOpen={isOpen}
       onClose={onClose}
-      title={language === 'bg' ? 'Редактиране на поръчка' : 'Edit order'}
+      title={'Edit order'}
       subheader={order ? `#${order.orderid}` : undefined}
       maxWidth="max-w-4xl"
       minWidth={320}
@@ -270,25 +270,23 @@ export default function OrderEditModal({
         <div className="space-y-5 max-h-[70vh] overflow-y-auto pr-1">
           {itemsLocked && (
             <div className="rounded-lg bg-amber-50 border border-amber-200 text-amber-950 text-sm p-3">
-              {language === 'bg'
-                ? 'Поръчката е върната — артикулите не могат да се променят. Можеш да редактираш клиент, доставка и бележки.'
-                : 'This order was returned — line items cannot be changed. You can still edit customer, delivery and notes.'}
+              {'This order was returned — line items cannot be changed. You can still edit customer, delivery and notes.'}
             </div>
           )}
 
           <section className="space-y-2">
             <h3 className="text-sm font-semibold text-gray-900">
-              {language === 'bg' ? 'Клиент' : 'Customer'}
+              {'Customer'}
             </h3>
             <input
               className={inputClass}
-              placeholder={language === 'bg' ? 'Пълно име' : 'Full name'}
+              placeholder={'Full name'}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
             />
             <input
               className={inputClass}
-              placeholder={language === 'bg' ? 'Телефон' : 'Phone'}
+              placeholder={'Phone'}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
@@ -301,20 +299,20 @@ export default function OrderEditModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <input
                 className={inputClass}
-                placeholder={language === 'bg' ? 'Град' : 'City'}
+                placeholder={'City'}
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
               />
               <input
                 className={inputClass}
-                placeholder={language === 'bg' ? 'Област' : 'Region'}
+                placeholder={'Region'}
                 value={region}
                 onChange={(e) => setRegion(e.target.value)}
               />
             </div>
             <input
               className={inputClass}
-              placeholder={language === 'bg' ? 'Еконт офис ID' : 'Econt office ID'}
+              placeholder={'Econt office ID'}
               value={econtOffice}
               onChange={(e) => setEcontOffice(e.target.value)}
             />
@@ -322,23 +320,23 @@ export default function OrderEditModal({
 
           <section className="space-y-2">
             <h3 className="text-sm font-semibold text-gray-900">
-              {language === 'bg' ? 'Бележки' : 'Notes'}
+              {'Notes'}
             </h3>
             <textarea
               className={`${inputClass} min-h-[72px]`}
-              placeholder={language === 'bg' ? 'Бележка към клиента' : 'Customer note'}
+              placeholder={'Customer note'}
               value={customerNote}
               onChange={(e) => setCustomerNote(e.target.value)}
             />
             <textarea
               className={`${inputClass} min-h-[72px]`}
-              placeholder={language === 'bg' ? 'Вътрешна бележка' : 'Internal note'}
+              placeholder={'Internal note'}
               value={internalNote}
               onChange={(e) => setInternalNote(e.target.value)}
             />
             <textarea
               className={`${inputClass} min-h-[60px]`}
-              placeholder={language === 'bg' ? 'Бележки за доставка' : 'Delivery notes'}
+              placeholder={'Delivery notes'}
               value={deliveryNotes}
               onChange={(e) => setDeliveryNotes(e.target.value)}
             />
@@ -346,7 +344,7 @@ export default function OrderEditModal({
 
           <section className="space-y-3">
             <h3 className="text-sm font-semibold text-gray-900">
-              {language === 'bg' ? 'Артикули' : 'Items'}
+              {'Items'}
             </h3>
             {!itemsLocked && (
               <div className="flex flex-col sm:flex-row gap-2 flex-wrap">
@@ -358,7 +356,7 @@ export default function OrderEditModal({
                     setPickVariant('');
                   }}
                 >
-                  <option value="">{language === 'bg' ? '— Артикул —' : '— Product —'}</option>
+                  <option value="">{'— Product —'}</option>
                   {productsGrouped.map((p) => (
                     <option key={p.productid} value={p.productid}>
                       {p.product_name}
@@ -371,7 +369,7 @@ export default function OrderEditModal({
                   disabled={!pickProductId}
                   onChange={(e) => setPickVariant(e.target.value)}
                 >
-                  <option value="">{language === 'bg' ? '— Размер —' : '— Size —'}</option>
+                  <option value="">{'— Size —'}</option>
                   {variantsForProduct.map((v) => (
                     <option key={v.productvariantid} value={v.productvariantid}>
                       {getVariantOptionLabel(v)}
@@ -385,7 +383,7 @@ export default function OrderEditModal({
                   className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-white bg-blue-600 min-h-[44px] disabled:opacity-50"
                 >
                   <Plus className="w-4 h-4" />
-                  {language === 'bg' ? 'Добави' : 'Add'}
+                  {'Add'}
                 </button>
               </div>
             )}
@@ -419,7 +417,7 @@ export default function OrderEditModal({
                         <p className="text-sm font-medium text-gray-900 truncate">{line.label}</p>
                         <div className="flex flex-wrap gap-2 items-center">
                           <label className="text-xs text-gray-600">
-                            {language === 'bg' ? 'Бройка' : 'Qty'}
+                            {'Qty'}
                             <input
                               type="number"
                               min={1}
@@ -435,7 +433,7 @@ export default function OrderEditModal({
                             />
                           </label>
                           <label className="text-xs text-gray-600">
-                            {language === 'bg' ? 'Цена' : 'Price'}
+                            {'Price'}
                             <input
                               type="number"
                               min={0}
@@ -473,7 +471,7 @@ export default function OrderEditModal({
 
           <div className="flex flex-wrap items-center gap-4 border-t border-gray-200 pt-4">
             <label className="text-sm text-gray-700 flex items-center gap-2">
-              {language === 'bg' ? 'Доставка (€)' : 'Delivery (€)'}
+              {'Delivery (€)'}
               <input
                 type="number"
                 min={0}
@@ -485,10 +483,10 @@ export default function OrderEditModal({
             </label>
             <div className="ml-auto text-right space-y-1">
               <p className="text-sm text-gray-600">
-                {language === 'bg' ? 'Междинна сума' : 'Subtotal'}: {subtotal.toFixed(2)} €
+                {'Subtotal'}: {subtotal.toFixed(2)} €
               </p>
               <p className="text-base font-bold text-gray-900">
-                {language === 'bg' ? 'Общо' : 'Total'}: {total.toFixed(2)} €
+                {'Total'}: {total.toFixed(2)} €
               </p>
             </div>
           </div>
@@ -501,7 +499,7 @@ export default function OrderEditModal({
               onClick={onClose}
               className="px-4 py-3 rounded-lg border border-gray-300 text-sm font-medium min-h-[44px]"
             >
-              {language === 'bg' ? 'Отказ' : 'Cancel'}
+              {'Cancel'}
             </button>
             <button
               type="button"
@@ -509,7 +507,7 @@ export default function OrderEditModal({
               disabled={saving}
               className="px-4 py-3 rounded-lg bg-blue-600 text-white text-sm font-medium min-h-[44px] disabled:opacity-50"
             >
-              {saving ? '…' : language === 'bg' ? 'Запази' : 'Save'}
+              {saving ? '…' : 'Save'}
             </button>
           </div>
         </div>

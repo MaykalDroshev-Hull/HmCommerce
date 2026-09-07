@@ -38,7 +38,7 @@ export default function DiscountsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    document.title = t.discounts || (language === 'bg' ? 'Отстъпки' : 'Discounts');
+    document.title = t.discounts || ('Discounts');
   }, [language, t]);
   const [isLoading, setIsLoading] = useState(true);
   const [discounts, setDiscounts] = useState<Discount[]>([]);
@@ -376,7 +376,7 @@ export default function DiscountsPage() {
                             <button
                               onClick={() => handleDelete(discount)}
                               className="p-1.5 sm:p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition-colors touch-manipulation"
-                              title={language === 'bg' ? 'Изтрий отстъпка' : 'Delete discount'}
+                              title={'Delete discount'}
                             >
                               <Trash2 size={16} className="sm:w-4 sm:h-4" />
                             </button>
@@ -420,7 +420,7 @@ export default function DiscountsPage() {
                           <button
                             onClick={() => handleDelete(discount)}
                             className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 active:bg-red-100 rounded transition-colors touch-manipulation"
-                            title={language === 'bg' ? 'Изтрий' : 'Delete'}
+                            title={'Delete'}
                           >
                             <Trash2 size={18} className="sm:w-5 sm:h-5" />
                           </button>
@@ -489,7 +489,7 @@ export default function DiscountsPage() {
               <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between w-full">
                 <div>
                   <p className="text-xs sm:text-sm text-gray-700">
-                    {t.showingTransactions || 'Showing'} <span className="font-medium">{startIndex + 1}</span> {language === 'bg' ? 'до' : 'to'} <span className="font-medium">{Math.min(endIndex, discounts.length)}</span> {language === 'bg' ? 'от' : 'of'} <span className="font-medium">{discounts.length}</span> {language === 'bg' ? 'отстъпки' : 'discounts'}
+                    {t.showingTransactions || 'Showing'} <span className="font-medium">{startIndex + 1}</span> {'to'} <span className="font-medium">{Math.min(endIndex, discounts.length)}</span> {'of'} <span className="font-medium">{discounts.length}</span> {'discounts'}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -555,8 +555,8 @@ export default function DiscountsPage() {
           onClose={closeModal}
           title={editingDiscount ? t.editDiscountCode : t.createDiscountCode}
           subheader={editingDiscount
-            ? (language === 'bg' ? 'Редактирайте информацията за отстъпката' : 'Edit the discount code information')
-            : (language === 'bg' ? 'Създайте нов код за отстъпка за вашите клиенти' : 'Create a new discount code for your customers')
+            ? ('Edit the discount code information')
+            : ('Create a new discount code for your customers')
           }
           maxWidth="max-w-md"
           minWidth={400}

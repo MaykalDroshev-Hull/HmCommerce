@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Menu, X, Search, User as UserIcon, ShoppingBag, ChevronLeft, ChevronRight, Globe } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
@@ -16,7 +17,7 @@ interface HeaderProps {
 const ANNOUNCEMENTS = [
   'Free UK delivery on orders over £50 · Free 30-day returns',
   'Spread the cost in 3 interest-free payments with Klarna',
-  'Engineered for durability in all British weather conditions',
+  'Engineered for durability in all weather conditions',
 ];
 
 export default function Header({ isAdmin = false, setIsAdmin }: HeaderProps) {
@@ -29,7 +30,7 @@ export default function Header({ isAdmin = false, setIsAdmin }: HeaderProps) {
   const { user, isAuthenticated, logout } = useAuth();
   const { settings } = useStoreSettings();
 
-  const storeName = settings?.storename || 'M-B Something';
+  const storeName = settings?.storename || 'MB-Paws';
 
   // Rotate announcement bar every 6s
   useEffect(() => {
@@ -58,7 +59,7 @@ export default function Header({ isAdmin = false, setIsAdmin }: HeaderProps) {
   const navLinks = [
     { label: 'Shop', href: '/#product' },
     { label: 'Features', href: '/#features' },
-    { label: 'Size Guide', href: '/#size-guide' },
+    { label: 'Size Guide', href: '/size-guide' },
     { label: 'Reviews', href: '/#reviews' },
     { label: 'FAQ', href: '/#faq' },
   ];
@@ -107,12 +108,18 @@ export default function Header({ isAdmin = false, setIsAdmin }: HeaderProps) {
 
               <Link
                 href="/"
-                className="flex items-center gap-2 group tracking-tight"
+                className="flex items-center group tracking-tight"
                 onClick={() => setIsAdmin?.(false)}
+                aria-label={storeName}
               >
-                <span className="text-lg sm:text-xl font-bold tracking-[0.14em] uppercase text-neutral-900 group-hover:opacity-80 transition-opacity">
-                  {storeName}
-                </span>
+                <Image
+                  src={settings?.logourl || '/Logo.jpg'}
+                  alt={storeName}
+                  width={120}
+                  height={47}
+                  priority
+                  className="h-8 sm:h-10 w-auto object-contain group-hover:opacity-80 transition-opacity"
+                />
               </Link>
             </div>
 
@@ -207,9 +214,19 @@ export default function Header({ isAdmin = false, setIsAdmin }: HeaderProps) {
           />
           <div className="relative w-4/5 max-w-sm bg-white h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
             <div className="p-5 border-b border-neutral-200 flex items-center justify-between">
-              <span className="text-base font-bold tracking-[0.14em] uppercase text-neutral-900">
-                {storeName}
-              </span>
+              <Link
+                href="/"
+                onClick={() => setMobileMenuOpen(false)}
+                aria-label={storeName}
+              >
+                <Image
+                  src={settings?.logourl || '/Logo.jpg'}
+                  alt={storeName}
+                  width={90}
+                  height={36}
+                  className="h-8 w-auto object-contain"
+                />
+              </Link>
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}

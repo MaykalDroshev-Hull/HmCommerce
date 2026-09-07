@@ -74,9 +74,9 @@ const defaultFormData: CheckoutFormData = {
   lastName: '',
   telephone: '',
   email: '',
-  country: 'Bulgaria',
+  country: 'United Kingdom',
   city: '',
-  deliveryType: 'office',
+  deliveryType: 'address',
   discountCode: '',
   econtOfficeId: '',
   street: '',
@@ -195,35 +195,14 @@ export const useCheckoutStore = create<CheckoutState>()(
 
       isFormValid: () => {
         const { formData } = get();
-        
-        // Basic required fields
-        const basicFieldsValid = !!(
-          formData.firstName.trim() &&
-          formData.lastName.trim() &&
-          formData.telephone.trim() &&
-          formData.city &&
-          formData.deliveryType
+        return !!(
+          formData.firstName?.trim() &&
+          formData.lastName?.trim() &&
+          formData.telephone?.trim() &&
+          formData.street?.trim() &&
+          formData.streetNumber?.trim() &&
+          formData.city?.trim()
         );
-        
-        if (!basicFieldsValid) {
-          return false;
-        }
-        
-        // Validate delivery-specific fields
-        if (formData.deliveryType === 'office') {
-          return !!formData.econtOfficeId && formData.econtOfficeId.trim() !== '';
-        }
-        
-        if (formData.deliveryType === 'address') {
-          // Address delivery requires street and street number
-          return !!(
-            formData.street?.trim() &&
-            formData.streetNumber?.trim()
-          );
-        }
-        
-        // For econtomat or other types, basic fields are enough
-        return true;
       },
 
       fullName: () => {

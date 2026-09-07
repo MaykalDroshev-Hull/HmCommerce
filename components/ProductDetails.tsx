@@ -5,10 +5,12 @@ import { Product } from '@/lib/data';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { ShoppingBag, Heart, Share2, ChevronDown, ChevronUp, RotateCcw, Truck, ShieldCheck, Check, Info, X, Star } from 'lucide-react';
 import KlarnaWidget from './KlarnaWidget';
 import QuickLoginModal from './QuickLoginModal';
-import { ExpressCheckoutButtons, PaymentBadgesRow } from './PaymentIcons';
+import { PaymentBadgesRow } from './PaymentIcons';
+import PayPalButtons from './PayPalButtons';
 
 interface ProductDetailsProps {
   product: Product;
@@ -58,11 +60,12 @@ const COLOUR_HEX_MAP: Record<string, string> = {
 };
 
 const SIZE_GUIDE_DATA = [
-  { size: 'XS', neck: '20 – 30 cm', width: '1.5 cm', breeds: 'Puppies, Chihuahua, Yorkshire Terrier' },
-  { size: 'S', neck: '28 – 38 cm', width: '2.0 cm', breeds: 'Jack Russell, Dachshund, Shih Tzu' },
-  { size: 'M', neck: '36 – 48 cm', width: '2.5 cm', breeds: 'Cocker Spaniel, French Bulldog, Beagle' },
-  { size: 'L', neck: '46 – 58 cm', width: '2.5 cm', breeds: 'Labrador, Golden Retriever, Boxer' },
-  { size: 'XL', neck: '56 – 68 cm', width: '3.0 cm', breeds: 'German Shepherd, Mastiff, Great Dane' },
+  { size: 'XXS', neck: '9.4"–11.0" (24–28 cm)', chest: '11.8"–13.7" (30–35 cm)', leash: '5/8" × 5 ft', breeds: 'Chihuahua, Teacup, Cats' },
+  { size: 'XS', neck: '11.8"–13.7" (30–35 cm)', chest: '14.6"–17.7" (37–45 cm)', leash: '5/8" × 5 ft', breeds: 'Miniature Dachshund, Pomeranian' },
+  { size: 'S', neck: '14.2"–15.7" (36–40 cm)', chest: '17.3"–18.8" (44–48 cm)', leash: '5/8" × 5 ft', breeds: 'Standard Dachshund, Jack Russell, Pug' },
+  { size: 'M', neck: '15.7"–18.8" (40–48 cm)', chest: '18.8"–21.6" (48–55 cm)', leash: '3/4" × 5 ft', breeds: 'Cocker Spaniel, French Bulldog, Beagle' },
+  { size: 'L', neck: '16.9"–19.6" (43–50 cm)', chest: '22.0"–25.5" (56–65 cm)', leash: '3/4" × 5 ft', breeds: 'Labrador, Golden Retriever, Boxer' },
+  { size: 'XL', neck: '17.3"–21.6" (44–55 cm)', chest: '25.5"–29.5" (65–75 cm)', leash: '3/4" × 5 ft', breeds: 'German Shepherd, Great Dane, Rottweiler' },
 ];
 
 export default function ProductDetails({
@@ -82,7 +85,6 @@ export default function ProductDetails({
   const [availableOptions, setAvailableOptions] = useState<Record<string, Set<string>>>({});
   const [propertyNameMap, setPropertyNameMap] = useState<Record<string, string>>({});
 
-  const [deliveryMethod, setDeliveryMethod] = useState<'ship' | 'collect'>('ship');
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -220,7 +222,7 @@ export default function ProductDetails({
     addItem({
       id: selectedVariant?.productvariantid || (product.id || (product as any).productid),
       name: productName,
-      brand: product.brand || 'M-B Something',
+      brand: product.brand || 'MB-Paws',
       model: product.model || 'Daydrift Collar',
       type: 'Dog Collar',
       color: selectedColour,
@@ -236,57 +238,7 @@ export default function ProductDetails({
     openCart();
   };
 
-  const handleExpressApplePay = () => {
-    // Add current variant to cart and navigate straight to checkout with Apple Pay
-    const cartProps: Record<string, string> = {};
-    if (selectedColour) cartProps['Colour'] = selectedColour;
-    if (selectedSize) cartProps['Size'] = selectedSize;
 
-    const productName = product.name || `${product.brand || ''} ${product.model || ''}`.trim() || 'Daydrift Adventure Dog Collar';
-
-    addItem({
-      id: selectedVariant?.productvariantid || (product.id || (product as any).productid),
-      name: productName,
-      brand: product.brand || 'M-B Something',
-      model: product.model || 'Daydrift Collar',
-      type: 'Dog Collar',
-      color: selectedColour,
-      size: selectedSize,
-      price: currentPrice,
-      quantity: 1,
-      imageUrl: selectedVariant?.imageurl || product.images?.[0] || '/products/collar-graphite-grey.jpg',
-      category: 'accessories',
-      propertyValues: Object.keys(cartProps).length > 0 ? cartProps : undefined,
-    });
-
-    router.push('/checkout?paymentMethod=applepay');
-  };
-
-  const handleExpressPayPal = () => {
-    // Add current variant to cart and navigate straight to checkout with PayPal
-    const cartProps: Record<string, string> = {};
-    if (selectedColour) cartProps['Colour'] = selectedColour;
-    if (selectedSize) cartProps['Size'] = selectedSize;
-
-    const productName = product.name || `${product.brand || ''} ${product.model || ''}`.trim() || 'Daydrift Adventure Dog Collar';
-
-    addItem({
-      id: selectedVariant?.productvariantid || (product.id || (product as any).productid),
-      name: productName,
-      brand: product.brand || 'M-B Something',
-      model: product.model || 'Daydrift Collar',
-      type: 'Dog Collar',
-      color: selectedColour,
-      size: selectedSize,
-      price: currentPrice,
-      quantity: 1,
-      imageUrl: selectedVariant?.imageurl || product.images?.[0] || '/products/collar-graphite-grey.jpg',
-      category: 'accessories',
-      propertyValues: Object.keys(cartProps).length > 0 ? cartProps : undefined,
-    });
-
-    router.push('/checkout?paymentMethod=paypal');
-  };
 
   const handleShare = async () => {
     if (typeof window === 'undefined') return;
@@ -425,45 +377,19 @@ export default function ProductDetails({
         </div>
       </div>
 
-      {/* Delivery Method Options Box (from Screenshot #3) */}
-      <div className="border border-neutral-200 rounded-lg p-4 space-y-3 bg-neutral-50/50 text-xs">
-        <label className="flex items-start gap-3 cursor-pointer group">
-          <input
-            type="radio"
-            name="delivery_method"
-            checked={deliveryMethod === 'ship'}
-            onChange={() => setDeliveryMethod('ship')}
-            className="mt-0.5 accent-[#D31336] w-4 h-4"
-          />
-          <div className="flex-1">
-            <span className="font-bold text-neutral-900 block group-hover:text-neutral-950">
-              Ship it to me
-            </span>
-            <span className="text-neutral-500 text-[11px] block mt-0.5">
-              Free Royal Mail delivery over £50, otherwise £3.99
-            </span>
-          </div>
-        </label>
-
-        <div className="border-t border-neutral-200" />
-
-        <label className="flex items-start gap-3 cursor-pointer group opacity-80">
-          <input
-            type="radio"
-            name="delivery_method"
-            checked={deliveryMethod === 'collect'}
-            onChange={() => setDeliveryMethod('collect')}
-            className="mt-0.5 accent-[#D31336] w-4 h-4"
-          />
-          <div className="flex-1">
-            <span className="font-bold text-neutral-900 block group-hover:text-neutral-950">
-              Pick up in store / Collection
-            </span>
-            <span className="text-neutral-500 text-[11px] block mt-0.5">
-              Available at partner collection hubs across the UK
-            </span>
-          </div>
-        </label>
+      {/* Delivery Highlights */}
+      <div className="border border-neutral-200 rounded-lg p-3.5 bg-neutral-50/60 text-xs flex items-center justify-between">
+        <div>
+          <span className="font-bold text-neutral-900 block">
+            Direct Tracked Delivery
+          </span>
+          <span className="text-neutral-500 text-[11px] block mt-0.5">
+            Free delivery on orders over £50 · Standard delivery £3.99
+          </span>
+        </div>
+        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+          Tracked
+        </span>
       </div>
 
       {/* Primary ADD TO BAG Button */}
@@ -478,11 +404,33 @@ export default function ProductDetails({
         </button>
       </div>
 
-      {/* Express Checkout (Apple Pay & PayPal) */}
-      <div className="pt-2">
-        <ExpressCheckoutButtons
-          onApplePay={handleExpressApplePay}
-          onPayPal={handleExpressPayPal}
+      {/* Express Checkout (Dedicated PayPal - UK GBP) */}
+      <div className="pt-2 space-y-2">
+        <div className="relative flex py-1 items-center">
+          <div className="flex-grow border-t border-neutral-200"></div>
+          <span className="flex-shrink mx-3 text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+            Instant Express Checkout
+          </span>
+          <div className="flex-grow border-t border-neutral-200"></div>
+        </div>
+
+        <PayPalButtons
+          mode="product"
+          productData={{
+            productId: product.id || (product as any).productid,
+            variantId: selectedVariant?.productvariantid,
+            price: currentPrice,
+            quantity: 1,
+            title: productName,
+            colour: selectedColour,
+            size: selectedSize,
+          }}
+          onValidate={() => {
+            if (sizeOptions.size > 0 && !selectedSize) {
+              return 'Please select a size before checking out with PayPal';
+            }
+            return true;
+          }}
         />
       </div>
 
@@ -562,7 +510,7 @@ export default function ProductDetails({
               <p className="font-medium text-neutral-900">Technical Webbing & Alloy Hardware</p>
               <ul className="list-disc list-inside space-y-1">
                 <li>High-density woven ripstop nylon webbing</li>
-                <li>Water-repellent and mud-resistant finish for British wet walks</li>
+                <li>Water-repellent and mud-resistant finish for wet weather and muddy walks</li>
                 <li>Anodised zinc-alloy buckle with corrosion-resistant coating</li>
                 <li>Tensile strength tested to withstand up to 250 kg pull force</li>
               </ul>
@@ -632,36 +580,56 @@ export default function ProductDetails({
               Measure around your dog&apos;s neck with a soft tape measure where the collar would naturally sit. Allow space for two fingers between the collar and neck for optimal comfort.
             </p>
 
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto max-h-[50vh] border border-neutral-200 rounded-md">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-neutral-200 text-neutral-900">
-                    <th className="py-2 pr-3 font-bold">Size</th>
-                    <th className="py-2 px-3 font-bold">Neck Circumference</th>
-                    <th className="py-2 px-3 font-bold">Width</th>
-                    <th className="py-2 pl-3 font-bold">Recommended Breeds</th>
+                  <tr className="border-b border-neutral-200 text-neutral-900 bg-neutral-50 sticky top-0 z-20">
+                    <th className="py-2.5 px-3 font-bold sticky left-0 z-30 bg-neutral-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">Size</th>
+                    <th className="py-2.5 px-3 font-bold whitespace-nowrap">Neck</th>
+                    <th className="py-2.5 px-3 font-bold whitespace-nowrap">Chest</th>
+                    <th className="py-2.5 px-3 font-bold whitespace-nowrap">Matching Leash</th>
+                    <th className="py-2.5 px-3 font-bold whitespace-nowrap">Ideal Breeds</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-neutral-100 text-neutral-700">
-                  {SIZE_GUIDE_DATA.map((row) => (
-                    <tr key={row.size} className={selectedSize === row.size ? 'bg-neutral-50 font-semibold text-neutral-950' : ''}>
-                      <td className="py-2.5 pr-3 font-bold">{row.size}</td>
-                      <td className="py-2.5 px-3">{row.neck}</td>
-                      <td className="py-2.5 px-3">{row.width}</td>
-                      <td className="py-2.5 pl-3 text-neutral-500">{row.breeds}</td>
-                    </tr>
-                  ))}
+                <tbody className="divide-y divide-neutral-100 text-neutral-700 bg-white">
+                  {SIZE_GUIDE_DATA.map((row) => {
+                    const isRowSelected = selectedSize === row.size;
+                    return (
+                      <tr key={row.size} className={isRowSelected ? 'bg-neutral-100/80 font-semibold text-neutral-950' : 'hover:bg-neutral-50/50'}>
+                        <td className={`py-2.5 px-3 font-bold sticky left-0 z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] ${
+                          isRowSelected ? 'bg-neutral-100' : 'bg-white'
+                        }`}>
+                          <span className="inline-block px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-300">
+                            {row.size}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3 whitespace-nowrap">{row.neck}</td>
+                        <td className="py-2.5 px-3 whitespace-nowrap">{row.chest}</td>
+                        <td className="py-2.5 px-3 text-neutral-500 whitespace-nowrap">{row.leash}</td>
+                        <td className="py-2.5 px-3 text-neutral-500 text-[11px] min-w-[150px]">{row.breeds}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setShowSizeGuide(false)}
-              className="mt-6 w-full py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold uppercase rounded transition-colors"
-            >
-              Close
-            </button>
+            <div className="mt-5 flex items-center justify-between gap-3">
+              <Link
+                href="/size-guide"
+                target="_blank"
+                className="text-xs font-bold uppercase tracking-wider text-neutral-900 hover:text-neutral-600 underline"
+              >
+                View Full Interactive Size Guide &rarr;
+              </Link>
+              <button
+                type="button"
+                onClick={() => setShowSizeGuide(false)}
+                className="py-2 px-5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold uppercase rounded transition-colors"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

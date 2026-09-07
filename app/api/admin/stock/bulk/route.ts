@@ -36,9 +36,9 @@ function normalizePrice(value: number): number {
 
 function validatePromoPrice(price: number, promotionalPrice: number | null): string | null {
   if (promotionalPrice == null) return null;
-  if (promotionalPrice < 0) return 'Промо цената не може да бъде отрицателна';
+  if (promotionalPrice < 0) return 'Promotional price cannot be negative';
   if (price > 0 && promotionalPrice >= price) {
-    return 'Промо цената трябва да е по-ниска от обикновената цена';
+    return 'Promotional price must be lower than regular price';
   }
   return null;
 }
@@ -93,7 +93,7 @@ async function handleStockAdjustments(updates: BulkUpdateItem[]) {
       return NextResponse.json(
         {
           success: false,
-          error: `Наличността не може да стане отрицателна (вариант ${item.productvariantid})`,
+          error: `Stock cannot become negative (variant ${item.productvariantid})`,
         },
         { status: 400 }
       );
@@ -244,7 +244,7 @@ async function handleVariantFieldUpdates(variantUpdates: VariantFieldUpdate[]) {
         return NextResponse.json(
           {
             success: false,
-            error: `Наличността не може да стане отрицателна (вариант ${item.productvariantid})`,
+            error: `Stock cannot become negative (variant ${item.productvariantid})`,
           },
           { status: 400 }
         );
@@ -285,7 +285,7 @@ async function handleVariantFieldUpdates(variantUpdates: VariantFieldUpdate[]) {
           {
             success: false,
             error: missingColumn
-              ? 'Колоната promotional_price липсва. Изпълнете migration-add-variant-promotional-price.sql'
+              ? 'Column promotional_price is missing. Run migration-add-variant-promotional-price.sql'
               : updateError.message || 'Failed to update variant',
             partialResults: results,
           },

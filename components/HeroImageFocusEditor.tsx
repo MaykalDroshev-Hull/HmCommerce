@@ -90,7 +90,7 @@ export default function HeroImageFocusEditor({
           <img
             ref={imageRef}
             src={imageUrl}
-            alt="Преглед на hero изображение"
+            alt="Hero image preview"
             onLoad={handleImageLoad}
             className="w-full h-full object-contain"
             style={{ pointerEvents: 'none' }}
@@ -118,7 +118,7 @@ export default function HeroImageFocusEditor({
                     color: '#ffffff'
                   }}
                 >
-                  Мобилен изглед
+                  Mobile view
                 </div>
               </div>
 
@@ -141,7 +141,7 @@ export default function HeroImageFocusEditor({
                     color: '#ffffff'
                   }}
                 >
-                  Десктоп изглед
+                  Desktop view
                 </div>
               </div>
 
@@ -190,7 +190,7 @@ export default function HeroImageFocusEditor({
       {/* Controls */}
       <div className="flex items-center justify-between">
         <div className="text-sm" style={{ color: theme.colors.textSecondary }}>
-          Кликнете върху изображението, за да зададете точката на фокус. Важната област ще остане видима на всички размери на екрана.
+          Click on the image to set the focus point. The focal area will remain visible across all screen sizes.
         </div>
         <button
           onClick={handleReset}
@@ -207,17 +207,17 @@ export default function HeroImageFocusEditor({
             e.currentTarget.style.opacity = '1';
           }}
         >
-          Нулиране в центъра
+          Reset to center
         </button>
       </div>
 
       {/* Preview info */}
       {imageLoaded && (
         <div className="text-xs space-y-1" style={{ color: theme.colors.textSecondary }}>
-          <div>Точка на фокус: ({focusX.toFixed(1)}%, {focusY.toFixed(1)}%)</div>
+          <div>Focus point: ({focusX.toFixed(1)}%, {focusY.toFixed(1)}%)</div>
           <div className="flex flex-wrap gap-4">
-            <span style={{ color: '#3b82f6' }}>■ Мобилен: Изображението е позиционирано на center {focusY.toFixed(1)}%</span>
-            <span style={{ color: '#10b981' }}>■ Десктоп: Изображението е позиционирано на {focusX.toFixed(1)}% center</span>
+            <span style={{ color: '#3b82f6' }}>■ Mobile: Image positioned at center {focusY.toFixed(1)}%</span>
+            <span style={{ color: '#10b981' }}>■ Desktop: Image positioned at {focusX.toFixed(1)}% center</span>
           </div>
         </div>
       )}

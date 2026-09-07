@@ -40,8 +40,8 @@ export function getVariantOptionsMap(variant: any): Record<string, string> {
 export function isSizePropertyKey(propertyKey: string, displayName?: string): boolean {
   const key = propertyKey.toLowerCase();
   const label = (displayName || propertyKey).toLowerCase();
-  if (key === 'size' || key === 'razmer' || key === 'размер') return true;
-  if (label.includes('size') || label.includes('размер')) return true;
+  if (key === 'size' || key === 'razmer') return true;
+  if (label.includes('size')) return true;
   if (key.includes('size') || key.includes('razmer')) return true;
   return false;
 }
@@ -173,21 +173,15 @@ export function getInStockSizeEntries(product: Product): Array<{ size: string; q
   return entries.sort((a, b) => compareSizeValues(a.size, b.size));
 }
 
-/** Card label: "L размер 2 бр." when only one size has stock, otherwise total in stock. */
+/** Card label: e.g. "L: 2 pcs" when only one size has stock, otherwise total in stock. */
 export function getProductCardStockDisplay(
   product: Product,
   language: 'bg' | 'en',
   unitLabel: string
 ): string {
   const entries = getInStockSizeEntries(product);
-  if (entries.length === 0) {
-    return `0 ${unitLabel}`;
-  }
   if (entries.length === 1) {
     const { size, quantity } = entries[0];
-    if (language === 'bg') {
-      return `${size} размер ${quantity} ${unitLabel}`;
-    }
     return `${size}: ${quantity} ${unitLabel}`;
   }
 

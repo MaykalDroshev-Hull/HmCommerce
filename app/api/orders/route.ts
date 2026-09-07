@@ -254,7 +254,7 @@ async function createOrder(orderData: OrderData): Promise<string> {
 
   const baseNotes = orderData.delivery.notes?.trim();
   const missingOffice = orderData.delivery.missingEcontOffice?.trim();
-  const missingOfficeNote = missingOffice ? `НОВ ОФИС ЕКОНТ: ${missingOffice}` : '';
+  const missingOfficeNote = missingOffice ? `NEW DELIVERY LOCATION: ${missingOffice}` : '';
   const deliveryNotes = [baseNotes, missingOfficeNote].filter(Boolean).join('\n');
 
   const orderRecord = {
@@ -401,7 +401,7 @@ export async function POST(request: NextRequest) {
       .limit(1)
       .single();
 
-    const language = (storeSettings?.language === 'bg' || storeSettings?.language === 'en') ? storeSettings.language : 'en';
+    const language = 'en';
 
     // Prepare order details for emails
     const orderDetails = {

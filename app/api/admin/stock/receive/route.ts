@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger';
 
 
 /**
- * Register incoming stock (заприхождаване) for an existing variant.
+ * Register incoming stock  for an existing variant.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     if (!productVariantId || !quantity || quantity <= 0) {
       return NextResponse.json(
-        { success: false, error: 'Невалидни данни: вариант и положително количество са задължителни.' },
+        { success: false, error: 'Invalid data: variant and a positive quantity are required.' },
         { status: 400 }
       );
     }
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     if (!res.ok) {
       return NextResponse.json(
-        { success: false, error: res.error || 'Грешка при заприхождаване' },
+        { success: false, error: res.error || 'Error registering incoming stock' },
         { status: 500 }
       );
     }

@@ -56,7 +56,7 @@ export const themes: Theme[] = [
   {
     id: 'dark',
     name: 'Dark Mode',
-    nameBg: 'Тъмен режим',
+    nameBg: 'Dark Mode',
     colors: {
       background: '#1a1a1a',
       surface: '#2a2a2a',
@@ -82,7 +82,7 @@ export const themes: Theme[] = [
   {
     id: 'vibrant',
     name: 'Bold & Vibrant',
-    nameBg: 'Смел и Ярък',
+    nameBg: 'Bold & Vibrant',
     colors: {
       background: '#ffffff',
       surface: '#ffffff',
@@ -108,7 +108,7 @@ export const themes: Theme[] = [
   {
     id: 'luxury',
     name: 'Elegant Luxury',
-    nameBg: 'Елегантен Лукс',
+    nameBg: 'Elegant Luxury',
     colors: {
       background: '#faf8f3',
       surface: '#ffffff',
@@ -134,7 +134,7 @@ export const themes: Theme[] = [
   {
     id: 'gradient',
     name: 'Modern Gradient',
-    nameBg: 'Модерен Градиент',
+    nameBg: 'Modern Gradient',
     colors: {
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       surface: '#ffffff',
@@ -161,7 +161,7 @@ export const themes: Theme[] = [
   {
     id: 'retro',
     name: 'Retro Vintage',
-    nameBg: 'Ретро Винтаж',
+    nameBg: 'Retro Vintage',
     colors: {
       background: '#f5e6d3',
       surface: '#ffffff',
@@ -187,7 +187,7 @@ export const themes: Theme[] = [
   {
     id: 'nature',
     name: 'Nature Organic',
-    nameBg: 'Природен Органичен',
+    nameBg: 'Natural Organic',
     colors: {
       background: '#f0f7f0',
       surface: '#ffffff',
@@ -213,7 +213,7 @@ export const themes: Theme[] = [
   {
     id: 'neon',
     name: 'Tech Neon',
-    nameBg: 'Техно Неон',
+    nameBg: 'Cyber Neon',
     colors: {
       background: '#0a0a0a',
       surface: '#1a1a1a',
@@ -239,7 +239,7 @@ export const themes: Theme[] = [
   {
     id: 'pastel',
     name: 'Soft Pastel',
-    nameBg: 'Мек Пастел',
+    nameBg: 'Soft Pastel',
     colors: {
       background: '#fff5f8',
       surface: '#ffffff',
@@ -265,7 +265,7 @@ export const themes: Theme[] = [
   {
     id: 'corporate',
     name: 'Professional Corporate',
-    nameBg: 'Професионален Корпоративен',
+    nameBg: 'Corporate Pro',
     colors: {
       background: '#f8f9fa',
       surface: '#ffffff',

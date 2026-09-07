@@ -290,9 +290,7 @@ export default function EditProductVariantsModal({ product, onClose, onSave }: E
   const generateVariantCombinations = () => {
     // This would generate all possible combinations of properties
     // For now, we'll keep it simple and let users add variants manually
-    alert(language === 'bg'
-      ? 'Функцията за автоматично генериране на варианти ще бъде добавена скоро'
-      : 'Auto-generate variants feature will be added soon'
+    alert('Auto-generate variants feature will be added soon'
     );
   };
 
@@ -312,8 +310,8 @@ export default function EditProductVariantsModal({ product, onClose, onSave }: E
         >
           <h2 className="text-2xl font-bold">
             {isNewProduct
-              ? (language === 'bg' ? 'Добави продукт' : 'Add Product')
-              : (language === 'bg' ? 'Редактирай продукт' : 'Edit Product')
+              ? ('Add Product')
+              : ('Edit Product')
             }
           </h2>
           <button
@@ -330,13 +328,13 @@ export default function EditProductVariantsModal({ product, onClose, onSave }: E
             <div className="space-y-4">
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <Package size={20} />
-                {language === 'bg' ? 'Основна информация' : 'Basic Information'}
+                {'Basic Information'}
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    {language === 'bg' ? 'Име на продукта' : 'Product Name'} *
+                    {'Product Name'} *
                   </label>
                   <input
                     type="text"
@@ -354,7 +352,7 @@ export default function EditProductVariantsModal({ product, onClose, onSave }: E
 
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    {language === 'bg' ? 'Категория' : 'Category'} *
+                    {'Category'} *
                   </label>
                   <select
                     required
@@ -368,7 +366,7 @@ export default function EditProductVariantsModal({ product, onClose, onSave }: E
                     }}
                   >
                     <option value="">
-                      {language === 'bg' ? 'Изберете тип' : 'Select Type'}
+                      {'Select Type'}
                     </option>
                     {productTypes
                       .filter(type => {
@@ -424,7 +422,7 @@ export default function EditProductVariantsModal({ product, onClose, onSave }: E
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium mb-1">
-                    {language === 'bg' ? 'Описание' : 'Description'}
+                    {'Description'}
                   </label>
                   <textarea
                     value={productForm.description}
@@ -446,7 +444,7 @@ export default function EditProductVariantsModal({ product, onClose, onSave }: E
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold flex items-center gap-2">
                   <Settings size={20} />
-                  {language === 'bg' ? 'Варианти на продукта' : 'Product Variants'}
+                  {'Product Variants'}
                 </h3>
                 <div className="flex gap-2">
                   <button
@@ -458,7 +456,7 @@ export default function EditProductVariantsModal({ product, onClose, onSave }: E
                       color: theme.colors.text
                     }}
                   >
-                    {language === 'bg' ? 'Генерирай варианти' : 'Generate Variants'}
+                    {'Generate Variants'}
                   </button>
                   <button
                     type="button"
@@ -466,7 +464,7 @@ export default function EditProductVariantsModal({ product, onClose, onSave }: E
                     className="px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex items-center gap-2"
                   >
                     <Plus size={16} />
-                    {language === 'bg' ? 'Добави вариант' : 'Add Variant'}
+                    {'Add Variant'}
                   </button>
                 </div>
               </div>
@@ -479,12 +477,10 @@ export default function EditProductVariantsModal({ product, onClose, onSave }: E
                 >
                   <Package size={48} className="mx-auto mb-4 opacity-50" />
                   <p className="text-lg font-medium">
-                    {language === 'bg' ? 'Няма варианти' : 'No variants yet'}
+                    {'No variants yet'}
                   </p>
                   <p className="text-sm opacity-75 mt-2">
-                    {language === 'bg'
-                      ? 'Добавете варианти за да управлявате различни комбинации от характеристики'
-                      : 'Add variants to manage different characteristic combinations'
+                    {'Add variants to manage different characteristic combinations'
                     }
                   </p>
                 </div>
@@ -494,22 +490,22 @@ export default function EditProductVariantsModal({ product, onClose, onSave }: E
                     <thead>
                       <tr style={{ borderBottomColor: theme.colors.border }} className="border-b">
                         <th className="text-left py-2 px-3 font-medium text-sm" style={{ color: theme.colors.text }}>
-                          {language === 'bg' ? 'Вариант' : 'Variant'}
+                          {'Variant'}
                         </th>
                         <th className="text-left py-2 px-3 font-medium text-sm" style={{ color: theme.colors.text }}>
                           SKU
                         </th>
                         <th className="text-left py-2 px-3 font-medium text-sm" style={{ color: theme.colors.text, width: '80px' }}>
-                          {language === 'bg' ? 'Цена' : 'Price'}
+                          {'Price'}
                         </th>
                         <th className="text-left py-2 px-3 font-medium text-sm" style={{ color: theme.colors.text, width: '90px' }}>
-                          {language === 'bg' ? 'Количество' : 'Quantity'}
+                          {'Quantity'}
                         </th>
                         <th className="text-left py-2 px-3 font-medium text-sm" style={{ color: theme.colors.text }}>
-                          {language === 'bg' ? 'Изображение' : 'Image'}
+                          {'Image'}
                         </th>
                         <th className="text-left py-2 px-3 font-medium text-sm" style={{ color: theme.colors.text, width: '60px' }}>
-                          {language === 'bg' ? 'Действия' : 'Actions'}
+                          {'Actions'}
                         </th>
                       </tr>
                     </thead>
@@ -523,7 +519,7 @@ export default function EditProductVariantsModal({ product, onClose, onSave }: E
                             variantDesc.push(`${property.name}: ${value}`);
                           }
                         });
-                        const variantDescription = variantDesc.join(', ') || `${language === 'bg' ? 'Вариант' : 'Variant'} ${index + 1}`;
+                        const variantDescription = variantDesc.join(', ') || `${'Variant'} ${index + 1}`;
                         
                         const variantImage = variant.images && variant.images.length > 0 ? variant.images[0] : null;
                         
@@ -554,7 +550,7 @@ export default function EditProductVariantsModal({ product, onClose, onSave }: E
                                   borderColor: theme.colors.border,
                                   color: theme.colors.text
                                 }}
-                                placeholder={language === 'bg' ? 'SKU' : 'SKU'}
+                                placeholder={'SKU'}
                               />
                             </td>
                             <td className="py-3 px-3" style={{ width: '80px' }}>
@@ -613,7 +609,7 @@ export default function EditProductVariantsModal({ product, onClose, onSave }: E
                                     borderColor: theme.colors.border,
                                     color: theme.colors.text
                                   }}
-                                  title={language === 'bg' ? 'Добави/Редактирай снимки' : 'Add/Edit images'}
+                                  title={'Add/Edit images'}
                                 >
                                   <ImageIcon size={16} />
                                 </button>
@@ -624,7 +620,7 @@ export default function EditProductVariantsModal({ product, onClose, onSave }: E
                                 type="button"
                                 onClick={() => deleteVariant(index)}
                                 className="p-1.5 rounded bg-red-500 text-white hover:bg-red-600 transition-colors"
-                                title={language === 'bg' ? 'Изтрий' : 'Delete'}
+                                title={'Delete'}
                               >
                                 <Trash2 size={20} />
                               </button>
@@ -653,14 +649,14 @@ export default function EditProductVariantsModal({ product, onClose, onSave }: E
                 color: theme.colors.text
               }}
             >
-              {language === 'bg' ? 'Отказ' : 'Cancel'}
+              {'Cancel'}
             </button>
             <button
               type="submit"
               className="px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex items-center gap-2"
             >
               <Save size={16} />
-              {language === 'bg' ? 'Запази' : 'Save'}
+              {'Save'}
             </button>
           </div>
 
@@ -669,12 +665,10 @@ export default function EditProductVariantsModal({ product, onClose, onSave }: E
             <div className="space-y-4">
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <List size={20} />
-                {language === 'bg' ? 'Налични стойности на характеристиките' : 'Available Property Values'}
+                {'Available Property Values'}
               </h3>
               <p className="text-sm opacity-75">
-                {language === 'bg'
-                  ? 'Изберете кои стойности на характеристиките са налични за този продукт'
-                  : 'Select which property values are available for this product'
+                {'Select which property values are available for this product'
                 }
               </p>
 
@@ -690,7 +684,7 @@ export default function EditProductVariantsModal({ product, onClose, onSave }: E
 
                         {availableValues.length === 0 ? (
                           <p className="text-sm text-gray-500 italic">
-                            {language === 'bg' ? 'Няма налични стойности' : 'No values available'}
+                            {'No values available'}
                           </p>
                         ) : (
                           <div className="space-y-2 max-h-40 overflow-y-auto border rounded p-3"
@@ -714,7 +708,7 @@ export default function EditProductVariantsModal({ product, onClose, onSave }: E
                         )}
 
                         <div className="text-xs opacity-75">
-                          {language === 'bg' ? 'Избрани:' : 'Selected:'} {(selectedPropertyValues[property.propertyid] || []).length} / {availableValues.length}
+                          {'Selected:'} {(selectedPropertyValues[property.propertyid] || []).length} / {availableValues.length}
                         </div>
                       </div>
                     );
@@ -723,9 +717,7 @@ export default function EditProductVariantsModal({ product, onClose, onSave }: E
 
               {availableProperties.filter(prop => prop.datatype === 'select').length === 0 && (
                 <div className="text-center py-8 text-gray-500">
-                  {language === 'bg'
-                    ? 'Няма select характеристики за тази категория'
-                    : 'No select properties for this product type'
+                  {'No select properties for this product type'
                   }
                 </div>
               )}
@@ -854,7 +846,7 @@ function VariantModal({
 
   const handleImageUpload = async (file: File) => {
     if (!file.type.startsWith('image/')) {
-      alert(language === 'bg' ? 'Моля изберете снимка (JPG, PNG, etc.)' : 'Please select an image (JPG, PNG, etc.)');
+      alert('Please select an image (JPG, PNG, etc.)');
       return;
     }
 
@@ -891,17 +883,13 @@ function VariantModal({
         const currentImages = variant.images || [];
         updateVariant('images', currentImages.filter(img => img !== tempPreviewUrl));
         URL.revokeObjectURL(tempPreviewUrl);
-        alert(language === 'bg' 
-          ? `Грешка при качване: ${result.error || 'Неуспешно качване'}` 
-          : `Upload error: ${result.error || 'Upload failed'}`);
+        alert(`Upload error: ${result.error || 'Upload failed'}`);
       }
     } catch {
       const currentImages = variant.images || [];
       updateVariant('images', currentImages.filter(img => img !== tempPreviewUrl));
       URL.revokeObjectURL(tempPreviewUrl);
-      alert(language === 'bg' 
-        ? 'Грешка при качване на снимка' 
-        : 'Error uploading image');
+      alert('Error uploading image');
     } finally {
       setUploadingImages(prev => prev.filter(id => id !== tempId));
     }
@@ -962,7 +950,7 @@ function VariantModal({
           style={{ borderColor: theme.colors.border }}
         >
           <h3 className="text-xl font-bold">
-            {language === 'bg' ? 'Редактирай вариант' : 'Edit Variant'}
+            {'Edit Variant'}
           </h3>
           <button
             onClick={onClose}
@@ -988,14 +976,14 @@ function VariantModal({
                   color: theme.colors.text,
                   width: '100%'
                 }}
-                placeholder={language === 'bg' ? 'Напр. PROD-001' : 'e.g. PROD-001'}
+                placeholder={'e.g. PROD-001'}
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  {language === 'bg' ? 'Количество' : 'Quantity'} *
+                  {'Quantity'} *
                 </label>
                 <input
                   type="number"
@@ -1014,7 +1002,7 @@ function VariantModal({
 
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  {language === 'bg' ? 'Цена' : 'Price'}
+                  {'Price'}
                 </label>
                 <input
                   type="number"
@@ -1038,7 +1026,7 @@ function VariantModal({
           {availableProperties.length > 0 && (
             <div className="space-y-4">
               <h4 className="text-lg font-semibold">
-                {language === 'bg' ? 'Характеристики на варианта' : 'Variant Properties'}
+                {'Variant Properties'}
               </h4>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1063,7 +1051,7 @@ function VariantModal({
                           }}
                         >
                           <option value="">
-                            {language === 'bg' ? 'Изберете...' : 'Select...'}
+                            {'Select...'}
                           </option>
                           {availableValues
                             .filter(value => {
@@ -1099,12 +1087,10 @@ function VariantModal({
           {/* Variant Images */}
           <div className="space-y-4">
             <h4 className="text-lg font-semibold">
-              {language === 'bg' ? 'Снимки на варианта' : 'Variant Images'}
+              {'Variant Images'}
             </h4>
             <p className="text-sm opacity-75">
-              {language === 'bg'
-                ? 'Добавете специфични снимки за този вариант. Те ще се покажат, когато потребителят избере този SKU.'
-                : 'Add specific images for this variant. These will be shown when the user selects this SKU.'}
+              {'Add specific images for this variant. These will be shown when the user selects this SKU.'}
             </p>
             
             {/* Drag & Drop Area */}
@@ -1131,9 +1117,7 @@ function VariantModal({
                   className="text-sm mb-3 transition-colors duration-300 px-2"
                   style={{ color: theme.colors.text }}
                 >
-                  {language === 'bg' 
-                    ? 'Плъзнете снимки тук или кликнете за избор' 
-                    : 'Drag images here or click to select'}
+                  {'Drag images here or click to select'}
                 </p>
                 <button
                   type="button"
@@ -1151,7 +1135,7 @@ function VariantModal({
                   }}
                 >
                   <Upload size={16} />
-                  <span>{language === 'bg' ? 'Избери снимки' : 'Select Images'}</span>
+                  <span>{'Select Images'}</span>
                 </button>
                 <input
                   ref={fileInputRef}
@@ -1165,9 +1149,7 @@ function VariantModal({
                   className="text-xs mt-2 transition-colors duration-300"
                   style={{ color: theme.colors.textSecondary }}
                 >
-                  {language === 'bg' 
-                    ? 'JPG, PNG, GIF до 10MB' 
-                    : 'JPG, PNG, GIF up to 10MB'}
+                  {'JPG, PNG, GIF up to 10MB'}
                 </p>
               </div>
             </div>
@@ -1179,9 +1161,7 @@ function VariantModal({
                   className="text-xs transition-colors duration-300"
                   style={{ color: theme.colors.textSecondary }}
                 >
-                  {language === 'bg' 
-                    ? `Качени снимки: ${variant.images.length}` 
-                    : `Uploaded images: ${variant.images.length}`}
+                  {'Uploaded images: ${variant.images.length}'}
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
                   {variant.images.map((image, index) => {
@@ -1209,7 +1189,7 @@ function VariantModal({
                                 const errorDiv = document.createElement('div');
                                 errorDiv.className = 'w-full h-full flex flex-col items-center justify-center bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs p-2 text-center';
                                 errorDiv.innerHTML = `
-                                  <div>${language === 'bg' ? 'Грешка при зареждане' : 'Load error'}</div>
+                                  <div>${'Load error'}</div>
                                   <div class="text-[10px] mt-1 break-all">${image.substring(0, 30)}...</div>
                                 `;
                                 target.parentElement?.appendChild(errorDiv);
@@ -1219,7 +1199,7 @@ function VariantModal({
                               type="button"
                               onClick={() => removeImage(index)}
                               className="absolute top-1 right-1 p-2 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 active:opacity-100 transition-opacity duration-300 touch-manipulation z-10"
-                              aria-label={language === 'bg' ? 'Премахни снимка' : 'Remove image'}
+                              aria-label={'Remove image'}
                             >
                               <Trash2 size={14} />
                             </button>
@@ -1243,7 +1223,7 @@ function VariantModal({
                 onChange={(e) => updateVariant('trackquantity', e.target.checked)}
               />
               <label htmlFor="trackQuantity" className="text-sm">
-                {language === 'bg' ? 'Проследявай количеството' : 'Track quantity'}
+                {'Track quantity'}
               </label>
             </div>
 
@@ -1258,7 +1238,7 @@ function VariantModal({
                 onChange={(e) => updateVariant('isvisible', e.target.checked)}
               />
               <label htmlFor="isVisible" className="text-sm">
-                {language === 'bg' ? 'Видим' : 'Visible'}
+                {'Visible'}
               </label>
             </div>
           </div>
@@ -1276,13 +1256,13 @@ function VariantModal({
               color: theme.colors.text
             }}
           >
-            {language === 'bg' ? 'Отказ' : 'Cancel'}
+            {'Cancel'}
           </button>
           <button
             onClick={onSave}
             className="px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
           >
-            {language === 'bg' ? 'Запази вариант' : 'Save Variant'}
+            {'Save Variant'}
           </button>
         </div>
       </div>

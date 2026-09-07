@@ -1,4 +1,4 @@
-const DEFAULT_STOREFRONT_URL = 'https://mb-something.co.uk';
+const DEFAULT_STOREFRONT_URL = 'https://mb-paws.co.uk';
 
 /** Public storefront origin for customer-facing links (never admin). */
 export function getStorefrontBaseUrl(): string {

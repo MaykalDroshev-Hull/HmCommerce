@@ -126,18 +126,8 @@ export function getShippingEstimate(orderDateIso: string, language: Language): S
   };
 }
 
-export function getShippingEstimateMessage(orderDateIso: string, language: Language): string {
-  const estimate = getShippingEstimate(orderDateIso, language);
-
-  if (language === 'bg') {
-    if (estimate.orderOnWeekend) {
-      return `Поръчката ви е получена в почивен ден и ще бъде изпратена в ${estimate.shipDateLabel}. Очаквана доставка: ${estimate.expectedDeliveryLabel} (обикновено 1 работен ден след изпращане).`;
-    }
-    if (estimate.shipsSameDay) {
-      return `Поръчката ви ще бъде изпратена днес (${estimate.shipDateLabel}), тъй като е направена преди 13:00 ч. в работен ден. Очаквана доставка: ${estimate.expectedDeliveryLabel} (обикновено 1 работен ден).`;
-    }
-    return `Поръчката ви ще бъде изпратена на ${estimate.shipDateLabel} (след 13:00 ч. изпращаме на следващия работен ден). Очаквана доставка: ${estimate.expectedDeliveryLabel} (обикновено 1 работен ден).`;
-  }
+export function getShippingEstimateMessage(orderDateIso: string, language?: Language): string {
+  const estimate = getShippingEstimate(orderDateIso, 'en');
 
   if (estimate.orderOnWeekend) {
     return `Your order was received on a weekend and will be dispatched on ${estimate.shipDateLabel}. Expected delivery: ${estimate.expectedDeliveryLabel} (typically 1 business day after dispatch).`;

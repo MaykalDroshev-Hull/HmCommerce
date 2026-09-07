@@ -70,7 +70,7 @@ export default function AdminSuperPromoPage() {
 
   useEffect(() => {
     document.title =
-      language === 'bg' ? 'SUPER PROMO - Админ' : 'SUPER PROMO - Admin';
+      'SUPER PROMO - Admin';
   }, [language]);
 
   useEffect(() => {
@@ -232,16 +232,14 @@ export default function AdminSuperPromoPage() {
 
     if (!formData.productid || variantIds.length === 0) {
       setFormError(
-        language === 'bg'
-          ? 'Изберете продукт и поне един размер.'
-          : 'Select a product and at least one size.'
+        'Select a product and at least one size.'
       );
       return;
     }
 
     const promoPrice = parseFloat(formData.promoprice);
     if (!Number.isFinite(promoPrice) || promoPrice <= 0) {
-      setFormError(language === 'bg' ? 'Въведете валидна промо цена.' : 'Enter a valid promo price.');
+      setFormError('Enter a valid promo price.');
       return;
     }
 
@@ -313,7 +311,7 @@ export default function AdminSuperPromoPage() {
         if (failed.length === results.length) {
           setFormError(
             failed[0]?.error ||
-              (language === 'bg' ? 'Неуспешен запис на офертите.' : 'Failed to save offers.')
+              ('Failed to save offers.')
           );
           return;
         }
@@ -321,9 +319,7 @@ export default function AdminSuperPromoPage() {
         if (failed.length > 0) {
           await loadItems();
           setFormError(
-            language === 'bg'
-              ? `Записани ${results.length - failed.length} от ${results.length} размера. Някои вече са в SUPER PROMO.`
-              : `Saved ${results.length - failed.length} of ${results.length} sizes. Some were already in SUPER PROMO.`
+            `Saved ${results.length - failed.length} of ${results.length} sizes. Some were already in SUPER PROMO.`
           );
           return;
         }
@@ -333,7 +329,7 @@ export default function AdminSuperPromoPage() {
       resetForm();
       await loadItems();
     } catch {
-      setFormError(language === 'bg' ? 'Грешка при запис.' : 'Failed to save.');
+      setFormError('Failed to save.');
     } finally {
       setSubmitting(false);
     }
@@ -341,7 +337,7 @@ export default function AdminSuperPromoPage() {
 
   const handleDelete = async (id: string) => {
     const confirmed = window.confirm(
-      language === 'bg' ? 'Изтриване на SUPER PROMO офертата?' : 'Delete this SUPER PROMO offer?'
+      'Delete this SUPER PROMO offer?'
     );
     if (!confirmed) return;
 
@@ -373,9 +369,7 @@ export default function AdminSuperPromoPage() {
               SUPER PROMO
             </h1>
             <p className="text-sm mt-1" style={{ color: theme.colors.textSecondary }}>
-              {language === 'bg'
-                ? 'Добавете избрани продукти и размери със специална промо цена за страницата /super-promo.'
-                : 'Add chosen products and sizes with special promo prices for the /super-promo page.'}
+              {'Add chosen products and sizes with special promo prices for the /super-promo page.'}
             </p>
           </div>
           <div className="flex gap-2">
@@ -387,7 +381,7 @@ export default function AdminSuperPromoPage() {
               style={{ borderColor: theme.colors.border, color: theme.colors.text }}
             >
               <ExternalLink size={16} />
-              {language === 'bg' ? 'Виж страницата' : 'View page'}
+              {'View page'}
             </a>
             <button
               type="button"
@@ -396,7 +390,7 @@ export default function AdminSuperPromoPage() {
               style={{ backgroundColor: theme.colors.primary }}
             >
               <Plus size={16} />
-              {language === 'bg' ? 'Добави оферта' : 'Add offer'}
+              {'Add offer'}
             </button>
           </div>
         </div>
@@ -407,19 +401,19 @@ export default function AdminSuperPromoPage() {
         >
           {items.length === 0 ? (
             <div className="p-10 text-center text-sm" style={{ color: theme.colors.textSecondary }}>
-              {language === 'bg' ? 'Няма SUPER PROMO оферти.' : 'No SUPER PROMO offers yet.'}
+              {'No SUPER PROMO offers yet.'}
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead style={{ backgroundColor: theme.colors.secondary }}>
                   <tr>
-                    <th className="text-left px-4 py-3">{language === 'bg' ? 'Продукт' : 'Product'}</th>
-                    <th className="text-left px-4 py-3">{language === 'bg' ? 'Размер' : 'Size'}</th>
-                    <th className="text-left px-4 py-3">{language === 'bg' ? 'Оригинал' : 'Original'}</th>
+                    <th className="text-left px-4 py-3">{'Product'}</th>
+                    <th className="text-left px-4 py-3">{'Size'}</th>
+                    <th className="text-left px-4 py-3">{'Original'}</th>
                     <th className="text-left px-4 py-3">SUPER PROMO</th>
-                    <th className="text-left px-4 py-3">{language === 'bg' ? 'Ред' : 'Order'}</th>
-                    <th className="text-right px-4 py-3">{language === 'bg' ? 'Действия' : 'Actions'}</th>
+                    <th className="text-left px-4 py-3">{'Order'}</th>
+                    <th className="text-right px-4 py-3">{'Actions'}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -472,12 +466,12 @@ export default function AdminSuperPromoPage() {
             resetForm();
           }
         }}
-        title={editingId ? (language === 'bg' ? 'Редакция SUPER PROMO' : 'Edit SUPER PROMO') : (language === 'bg' ? 'Нова SUPER PROMO оферта' : 'New SUPER PROMO offer')}
+        title={editingId ? ('Edit SUPER PROMO') : ('New SUPER PROMO offer')}
       >
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">
-              {language === 'bg' ? 'Продукт' : 'Product'}
+              {'Product'}
             </label>
             <select
               value={formData.productid}
@@ -491,7 +485,7 @@ export default function AdminSuperPromoPage() {
               }
               className="w-full border rounded-lg px-3 py-2 text-sm"
             >
-              <option value="">{language === 'bg' ? 'Изберете продукт' : 'Select product'}</option>
+              <option value="">{'Select product'}</option>
               {products.map((product) => (
                 <option key={product.productid} value={product.productid}>
                   {product.name}
@@ -515,21 +509,15 @@ export default function AdminSuperPromoPage() {
                 }
                 disabled={!formData.productid || variants.length === 0}
               />
-              {language === 'bg'
-                ? 'Избери повече от един размер'
-                : 'Select more than one size'}
+              {'Select more than one size'}
             </label>
           )}
 
           <div>
             <label className="block text-sm font-medium mb-1">
               {formData.multiSize && !editingId
-                ? language === 'bg'
-                  ? 'Размери'
-                  : 'Sizes'
-                : language === 'bg'
-                  ? 'Вариант / размер'
-                  : 'Variant / size'}
+                ? 'Sizes'
+                : 'Variant / size'}
             </label>
 
             {formData.multiSize && !editingId ? (
@@ -539,11 +527,11 @@ export default function AdminSuperPromoPage() {
               >
                 {loadingVariants ? (
                   <p className="text-sm" style={{ color: theme.colors.textSecondary }}>
-                    {language === 'bg' ? 'Зареждане...' : 'Loading...'}
+                    {'Loading...'}
                   </p>
                 ) : variants.length === 0 ? (
                   <p className="text-sm" style={{ color: theme.colors.textSecondary }}>
-                    {language === 'bg' ? 'Няма налични размери.' : 'No sizes available.'}
+                    {'No sizes available.'}
                   </p>
                 ) : (
                   <>
@@ -566,7 +554,7 @@ export default function AdminSuperPromoPage() {
                           }))
                         }
                       />
-                      {language === 'bg' ? 'Маркирай всички' : 'Select all'}
+                      {'Select all'}
                     </label>
                     {variants.map((variant) => (
                       <label
@@ -595,12 +583,8 @@ export default function AdminSuperPromoPage() {
               >
                 <option value="">
                   {loadingVariants
-                    ? language === 'bg'
-                      ? 'Зареждане...'
-                      : 'Loading...'
-                    : language === 'bg'
-                      ? 'Изберете размер'
-                      : 'Select size'}
+                    ? 'Loading...'
+                    : 'Select size'}
                 </option>
                 {variants.map((variant) => (
                   <option key={variant.productvariantid} value={variant.productvariantid}>
@@ -612,9 +596,7 @@ export default function AdminSuperPromoPage() {
 
             {formData.multiSize && !editingId && formData.selectedVariantIds.length > 0 && (
               <p className="text-xs mt-1" style={{ color: theme.colors.textSecondary }}>
-                {language === 'bg'
-                  ? `Избрани ${formData.selectedVariantIds.length} размера с една и съща промо цена.`
-                  : `${formData.selectedVariantIds.length} sizes selected with the same promo price.`}
+                {`${formData.selectedVariantIds.length} sizes selected with the same promo price.`}
               </p>
             )}
           </div>
@@ -622,7 +604,7 @@ export default function AdminSuperPromoPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">
-                {language === 'bg' ? 'SUPER PROMO цена (€)' : 'SUPER PROMO price (€)'}
+                {'SUPER PROMO price (€)'}
               </label>
               <input
                 type="number"
@@ -636,7 +618,7 @@ export default function AdminSuperPromoPage() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">
-                {language === 'bg' ? 'Ред на показване' : 'Display order'}
+                {'Display order'}
               </label>
               <input
                 type="number"
@@ -653,7 +635,7 @@ export default function AdminSuperPromoPage() {
               checked={formData.isactive}
               onChange={(e) => setFormData({ ...formData, isactive: e.target.checked })}
             />
-            {language === 'bg' ? 'Активна оферта' : 'Active offer'}
+            {'Active offer'}
           </label>
 
           {formError && <p className="text-sm text-red-600">{formError}</p>}
@@ -677,7 +659,7 @@ export default function AdminSuperPromoPage() {
               className="px-4 py-2 rounded-lg text-white text-sm font-medium disabled:opacity-60"
               style={{ backgroundColor: theme.colors.primary }}
             >
-              {submitting ? (language === 'bg' ? 'Запис...' : 'Saving...') : t.save}
+              {submitting ? ('Saving...') : t.save}
             </button>
           </div>
         </div>

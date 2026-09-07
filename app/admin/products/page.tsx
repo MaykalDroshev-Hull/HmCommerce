@@ -48,7 +48,7 @@ function VariantSelectAllCheckbox({
         className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
       />
       <span className="text-xs sm:text-sm text-gray-700">
-        {language === 'bg' ? 'Избери всички' : 'Select all'}
+        {'Select all'}
       </span>
     </label>
   );
@@ -64,7 +64,7 @@ interface Product {
   isdisabled?: boolean;
   /** Shown greyed out on shop as awaiting restock. */
   awaitingrestock?: boolean;
-  /** Percentage discount for ПРОМОЦИЯ label. */
+  /** Percentage discount for PROMOTION label. */
   promodiscountpercent?: number | null;
   ProductType?: ProductType;
   propertyvalues?: Record<string, string>;
@@ -93,7 +93,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    document.title = t.products || (language === 'bg' ? 'Артикули' : 'Items');
+    document.title = t.products || ('Items');
   }, [language, t]);
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -231,7 +231,7 @@ export default function ProductsPage() {
       if (prev.length >= MAX_PRODUCT_IMAGES) {
         alert(
           language === 'bg'
-            ? `Можете да добавите максимум ${MAX_PRODUCT_IMAGES} изображения.`
+            ? `You can add a maximum of ${MAX_PRODUCT_IMAGES} images.`
             : `You can add at most ${MAX_PRODUCT_IMAGES} images.`
         );
         return prev;
@@ -243,7 +243,7 @@ export default function ProductsPage() {
         if (next.length >= MAX_PRODUCT_IMAGES) {
           alert(
             language === 'bg'
-              ? `Добавени са само първите ${MAX_PRODUCT_IMAGES} изображения.`
+              ? `Only the first ${MAX_PRODUCT_IMAGES} images were added.`
               : `Only the first ${MAX_PRODUCT_IMAGES} images were added.`
           );
           break;
@@ -402,14 +402,14 @@ export default function ProductsPage() {
   const handleAddPropertyValue = async (propertyId: string) => {
     const newValue = newPropertyValues[propertyId]?.trim();
     if (!newValue) {
-      alert(language === 'bg' ? 'Моля, въведете стойност' : 'Please enter a value');
+      alert('Please enter a value');
       return;
     }
 
     // Check if value already exists
     const property = productTypeProperties.find(p => p.propertyid === propertyId);
     if (property?.values?.some(v => v.value.toLowerCase() === newValue.toLowerCase())) {
-      alert(language === 'bg' ? 'Тази стойност вече съществува' : 'This value already exists');
+      alert('This value already exists');
       return;
     }
 
@@ -447,10 +447,10 @@ export default function ProductsPage() {
         // Clear the input
         setNewPropertyValues(prev => ({ ...prev, [propertyId]: '' }));
       } else {
-        alert(language === 'bg' ? 'Грешка при добавяне на стойност: ' + result.error : 'Error adding value: ' + result.error);
+        alert('Error adding value: ' + result.error);
       }
     } catch (error) {
-      alert(language === 'bg' ? 'Неуспешно добавяне на стойност' : 'Failed to add property value');
+      alert('Failed to add property value');
     } finally {
       setAddingPropertyValue(prev => ({ ...prev, [propertyId]: false }));
     }
@@ -460,7 +460,7 @@ export default function ProductsPage() {
     e.preventDefault();
     
     if (variants.length === 0) {
-      alert(language === 'bg' ? 'Моля, генерирайте поне един вариант' : 'Please generate at least one variant');
+      alert('Please generate at least one variant');
       return;
     }
 
@@ -494,9 +494,7 @@ export default function ProductsPage() {
       const promoValue = parseFloat(formData.promodiscountpercent);
       if (!Number.isFinite(promoValue) || promoValue <= 0 || promoValue > 99) {
         alert(
-          language === 'bg'
-            ? 'Въведете валидна отстъпка за ПРОМОЦИЯ между 1 и 99%.'
-            : 'Enter a valid ПРОМОЦИЯ discount between 1 and 99%.'
+          'Enter a valid discount between 1 and 99%.'
         );
         return;
       }
@@ -751,7 +749,7 @@ export default function ProductsPage() {
       if (!response.ok || !result.success) {
         alert(
           language === 'bg'
-            ? `Грешка: ${result.error || 'Неуспешна промяна'}`
+            ? `Error: ${result.error || 'Update failed'}`
             : `Error: ${result.error || 'Update failed'}`
         );
         return;
@@ -766,9 +764,7 @@ export default function ProductsPage() {
       }, 1200);
     } catch (error) {
       alert(
-        language === 'bg'
-          ? 'Неуспешна промяна на видимостта'
-          : 'Failed to update visibility'
+        'Failed to update visibility'
       );
     } finally {
       setBulkUpdatingVisibility(false);
@@ -799,7 +795,7 @@ export default function ProductsPage() {
       if (!response.ok || !result.success) {
         alert(
           language === 'bg'
-            ? `Грешка: ${result.error || 'Неуспешна промяна'}`
+            ? `Error: ${result.error || 'Update failed'}`
             : `Error: ${result.error || 'Update failed'}`
         );
         return;
@@ -814,9 +810,7 @@ export default function ProductsPage() {
       }, 1200);
     } catch (error) {
       alert(
-        language === 'bg'
-          ? 'Неуспешна промяна на статуса „изчерпана наличност“'
-          : 'Failed to update out-of-stock display status'
+        'Failed to update out-of-stock display status'
       );
     } finally {
       setBulkUpdatingRestock(false);
@@ -839,7 +833,7 @@ export default function ProductsPage() {
       if (failed.length > 0) {
         alert(
           language === 'bg'
-            ? `Неуспешно изтриване за ${failed.length} продукта.`
+            ? `Failed to delete ${failed.length} product(s).`
             : `Failed to delete ${failed.length} products.`
         );
         setSelectedProductIds(failed.map((item) => item.id));
@@ -861,7 +855,7 @@ export default function ProductsPage() {
         return;
       }
     } catch (error) {
-      alert(language === 'bg' ? 'Неуспешно масово изтриване' : 'Bulk delete failed');
+      alert('Bulk delete failed');
     } finally {
       setBulkDeleting(false);
     }
@@ -1191,18 +1185,16 @@ export default function ProductsPage() {
               className="text-2xl sm:text-3xl font-bold tracking-tight"
               style={{ color: theme.colors.text }}
             >
-              {language === 'bg' ? 'Артикули' : 'Items'}
+              {'Items'}
             </h1>
             <h2
               className="mt-2 text-base sm:text-lg font-semibold"
               style={{ color: theme.colors.text }}
             >
-              {language === 'bg' ? 'Списък с артикули' : 'Items list'}
+              {'Items list'}
             </h2>
             <p className="mt-1 text-sm" style={{ color: theme.colors.textSecondary }}>
-              {language === 'bg'
-                ? 'Управлявайте артикулите и техните варианти'
-                : 'Manage items and their variants'}
+              {'Manage items and their variants'}
             </p>
           </div>
 
@@ -1210,47 +1202,47 @@ export default function ProductsPage() {
           <div className="flex min-w-0 flex-col gap-3">
             <div className="flex flex-wrap items-center justify-start gap-2 lg:justify-end">
               {headerActionButton({
-                label: language === 'bg' ? 'Скрий избрани' : 'Hide selected',
+                label: 'Hide selected',
                 variant: 'outline-orange',
                 onClick: () => setBulkVisibilityModal('hide'),
                 badge: selectedCount > 0 ? selectedCount : undefined,
                 disabled: selectedCount === 0,
-                title: selectedCount > 0 ? undefined : (language === 'bg' ? 'Изберете артикули' : 'Select items first'),
+                title: selectedCount > 0 ? undefined : ('Select items first'),
               })}
               {headerActionButton({
-                label: language === 'bg' ? 'Покажи избрани' : 'Show selected',
+                label: 'Show selected',
                 variant: 'outline-green',
                 onClick: () => setBulkVisibilityModal('show'),
                 badge: selectedCount > 0 ? selectedCount : undefined,
                 disabled: selectedCount === 0,
-                title: selectedCount > 0 ? undefined : (language === 'bg' ? 'Изберете артикули' : 'Select items first'),
+                title: selectedCount > 0 ? undefined : ('Select items first'),
               })}
               {headerActionButton({
-                label: language === 'bg' ? 'Изчерпана наличност' : 'Out of stock',
+                label: 'Out of stock',
                 variant: 'solid-slate',
                 onClick: () => setBulkRestockModal('mark'),
                 badge: selectedCount > 0 ? selectedCount : undefined,
                 disabled: selectedCount === 0,
-                title: selectedCount > 0 ? undefined : (language === 'bg' ? 'Изберете артикули' : 'Select items first'),
+                title: selectedCount > 0 ? undefined : ('Select items first'),
               })}
               {headerActionButton({
-                label: language === 'bg' ? 'Премахни „изчерпан“' : 'Clear out of stock',
+                label: 'Clear out of stock',
                 variant: 'solid-teal',
                 onClick: () => setBulkRestockModal('clear'),
                 badge: selectedCount > 0 ? selectedCount : undefined,
                 disabled: selectedCount === 0,
-                title: selectedCount > 0 ? undefined : (language === 'bg' ? 'Изберете артикули' : 'Select items first'),
+                title: selectedCount > 0 ? undefined : ('Select items first'),
               })}
               {headerActionButton({
-                label: language === 'bg' ? 'Изтрий избрани' : 'Delete selected',
+                label: 'Delete selected',
                 variant: 'solid-red',
                 onClick: () => setShowBulkDeleteModal(true),
                 badge: selectedCount > 0 ? selectedCount : undefined,
                 disabled: selectedCount === 0,
-                title: selectedCount > 0 ? undefined : (language === 'bg' ? 'Изберете артикули' : 'Select items first'),
+                title: selectedCount > 0 ? undefined : ('Select items first'),
               })}
               {headerActionButton({
-                label: language === 'bg' ? 'Добави артикул' : (t.addProduct || 'Add item'),
+                label: t.addProduct || 'Add item',
                 variant: 'solid-violet',
                 onClick: openAddProductModal,
                 showPlus: true,
@@ -1263,7 +1255,7 @@ export default function ProductsPage() {
                   className="text-sm font-medium whitespace-nowrap"
                   style={{ color: theme.colors.text }}
                 >
-                  {language === 'bg' ? 'Филтър по тип:' : 'Filter by type:'}
+                  {'Filter by type:'}
                 </label>
                 <select
                   value={selectedProductTypeFilter}
@@ -1276,7 +1268,7 @@ export default function ProductsPage() {
                   }}
                 >
                   <option value="all">
-                    {language === 'bg' ? 'Всички типове' : 'All types'}
+                    {'All types'}
                   </option>
                   {productTypes.map((type) => (
                     <option key={type.producttypeid} value={type.producttypeid}>
@@ -1286,7 +1278,7 @@ export default function ProductsPage() {
                 </select>
                 {selectedProductTypeFilter !== 'all' && (
                   <span className="text-sm" style={{ color: theme.colors.textSecondary }}>
-                    ({filteredProducts.length} {language === 'bg' ? 'артикула' : 'items'})
+                    ({filteredProducts.length} {'items'})
                   </span>
                 )}
               </div>
@@ -1304,15 +1296,15 @@ export default function ProductsPage() {
           <Section>
             {filteredProducts.length === 0 ? (
               <EmptyState
-                title={language === 'bg' ? selectedProductTypeFilter === 'all' ? 'Няма артикули' : 'Няма артикули от този тип' : selectedProductTypeFilter === 'all' ? 'No Items' : 'No items of this type'}
-                description={language === 'bg' ? selectedProductTypeFilter === 'all' ? 'Създайте първия продукт, за да започнете да продавате.' : 'Няма артикули, отговарящи на избрания филтър.' : selectedProductTypeFilter === 'all' ? 'Create your first product to start selling.' : 'No items match the selected filter.'}
+                title={selectedProductTypeFilter === 'all' ? 'No Items' : 'No items of this type'}
+                description={selectedProductTypeFilter === 'all' ? 'Create your first product to start selling.' : 'No items match the selected filter.'}
                 action={
                   <button
                     onClick={openAddProductModal}
                     className="flex items-center justify-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
-                    {language === 'bg' ? 'Добави артикул' : (t.addProduct || 'Add item')}
+                    {(t.addProduct || 'Add item')}
                   </button>
                 }
                 icon={Package}
@@ -1330,7 +1322,7 @@ export default function ProductsPage() {
                             checked={allSelectedOnPage}
                             onChange={toggleSelectAllProductsOnPage}
                             className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                            aria-label={language === 'bg' ? 'Избери всички' : 'Select all'}
+                            aria-label={'Select all'}
                           />
                         </TableHeaderCell>
                         <TableHeaderCell columnId="name" defaultWidth={360} minWidth={160}>
@@ -1340,7 +1332,7 @@ export default function ProductsPage() {
                           {t.productType}
                         </TableHeaderCell>
                         <TableHeaderCell align="center" columnId="shop" defaultWidth={150} minWidth={110}>
-                          {language === 'bg' ? 'Магазин' : 'Shop'}
+                          {'Shop'}
                         </TableHeaderCell>
                         <TableHeaderCell align="right" columnId="actions" defaultWidth={128} resizable={false}>
                           {t.actions}
@@ -1356,7 +1348,7 @@ export default function ProductsPage() {
                               checked={selectedProductIds.includes(product.productid)}
                               onChange={() => toggleProductSelection(product.productid)}
                               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                              aria-label={language === 'bg' ? 'Избери продукт' : 'Select product'}
+                              aria-label={'Select product'}
                             />
                           </TableCell>
                           <TableCell columnId="name" defaultWidth={360}>
@@ -1373,22 +1365,22 @@ export default function ProductsPage() {
                             <div className="flex flex-col items-center gap-1">
                               {product.isdisabled ? (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-900 border border-amber-200">
-                                  {language === 'bg' ? 'Скрит' : 'Hidden'}
+                                  {'Hidden'}
                                 </span>
                               ) : (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-100">
-                                  {language === 'bg' ? 'Видим' : 'Live'}
+                                  {'Live'}
                                 </span>
                               )}
                               {product.awaitingrestock && (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200">
-                                  {language === 'bg' ? 'Изчерпан' : 'OOS'}
+                                  {'OOS'}
                                 </span>
                               )}
                               {product.promodiscountpercent != null &&
                                 Number(product.promodiscountpercent) > 0 && (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-rose-100 text-rose-800 border border-rose-200">
-                                  ПРОМОЦИЯ −{Number(product.promodiscountpercent)}%
+                                  SALE −{Number(product.promodiscountpercent)}%
                                 </span>
                               )}
                             </div>
@@ -1398,7 +1390,7 @@ export default function ProductsPage() {
                               <button
                                 onClick={() => window.open(`/products/${product.productid}`, '_blank', 'noopener,noreferrer')}
                                 className="p-1.5 sm:p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors touch-manipulation"
-                                title={language === 'bg' ? 'Преглед' : 'View'}
+                                title={'View'}
                               >
                                 <Eye className="w-4 h-4" />
                               </button>
@@ -1412,7 +1404,7 @@ export default function ProductsPage() {
                               <button
                                 onClick={() => handleDeleteClick(product)}
                                 className="p-1.5 sm:p-2 text-danger hover:text-danger-text hover:bg-danger-bg rounded transition-colors touch-manipulation"
-                                title={language === 'bg' ? 'Изтрий' : 'Delete'}
+                                title={'Delete'}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -1438,7 +1430,7 @@ export default function ProductsPage() {
                     onChange={toggleSelectAllProductsOnPage}
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
-                  {language === 'bg' ? 'Избери всички на страницата' : 'Select all on page'}
+                  {'Select all on page'}
                 </label>
               </div>
               <div className="space-y-3">
@@ -1452,7 +1444,7 @@ export default function ProductsPage() {
                           checked={selectedProductIds.includes(product.productid)}
                           onChange={() => toggleProductSelection(product.productid)}
                           className="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                          aria-label={language === 'bg' ? 'Избери продукт' : 'Select product'}
+                          aria-label={'Select product'}
                         />
                         <h3 className="text-sm sm:text-base font-medium text-gray-900 mb-1 truncate">{product.name}</h3>
                       </div>
@@ -1461,18 +1453,18 @@ export default function ProductsPage() {
                           <span className="font-medium">{t.productType}:</span> {productTypes.find(pt => pt.producttypeid === product.producttypeid)?.name || '-'}
                         </p>
                         <p>
-                          <span className="font-medium">{language === 'bg' ? 'Магазин' : 'Shop'}:</span>{' '}
+                          <span className="font-medium">{'Shop'}:</span>{' '}
                           {product.isdisabled ? (
-                            <span className="text-amber-800">{language === 'bg' ? 'Скрит от клиентите' : 'Hidden from customers'}</span>
+                            <span className="text-amber-800">{'Hidden from customers'}</span>
                           ) : (
-                            <span className="text-emerald-800">{language === 'bg' ? 'Видим' : 'Visible'}</span>
+                            <span className="text-emerald-800">{'Visible'}</span>
                           )}
                         </p>
                         {product.awaitingrestock && (
                           <p>
-                            <span className="font-medium">{language === 'bg' ? 'Статус:' : 'Status:'}</span>{' '}
+                            <span className="font-medium">{'Status:'}</span>{' '}
                             <span className="text-slate-700">
-                              {language === 'bg' ? 'Изчерпана наличност' : 'Out of stock display'}
+                              {'Out of stock display'}
                             </span>
                           </p>
                         )}
@@ -1480,7 +1472,7 @@ export default function ProductsPage() {
                           Number(product.promodiscountpercent) > 0 && (
                           <p>
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-rose-100 text-rose-800 border border-rose-200">
-                              ПРОМОЦИЯ −{Number(product.promodiscountpercent)}%
+                              SALE −{Number(product.promodiscountpercent)}%
                             </span>
                           </p>
                         )}
@@ -1490,7 +1482,7 @@ export default function ProductsPage() {
                       <button
                         onClick={() => window.open(`/products/${product.productid}`, '_blank', 'noopener,noreferrer')}
                         className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 active:bg-gray-100 rounded transition-colors touch-manipulation"
-                        title={language === 'bg' ? 'Преглед' : 'View'}
+                        title={'View'}
                       >
                         <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
                       </button>
@@ -1504,7 +1496,7 @@ export default function ProductsPage() {
                       <button
                         onClick={() => handleDeleteClick(product)}
                         className="p-2 text-danger hover:text-danger-text hover:bg-danger-bg active:bg-danger-bg/80 rounded transition-colors touch-manipulation"
-                        title={language === 'bg' ? 'Изтрий' : 'Delete'}
+                        title={'Delete'}
                       >
                         <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                       </button>
@@ -1546,7 +1538,7 @@ export default function ProductsPage() {
                 <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between w-full">
                   <div>
                     <p className="text-xs sm:text-sm text-gray-700">
-                      {t.showingTransactions || 'Showing'} <span className="font-medium">{startIndex + 1}</span> {language === 'bg' ? 'до' : 'to'} <span className="font-medium">{Math.min(endIndex, filteredProducts.length)}</span> {language === 'bg' ? 'от' : 'of'} <span className="font-medium">{filteredProducts.length}</span> {language === 'bg' ? 'артикули' : 'items'}
+                      {t.showingTransactions || 'Showing'} <span className="font-medium">{startIndex + 1}</span> {'to'} <span className="font-medium">{Math.min(endIndex, filteredProducts.length)}</span> {'of'} <span className="font-medium">{filteredProducts.length}</span> {'items'}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1618,8 +1610,8 @@ export default function ProductsPage() {
           }}
           title={editingProduct ? t.editProduct : t.addProduct}
           subheader={editingProduct
-            ? (language === 'bg' ? 'Редактирайте информацията за продукта и неговите варианти' : 'Edit the product information and its variants')
-            : (language === 'bg' ? 'Създайте нов продукт с варианти и характеристики' : 'Create a new product with variants and properties')
+            ? ('Edit the product information and its variants')
+            : ('Create a new product with variants and properties')
           }
           maxWidth="max-w-4xl"
           minWidth={320}
@@ -1642,7 +1634,7 @@ export default function ProductsPage() {
                   </div>
                   <div>
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      {language === 'bg' ? 'Основна категория' : 'Main Category'}
+                      {'Main Category'}
                     </label>
                     <select
                       value={formData.rfproducttypeid}
@@ -1666,9 +1658,9 @@ export default function ProductsPage() {
                         const getTranslatedName = (name: string) => {
                           if (language === 'bg') {
                             const nameLower = name.toLowerCase();
-                            if (nameLower.includes('him') || nameLower.includes('него')) return 'За Него';
-                            if (nameLower.includes('her') || nameLower.includes('нея')) return 'За Нея';
-                            if (nameLower.includes('accessor') || nameLower.includes('аксесоар')) return 'Аксесоар';
+                            if (nameLower.includes('him') || nameLower.includes('collar')) return 'Collars';
+                            if (nameLower.includes('her') || nameLower.includes('harness')) return 'Harnesses';
+                            if (nameLower.includes('accessor')) return 'Accessories';
                           }
                           return name;
                         };
@@ -1682,7 +1674,7 @@ export default function ProductsPage() {
                   </div>
                   <div>
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      {language === 'bg' ? 'Категория' : 'Product Type'}
+                      {'Product Type'}
                     </label>
                     <select
                       value={formData.producttypeid}
@@ -1701,7 +1693,7 @@ export default function ProductsPage() {
                   </div>
                   <div>
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      {language === 'bg' ? 'Описание' : 'Description'}
+                      {'Description'}
                     </label>
                     <textarea
                       value={formData.description}
@@ -1712,19 +1704,19 @@ export default function ProductsPage() {
                   </div>
                   <div>
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      {language === 'bg' ? 'Изображения на продукта' : 'Product Images'}
+                      {'Product Images'}
                       <span className="ml-2 font-normal text-gray-500">
                         ({productImages.length}/{MAX_PRODUCT_IMAGES})
                       </span>
                     </label>
                     <p className="text-xs text-gray-500 mb-2">
                       {language === 'bg'
-                        ? `Качете до ${MAX_PRODUCT_IMAGES} изображения. Колкото качите (1–${MAX_PRODUCT_IMAGES}), толкова ще вижда клиентът. Снимките се компресират автоматично при качване. Добавете изображения с еднакви размери за да се показват правилно.`
+                        ? `Upload up to ${MAX_PRODUCT_IMAGES} images. Add images of the same dimensions for consistent display.`
                         : `Upload up to ${MAX_PRODUCT_IMAGES} images. Customers see exactly how many you upload (1–${MAX_PRODUCT_IMAGES}). Photos are compressed automatically on upload. Use matching sizes for best display.`}
                     </p>
                     {productImages.length === 0 ? (
                       <p className="text-xs text-gray-400 mb-2">
-                        {language === 'bg' ? 'Няма добавени изображения.' : 'No images added.'}
+                        {'No images added.'}
                       </p>
                     ) : (
                       <div className="flex flex-wrap gap-2 mb-2">
@@ -1732,14 +1724,14 @@ export default function ProductsPage() {
                           <div key={`${url}-${index}`} className="relative group">
                             <img
                               src={url}
-                              alt={language === 'bg' ? 'Изображение' : 'Image'}
+                              alt={'Image'}
                               className="w-16 h-16 object-cover rounded border"
                             />
                             <button
                               type="button"
                               onClick={() => removeProductImage(url)}
                               className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity touch-manipulation"
-                              title={language === 'bg' ? 'Премахни изображение' : 'Remove image'}
+                              title={'Remove image'}
                             >
                               ×
                             </button>
@@ -1762,7 +1754,7 @@ export default function ProductsPage() {
                         />
                         <span className="inline-flex items-center gap-2 px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors">
                           <Upload className="w-4 h-4" />
-                          {language === 'bg' ? 'Качи изображения' : 'Upload images'}
+                          {'Upload images'}
                         </span>
                       </label>
                       <button
@@ -1772,7 +1764,7 @@ export default function ProductsPage() {
                         className="inline-flex items-center gap-2 px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <ImageIcon className="w-4 h-4" />
-                        {language === 'bg' ? 'Избери от медия' : 'Select from media'}
+                        {'Select from media'}
                       </button>
                     </div>
                   </div>
@@ -1786,10 +1778,10 @@ export default function ProductsPage() {
                       />
                       <div>
                         <span className="text-xs sm:text-sm font-medium text-gray-700 block">
-                          {language === 'bg' ? 'Избран продукт (показва се на началната страница)' : 'Featured Product (displayed on home page)'}
+                          {'Featured Product (displayed on home page)'}
                         </span>
                         <p className="text-xs text-gray-500 mt-1">
-                          {language === 'bg' ? 'Максимум 4 избрани продукта ще се покажат на началната страница' : 'Maximum 4 featured products will be displayed on the home page'}
+                          {'Maximum 4 featured products will be displayed on the home page'}
                         </p>
                       </div>
                     </label>
@@ -1805,14 +1797,10 @@ export default function ProductsPage() {
                       />
                       <div>
                         <span className="text-xs sm:text-sm font-medium text-gray-700 block">
-                          {language === 'bg'
-                            ? 'Скрий от онлайн магазина (няма наличност / неактивен)'
-                            : 'Hide from online store (out of stock / inactive)'}
+                          {'Hide from online store (out of stock / inactive)'}
                         </span>
                         <p className="text-xs text-gray-500 mt-1">
-                          {language === 'bg'
-                            ? 'Когато е отметнато, клиентите не виждат този артикул в магазина. Можете да го включите отново по всяко време.'
-                            : 'When checked, customers will not see this product in the shop. You can turn it back on anytime.'}
+                          {'When checked, customers will not see this product in the shop. You can turn it back on anytime.'}
                         </p>
                       </div>
                     </label>
@@ -1828,14 +1816,10 @@ export default function ProductsPage() {
                       />
                       <div>
                         <span className="text-xs sm:text-sm font-medium text-gray-700 block">
-                          {language === 'bg'
-                            ? 'Покажи като „Изчерпана наличност“ (очакваме зареждане)'
-                            : 'Show as “Out of stock” (restock coming soon)'}
+                          {'Show as “Out of stock” (restock coming soon)'}
                         </span>
                         <p className="text-xs text-gray-500 mt-1">
-                          {language === 'bg'
-                            ? 'Артикулът остава видим в магазина, но картата е посивена с надпис „Изчерпана наличност / Очакваме зареждане скоро“. Бутонът „Добави в количката“ се скрива.'
-                            : 'Product stays visible in the shop, but the card is greyed out with “Out of stock / Restock coming soon”. Add to cart is hidden.'}
+                          {'Product stays visible in the shop, but the card is greyed out with “Out of stock / Restock coming soon”. Add to cart is hidden.'}
                         </p>
                       </div>
                     </label>
@@ -1857,21 +1841,17 @@ export default function ProductsPage() {
                       />
                       <div className="flex-1 min-w-0">
                         <span className="text-xs sm:text-sm font-medium text-gray-800 block">
-                          {language === 'bg'
-                            ? 'ПРОМОЦИЯ — отстъпка на артикула'
-                            : 'ПРОМОЦИЯ — product discount'}
+                          {'PROMOTION — product discount'}
                         </span>
                         <p className="text-xs text-gray-500 mt-1">
-                          {language === 'bg'
-                            ? 'Показва етикет „ПРОМОЦИЯ“ на картата, зачеркната оригинална цена и новата намалена цена.'
-                            : 'Shows a “ПРОМОЦИЯ” badge on the card, struck-through original price, and the new sale price.'}
+                          {'Shows a "SALE" badge on the card, struck-through original price, and the new sale price.'}
                         </p>
                       </div>
                     </label>
                     {formData.hasPromo && (
                       <div className="mt-3 ml-6 space-y-2">
                         <label className="block text-xs font-medium text-gray-700">
-                          {language === 'bg' ? 'Отстъпка (%)' : 'Discount (%)'}
+                          {'Discount (%)'}
                           <div className="mt-1 flex items-center gap-2 max-w-[200px]">
                             <input
                               type="number"
@@ -1897,9 +1877,7 @@ export default function ProductsPage() {
                           if (!Number.isFinite(percent) || percent <= 0 || original <= 0) {
                             return (
                               <p className="text-xs text-gray-500">
-                                {language === 'bg'
-                                  ? 'Задайте процент и цена на вариант, за да видите новата цена.'
-                                  : 'Set a percent and a variant price to preview the sale price.'}
+                                {'Set a percent and a variant price to preview the sale price.'}
                               </p>
                             );
                           }
@@ -1925,12 +1903,10 @@ export default function ProductsPage() {
                   {formData.producttypeid && productTypeProperties.length > 0 && (
                     <div>
                       <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                        {language === 'bg' ? 'Характеристики на вариантите' : 'Variant Properties'}
+                        {'Variant Properties'}
                       </label>
                       <p className="text-xs text-gray-500 mb-3">
-                        {language === 'bg'
-                          ? 'Изберете няколко стойности за всяка характеристика, за да генерирате варианти'
-                          : 'Select multiple values for each characteristic to generate variants'
+                        {'Select multiple values for each characteristic to generate variants'
                         }
                       </p>
                       <div className="space-y-3 max-h-64 sm:max-h-none overflow-y-auto">
@@ -2008,7 +1984,7 @@ export default function ProductsPage() {
                                   </div>
                                 ) : (
                                   <p className="text-xs text-gray-400 mb-2">
-                                    {language === 'bg' ? 'Няма налични стойности' : 'No values available'}
+                                    {'No values available'}
                                   </p>
                                 )}
                                 {/* Add new value input */}
@@ -2024,7 +2000,7 @@ export default function ProductsPage() {
                                           handleAddPropertyValue(property.propertyid);
                                         }
                                       }}
-                                      placeholder={language === 'bg' ? 'Добави нова стойност...' : 'Add new value...'}
+                                      placeholder={'Add new value...'}
                                       className="flex-1 px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                                       disabled={addingPropertyValue[property.propertyid]}
                                     />
@@ -2037,12 +2013,12 @@ export default function ProductsPage() {
                                       {addingPropertyValue[property.propertyid] ? (
                                         <>
                                           <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                                          <span>{language === 'bg' ? 'Добавяне...' : 'Adding...'}</span>
+                                          <span>{'Adding...'}</span>
                                         </>
                                       ) : (
                                         <>
                                           <Plus className="w-3 h-3" />
-                                          <span>{language === 'bg' ? 'Добави' : 'Add'}</span>
+                                          <span>{'Add'}</span>
                                         </>
                                       )}
                                     </button>
@@ -2080,10 +2056,10 @@ export default function ProductsPage() {
                         // Determine button text
                         let buttonText;
                         if (!editingProduct) {
-                          // New product: "Продължи" / "Continue"
+                          // New product: "Continue"
                           buttonText = t.continue;
                         } else {
-                          // Editing product: Always show "Регенерирай" / "Regenerate"
+                          // Editing product: Always show "Regenerate"
                           buttonText = t.regenerateVariants;
                         }
                         
@@ -2310,7 +2286,7 @@ export default function ProductsPage() {
                                   <td className="px-3 py-2">
                                     {productImages.length === 0 ? (
                                       <span className="text-xs text-gray-400">
-                                        {language === 'bg' ? 'Добавете изображения за продукта' : 'Add product images'}
+                                        {'Add product images'}
                                       </span>
                                     ) : (
                                       <div className="flex items-center gap-2">
@@ -2330,7 +2306,7 @@ export default function ProductsPage() {
                                           onClick={() => openVariantImagePicker(index)}
                                           className="px-3 py-1.5 text-xs border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors"
                                         >
-                                          {language === 'bg' ? 'Избери изображение' : 'Choose image'}
+                                          {'Choose image'}
                                         </button>
                                       </div>
                                     )}
@@ -2349,7 +2325,7 @@ export default function ProductsPage() {
                                       type="button"
                                       onClick={() => deleteVariant(index)}
                                       className="p-1 text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition-colors touch-manipulation"
-                                      title={language === 'bg' ? 'Изтрий' : 'Delete'}
+                                      title={'Delete'}
                                     >
                                       <Trash2 className="w-3 h-3" />
                                     </button>
@@ -2377,7 +2353,7 @@ export default function ProductsPage() {
                                   type="button"
                                   onClick={() => deleteVariant(index)}
                                   className="p-1.5 text-red-600 hover:text-red-900 hover:bg-red-50 rounded flex-shrink-0 transition-colors touch-manipulation"
-                                  title={language === 'bg' ? 'Изтрий' : 'Delete'}
+                                  title={'Delete'}
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </button>
@@ -2571,7 +2547,7 @@ export default function ProductsPage() {
                                 <label className="block text-gray-500 mb-1 text-xs">{t.image}</label>
                                 {productImages.length === 0 ? (
                                   <p className="text-xs text-gray-400">
-                                    {language === 'bg' ? 'Добавете изображения за продукта' : 'Add product images'}
+                                    {'Add product images'}
                                   </p>
                                 ) : (
                                   <div className="flex items-center gap-2">
@@ -2592,7 +2568,7 @@ export default function ProductsPage() {
                                         onClick={() => openVariantImagePicker(index)}
                                         className="px-3 py-2 text-xs border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors"
                                       >
-                                        {language === 'bg' ? 'Избери изображение' : 'Choose image'}
+                                        {'Choose image'}
                                       </button>
                                     </div>
                                   </div>
@@ -2613,7 +2589,7 @@ export default function ProductsPage() {
                         className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md"
                       >
                         <p className="text-sm text-red-800 font-medium">
-                          {language === 'bg' ? 'Моля попълнете липсващите полета' : 'Please fill in the missing fields'}
+                          {'Please fill in the missing fields'}
                         </p>
                       </div>
                     )}
@@ -2637,15 +2613,15 @@ export default function ProductsPage() {
                         }}
                         className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation"
                       >
-                        {language === 'bg' ? 'Отказ' : 'Cancel'}
+                        {'Cancel'}
                       </button>
                       <button
                         type="submit"
                         className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base bg-primary text-primary-foreground rounded hover:opacity-90 active:opacity-80 transition-opacity touch-manipulation"
                       >
                         {editingProduct
-                          ? (language === 'bg' ? 'Актуализиране' : 'Update')
-                          : (language === 'bg' ? 'Създаване' : 'Create')
+                          ? ('Update')
+                          : ('Create')
                         }
                       </button>
                     </div>
@@ -2667,8 +2643,8 @@ export default function ProductsPage() {
             setShowMediaModal(false);
             setMediaTarget(null);
           }}
-          title={language === 'bg' ? 'Избери изображение от медията' : 'Select Image from Media'}
-          subheader={language === 'bg' ? 'Изберете изображение от вашата медийна библиотека' : 'Select an image from your media library'}
+          title={'Select Image from Media'}
+          subheader={'Select an image from your media library'}
           maxWidth="max-w-4xl"
           minWidth={320}
           minHeight={400}
@@ -2677,12 +2653,12 @@ export default function ProductsPage() {
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
                     <p className="mt-2 text-xs sm:text-sm text-gray-500">
-                      {language === 'bg' ? 'Зареждане...' : 'Loading...'}
+                      {'Loading...'}
                     </p>
                   </div>
                 ) : mediaFiles.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
-                    <p className="text-sm">{language === 'bg' ? 'Няма налични изображения' : 'No images available'}</p>
+                    <p className="text-sm">{'No images available'}</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4">
@@ -2700,7 +2676,7 @@ export default function ProductsPage() {
                         />
                         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 group-active:bg-opacity-50 transition-opacity flex items-center justify-center">
                           <span className="text-white text-xs font-medium opacity-0 group-hover:opacity-100">
-                            {language === 'bg' ? 'Избери' : 'Select'}
+                            {'Select'}
                           </span>
                         </div>
                       </button>
@@ -2715,17 +2691,15 @@ export default function ProductsPage() {
             setShowVariantImageModal(false);
             setVariantImageTargetIndex(null);
           }}
-          title={language === 'bg' ? 'Избери изображение за варианта' : 'Select variant image'}
-          subheader={language === 'bg'
-            ? 'Изберете изображение само от качените за продукта'
-            : 'Choose from images uploaded for the product'}
+          title={'Select variant image'}
+          subheader={'Choose from images uploaded for the product'}
           maxWidth="max-w-4xl"
           minWidth={320}
           minHeight={360}
         >
           {productImages.length === 0 ? (
             <div className="text-center py-8 text-sm text-gray-500">
-              {language === 'bg' ? 'Няма качени изображения за този продукт.' : 'No product images uploaded yet.'}
+              {'No product images uploaded yet.'}
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -2735,11 +2709,11 @@ export default function ProductsPage() {
                   type="button"
                   onClick={() => handleSelectVariantImage(url)}
                   className="group relative rounded border border-gray-200 overflow-hidden hover:border-blue-500 transition-colors"
-                  title={language === 'bg' ? 'Избери изображение' : 'Select image'}
+                  title={'Select image'}
                 >
                   <img
                     src={url}
-                    alt={language === 'bg' ? 'Изображение' : 'Image'}
+                    alt={'Image'}
                     className="w-full h-28 object-cover"
                   />
                 </button>
@@ -2755,10 +2729,8 @@ export default function ProductsPage() {
             setShowApplyImageToAllModal(false);
             setApplyImageUrl(null);
           }}
-          title={language === 'bg' ? 'Приложи изображение към всички варианти?' : 'Apply image to all variants?'}
-          subheader={language === 'bg'
-            ? 'Искате ли да зададете това изображение на всички генерирани варианти?'
-            : 'Do you want to assign this image to all generated variants?'}
+          title={'Apply image to all variants?'}
+          subheader={'Do you want to assign this image to all generated variants?'}
           maxWidth="max-w-md"
           minWidth={320}
           minHeight={200}
@@ -2772,7 +2744,7 @@ export default function ProductsPage() {
               }}
               className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation"
             >
-              {language === 'bg' ? 'Не' : 'No'}
+              {'No'}
             </button>
             <button
               type="button"
@@ -2785,7 +2757,7 @@ export default function ProductsPage() {
               }}
               className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base bg-primary text-primary-foreground rounded hover:opacity-90 active:opacity-80 transition-opacity touch-manipulation"
             >
-              {language === 'bg' ? 'Да, към всички' : 'Yes, apply to all'}
+              {'Yes, apply to all'}
             </button>
           </div>
         </AdminModal>
@@ -2800,10 +2772,8 @@ export default function ProductsPage() {
               setShowDeleteCompleteAnimation(false);
             }
           }}
-          title={language === 'bg' ? 'Потвърди изтриване' : 'Confirm Delete'}
-          subheader={language === 'bg' 
-            ? 'Сигурни ли сте, че искате да изтриете този продукт? Това действие не може да бъде отменено.'
-            : 'Are you sure you want to delete this product? This action cannot be undone.'}
+          title={'Confirm Delete'}
+          subheader={'Are you sure you want to delete this product? This action cannot be undone.'}
           maxWidth="max-w-md"
           minWidth={400}
           minHeight={200}
@@ -2813,7 +2783,7 @@ export default function ProductsPage() {
             {productToDelete && (
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="text-sm font-medium text-gray-900 mb-1">
-                  {language === 'bg' ? 'Продукт:' : 'Product:'}
+                  {'Product:'}
                 </p>
                 <p className="text-sm text-gray-700">{productToDelete.name}</p>
               </div>
@@ -2839,7 +2809,7 @@ export default function ProductsPage() {
                 disabled={deleting || showDeleteCompleteAnimation}
                 className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base bg-danger text-danger-foreground rounded hover:opacity-90 active:opacity-80 transition-opacity touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {deleting ? (language === 'bg' ? 'Изтриване...' : 'Deleting...') : (language === 'bg' ? 'Изтрий' : 'Delete')}
+                {deleting ? ('Deleting...') : ('Delete')}
               </button>
             </div>
             </div>
@@ -2863,21 +2833,13 @@ export default function ProductsPage() {
           }}
           title={
             bulkRestockModal === 'mark'
-              ? language === 'bg'
-                ? 'Маркирай като изчерпана наличност'
-                : 'Mark as out of stock'
-              : language === 'bg'
-                ? 'Премахни статуса „изчерпана наличност“'
-                : 'Clear out-of-stock display'
+              ? 'Mark as out of stock'
+              : 'Clear out-of-stock display'
           }
           subheader={
             bulkRestockModal === 'mark'
-              ? language === 'bg'
-                ? 'Избраните артикули ще се показват посивени с надпис „Изчерпана наличност / Очакваме зареждане скоро“.'
-                : 'Selected products will appear greyed out with “Out of stock / Restock coming soon”.'
-              : language === 'bg'
-                ? 'Избраните артикули ще се показват нормално (ако имат наличност).'
-                : 'Selected products will display normally (if they have stock).'
+              ? 'Selected products will appear greyed out with “Out of stock / Restock coming soon”.'
+              : 'Selected products will display normally (if they have stock).'
           }
           maxWidth="max-w-md"
           minWidth={400}
@@ -2891,7 +2853,7 @@ export default function ProductsPage() {
             >
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="text-sm font-medium text-gray-900 mb-1">
-                  {language === 'bg' ? 'Избрани артикули:' : 'Selected items:'}
+                  {'Selected items:'}
                 </p>
                 <p className="text-sm text-gray-700">{selectedProductIds.length}</p>
               </div>
@@ -2920,16 +2882,10 @@ export default function ProductsPage() {
                   }`}
                 >
                   {bulkUpdatingRestock
-                    ? language === 'bg'
-                      ? 'Запазване...'
-                      : 'Saving...'
+                    ? 'Saving...'
                     : bulkRestockModal === 'mark'
-                      ? language === 'bg'
-                        ? 'Маркирай'
-                        : 'Mark selected'
-                      : language === 'bg'
-                        ? 'Премахни статуса'
-                        : 'Clear status'}
+                      ? 'Mark selected'
+                      : 'Clear status'}
                 </button>
               </div>
             </div>
@@ -2952,21 +2908,13 @@ export default function ProductsPage() {
           }}
           title={
             bulkVisibilityModal === 'hide'
-              ? language === 'bg'
-                ? 'Скрий избраните от магазина'
-                : 'Hide selected from shop'
-              : language === 'bg'
-                ? 'Покажи избраните в магазина'
-                : 'Show selected in shop'
+              ? 'Hide selected from shop'
+              : 'Show selected in shop'
           }
           subheader={
             bulkVisibilityModal === 'hide'
-              ? language === 'bg'
-                ? 'Избраните артикули няма да се виждат от клиентите. Можете да ги покажете отново по всяко време.'
-                : 'Selected products will be hidden from customers. You can show them again anytime.'
-              : language === 'bg'
-                ? 'Избраните артикули ще станат видими в онлайн магазина.'
-                : 'Selected products will become visible in the online shop.'
+              ? 'Selected products will be hidden from customers. You can show them again anytime.'
+              : 'Selected products will become visible in the online shop.'
           }
           maxWidth="max-w-md"
           minWidth={400}
@@ -2980,7 +2928,7 @@ export default function ProductsPage() {
             >
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="text-sm font-medium text-gray-900 mb-1">
-                  {language === 'bg' ? 'Избрани артикули:' : 'Selected items:'}
+                  {'Selected items:'}
                 </p>
                 <p className="text-sm text-gray-700">{selectedProductIds.length}</p>
               </div>
@@ -3009,16 +2957,10 @@ export default function ProductsPage() {
                   }`}
                 >
                   {bulkUpdatingVisibility
-                    ? language === 'bg'
-                      ? 'Запазване...'
-                      : 'Saving...'
+                    ? 'Saving...'
                     : bulkVisibilityModal === 'hide'
-                      ? language === 'bg'
-                        ? 'Скрий избраните'
-                        : 'Hide selected'
-                      : language === 'bg'
-                        ? 'Покажи избраните'
-                        : 'Show selected'}
+                      ? 'Hide selected'
+                      : 'Show selected'}
                 </button>
               </div>
             </div>
@@ -3039,10 +2981,8 @@ export default function ProductsPage() {
               setShowBulkDeleteCompleteAnimation(false);
             }
           }}
-          title={language === 'bg' ? 'Потвърди масово изтриване' : 'Confirm Bulk Delete'}
-          subheader={language === 'bg'
-            ? 'Избраните артикули ще бъдат изтрити. Това действие не може да бъде отменено.'
-            : 'Selected products will be deleted. This action cannot be undone.'}
+          title={'Confirm Bulk Delete'}
+          subheader={'Selected products will be deleted. This action cannot be undone.'}
           maxWidth="max-w-md"
           minWidth={400}
           minHeight={200}
@@ -3051,7 +2991,7 @@ export default function ProductsPage() {
             <div className={`space-y-4 transition-all duration-300 ${showBulkDeleteCompleteAnimation ? 'blur-sm pointer-events-none' : ''}`}>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-sm font-medium text-gray-900 mb-1">
-                {language === 'bg' ? 'Избрани артикули:' : 'Selected items:'}
+                {'Selected items:'}
               </p>
               <p className="text-sm text-gray-700">
                 {selectedProductIds.length}
@@ -3077,7 +3017,7 @@ export default function ProductsPage() {
                 disabled={bulkDeleting || showBulkDeleteCompleteAnimation}
                 className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base bg-danger text-danger-foreground rounded hover:opacity-90 active:opacity-80 transition-opacity touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {bulkDeleting ? (language === 'bg' ? 'Изтриване...' : 'Deleting...') : (language === 'bg' ? 'Изтрий избраните' : 'Delete selected')}
+                {bulkDeleting ? ('Deleting...') : ('Delete selected')}
               </button>
             </div>
             </div>

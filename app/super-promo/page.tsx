@@ -77,10 +77,7 @@ export default function SuperPromoPage() {
             {t.superPromoTitle || 'SUPER PROMO'}
           </h1>
           <p className="text-sm sm:text-base max-w-2xl mx-auto" style={{ color: theme.colors.textSecondary }}>
-            {t.superPromoDescription ||
-              (language === 'bg'
-                ? 'Избрани продукти и размери с ексклузивни промо цени – само за ограничено време.'
-                : 'Selected products and sizes with exclusive promo prices – for a limited time only.')}
+            {t.superPromoDescription || 'Selected products and sizes with exclusive promo prices – for a limited time only.'}
           </p>
         </div>
 
@@ -102,10 +99,7 @@ export default function SuperPromoPage() {
             className="rounded-2xl border px-6 py-16 text-center"
             style={{ borderColor: theme.colors.border, color: theme.colors.textSecondary }}
           >
-            {t.superPromoEmpty ||
-              (language === 'bg'
-                ? 'В момента няма активни SUPER PROMO оферти.'
-                : 'There are no active SUPER PROMO offers at the moment.')}
+            {t.superPromoEmpty || 'There are no active SUPER PROMO offers at the moment.'}
           </div>
         )}
       </section>

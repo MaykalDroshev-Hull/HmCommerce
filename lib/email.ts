@@ -83,8 +83,8 @@ function renderEmailOrderItemRow(
           ${showProductLink ? productLink : ''}
         </td>
         <td valign="top" align="right" style="padding: 12px 0; white-space: nowrap;">
-          <div>${item.quantity} × €${item.price.toFixed(2)}</div>
-          <div style="font-weight: bold;">€${(item.quantity * item.price).toFixed(2)}</div>
+          <div>${item.quantity} × £${item.price.toFixed(2)}</div>
+          <div style="font-weight: bold;">£${(item.quantity * item.price).toFixed(2)}</div>
         </td>
       </tr>
     </table>
@@ -143,7 +143,7 @@ export async function sendCustomerOrderEmail(orderDetails: OrderDetails, languag
         </div>
 
         <div class="content">
-          <p>${language === 'bg' ? 'Уважаеми' : 'Dear'} ${orderDetails.customer.firstName} ${orderDetails.customer.lastName},</p>
+          <p>Dear ${orderDetails.customer.firstName} ${orderDetails.customer.lastName},</p>
 
           <p>${t.emailPendingIntro}</p>
           <p><strong>${t.emailPendingAwaitingConfirm}</strong></p>
@@ -157,17 +157,17 @@ export async function sendCustomerOrderEmail(orderDetails: OrderDetails, languag
 
             <div class="item">
               <strong>${t.subtotal}:</strong>
-              <span>€${orderDetails.totals.subtotal.toFixed(2)}</span>
+              <span>£${orderDetails.totals.subtotal.toFixed(2)}</span>
             </div>
 
             <div class="item">
               <strong>${t.delivery} (${getDeliveryTypeLabel(orderDetails.delivery.type, language)}):</strong>
-              <span>€${orderDetails.totals.delivery.toFixed(2)}</span>
+              <span>£${orderDetails.totals.delivery.toFixed(2)}</span>
             </div>
 
             <div class="item total">
               <strong>${t.total}:</strong>
-              <span>€${orderDetails.totals.total.toFixed(2)}</span>
+              <span>£${orderDetails.totals.total.toFixed(2)}</span>
             </div>
           </div>
 
@@ -175,11 +175,11 @@ export async function sendCustomerOrderEmail(orderDetails: OrderDetails, languag
             <h4>${t.emailDeliveryInformation}</h4>
             <p><strong>${t.emailMethod}</strong> ${getDeliveryTypeLabel(orderDetails.delivery.type, language)}</p>
             ${orderDetails.delivery.type === 'address' && (orderDetails.delivery.street || orderDetails.delivery.streetNumber) ? `
-              <p><strong>${language === 'bg' ? 'Адрес' : 'Address'}:</strong> 
+              <p><strong>Address:</strong> 
                 ${orderDetails.delivery.street || ''} ${orderDetails.delivery.streetNumber || ''}
-                ${orderDetails.delivery.entrance ? `, ${language === 'bg' ? 'вх.' : 'Entrance'} ${orderDetails.delivery.entrance}` : ''}
-                ${orderDetails.delivery.floor ? `, ${language === 'bg' ? 'ет.' : 'Floor'} ${orderDetails.delivery.floor}` : ''}
-                ${orderDetails.delivery.apartment ? `, ${language === 'bg' ? 'ап.' : 'Apt'} ${orderDetails.delivery.apartment}` : ''}
+                ${orderDetails.delivery.entrance ? `, Entrance ${orderDetails.delivery.entrance}` : ''}
+                ${orderDetails.delivery.floor ? `, Floor ${orderDetails.delivery.floor}` : ''}
+                ${orderDetails.delivery.apartment ? `, Apt ${orderDetails.delivery.apartment}` : ''}
                 <br>
                 ${orderDetails.customer.city}, ${orderDetails.customer.country}
               </p>
@@ -274,11 +274,11 @@ export async function sendAdminOrderEmail(orderDetails: OrderDetails, language: 
             <h3>${t.emailDeliveryInformation}</h3>
             <p><strong>${t.emailMethod}</strong> ${getDeliveryTypeLabel(orderDetails.delivery.type, language)}</p>
             ${orderDetails.delivery.type === 'address' && (orderDetails.delivery.street || orderDetails.delivery.streetNumber) ? `
-              <p><strong>${language === 'bg' ? 'Адрес' : 'Address'}:</strong> 
+              <p><strong>Address:</strong> 
                 ${orderDetails.delivery.street || ''} ${orderDetails.delivery.streetNumber || ''}
-                ${orderDetails.delivery.entrance ? `, ${language === 'bg' ? 'вх.' : 'Entrance'} ${orderDetails.delivery.entrance}` : ''}
-                ${orderDetails.delivery.floor ? `, ${language === 'bg' ? 'ет.' : 'Floor'} ${orderDetails.delivery.floor}` : ''}
-                ${orderDetails.delivery.apartment ? `, ${language === 'bg' ? 'ап.' : 'Apt'} ${orderDetails.delivery.apartment}` : ''}
+                ${orderDetails.delivery.entrance ? `, Entrance ${orderDetails.delivery.entrance}` : ''}
+                ${orderDetails.delivery.floor ? `, Floor ${orderDetails.delivery.floor}` : ''}
+                ${orderDetails.delivery.apartment ? `, Apt ${orderDetails.delivery.apartment}` : ''}
                 <br>
                 ${orderDetails.customer.city}, ${orderDetails.customer.country}
               </p>
@@ -300,17 +300,17 @@ export async function sendAdminOrderEmail(orderDetails: OrderDetails, language: 
 
             <div class="item">
               <strong>${t.subtotal}:</strong>
-              <span>€${orderDetails.totals.subtotal.toFixed(2)}</span>
+              <span>£${orderDetails.totals.subtotal.toFixed(2)}</span>
             </div>
 
             <div class="item">
               <strong>${t.delivery} (${getDeliveryTypeLabel(orderDetails.delivery.type, language)}):</strong>
-              <span>€${orderDetails.totals.delivery.toFixed(2)}</span>
+              <span>£${orderDetails.totals.delivery.toFixed(2)}</span>
             </div>
 
             <div class="item total">
               <strong>${t.total}:</strong>
-              <span>€${orderDetails.totals.total.toFixed(2)}</span>
+              <span>£${orderDetails.totals.total.toFixed(2)}</span>
             </div>
           </div>
 
@@ -434,7 +434,7 @@ export async function sendOrderStatusEmail(
         </div>
 
         <div class="content">
-          <p>${language === 'bg' ? 'Уважаеми' : 'Dear'} ${orderDetails.customer.firstName} ${orderDetails.customer.lastName},</p>
+          <p>Dear ${orderDetails.customer.firstName} ${orderDetails.customer.lastName},</p>
 
           <p>${statusInfo.message}</p>
 
@@ -448,7 +448,7 @@ export async function sendOrderStatusEmail(
 
             <div class="item total">
                         <strong>${t.total}:</strong>
-                        <span>€${orderDetails.totals.total.toFixed(2)}</span>
+                        <span>£${orderDetails.totals.total.toFixed(2)}</span>
                       </div>
                     </div>
 

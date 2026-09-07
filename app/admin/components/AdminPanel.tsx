@@ -123,7 +123,7 @@ export default function AdminPanel() {
           await loadProducts();
           setEditingProduct(null);
         } else {
-          alert(language === 'bg' ? 'Грешка при създаване на продукт' : 'Error creating product');
+          alert('Error creating product');
         }
       } else {
         // Update existing product
@@ -139,18 +139,16 @@ export default function AdminPanel() {
           await loadProducts();
           setEditingProduct(null);
         } else {
-          alert(language === 'bg' ? 'Грешка при обновяване на продукт' : 'Error updating product');
+          alert('Error updating product');
         }
       }
     } catch {
-      alert(language === 'bg' ? 'Грешка при записване на продукт' : 'Error saving product');
+      alert('Error saving product');
     }
   };
 
   const handleDeleteProduct = async (id: string | number) => {
-    if (!confirm(language === 'bg' 
-      ? 'Сигурни ли сте, че искате да изтриете този продукт?' 
-      : 'Are you sure you want to delete this product?')) {
+    if (!confirm('Are you sure you want to delete this product?')) {
       return;
     }
 
@@ -162,10 +160,10 @@ export default function AdminPanel() {
       if (response.ok) {
         await loadProducts();
       } else {
-        alert(language === 'bg' ? 'Грешка при изтриване на продукт' : 'Error deleting product');
+        alert('Error deleting product');
       }
     } catch {
-      alert(language === 'bg' ? 'Грешка при изтриване на продукт' : 'Error deleting product');
+      alert('Error deleting product');
     }
   };
 
@@ -200,12 +198,12 @@ export default function AdminPanel() {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Моля изберете снимка (JPG, PNG, etc.)');
+      alert('Please select an image (JPG, PNG, etc.)');
       return;
     }
 
     setUploading(true);
-    setUploadProgress('Качване на снимка...');
+    setUploadProgress('Uploading image...');
 
     try {
       const formData = new FormData();
@@ -220,7 +218,7 @@ export default function AdminPanel() {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        setUploadProgress(`✅ Снимката е качена успешно!`);
+        setUploadProgress('Image uploaded successfully.');
         
         // Add to uploaded files list
         setUploadedFiles(prev => [{
@@ -237,10 +235,10 @@ export default function AdminPanel() {
           setShowUploadModal(false);
         }, 2000);
       } else {
-        setUploadProgress(`❌ Грешка: ${result.error || 'Неуспешно качване'}`);
+        setUploadProgress(`Error: ${result.error || 'Upload failed'}`);
       }
     } catch (error) {
-      setUploadProgress(`❌ Грешка: ${error instanceof Error ? error.message : 'Неочаквана грешка'}`);
+      setUploadProgress(`Error: ${error instanceof Error ? error.message : 'Unexpected error'}`);
     } finally {
       setUploading(false);
     }
@@ -273,7 +271,7 @@ export default function AdminPanel() {
                   }}
                 >
                   <Plus size={18} />
-                  <span>{language === 'bg' ? 'Добави продукт' : 'Add Product'}</span>
+                  <span>{'Add Product'}</span>
                 </button>
                 
                 <div className="hidden lg:block">
@@ -434,7 +432,7 @@ export default function AdminPanel() {
                             <button
                               onClick={() => handleDeleteProduct(product.id)}
                               className="p-2 rounded touch-manipulation text-red-600 active:bg-red-50"
-                              aria-label={language === 'bg' ? 'Изтрий продукт' : 'Delete product'}
+                              aria-label={'Delete product'}
                             >
                               <Trash2 size={18} />
                             </button>
@@ -635,7 +633,7 @@ export default function AdminPanel() {
                           <button
                             onClick={() => handleDeleteProduct(product.id)}
                             className="p-2 rounded transition-colors duration-300 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                            aria-label={language === 'bg' ? 'Изтрий продукт' : 'Delete product'}
+                            aria-label={'Delete product'}
                           >
                             <Trash2 size={18} />
                           </button>
@@ -672,8 +670,8 @@ export default function AdminPanel() {
         <AdminModal
           isOpen={showUploadModal}
           onClose={() => !uploading && setShowUploadModal(false)}
-          title={language === 'bg' ? 'Качи снимка в Storage' : 'Upload Image to Storage'}
-          subheader={language === 'bg' ? 'Качете изображения във вашата медийна библиотека' : 'Upload images to your media library'}
+          title={'Upload Image to Storage'}
+          subheader={'Upload images to your media library'}
           maxWidth="max-w-2xl"
           minWidth={500}
           minHeight={400}
@@ -684,7 +682,7 @@ export default function AdminPanel() {
                   className="block mb-2 text-sm font-medium"
                   style={{ color: theme.colors.text }}
                 >
-                  {language === 'bg' ? 'Избери снимка' : 'Select Image'}
+                  {'Select Image'}
                 </label>
                 <div 
                   className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors"
@@ -733,17 +731,13 @@ export default function AdminPanel() {
                       className="text-sm mb-2"
                       style={{ color: theme.colors.text }}
                     >
-                      {language === 'bg' 
-                        ? 'Кликни или влачи снимка тук' 
-                        : 'Click or drag image here'}
+                      {'Click or drag image here'}
                     </p>
                     <p 
                       className="text-xs"
                       style={{ color: theme.colors.textSecondary }}
                     >
-                      {language === 'bg' 
-                        ? 'JPG, PNG, GIF до 10MB' 
-                        : 'JPG, PNG, GIF up to 10MB'}
+                      {'JPG, PNG, GIF up to 10MB'}
                     </p>
                   </label>
                 </div>
@@ -776,7 +770,7 @@ export default function AdminPanel() {
                     className="text-sm font-medium mb-3"
                     style={{ color: theme.colors.text }}
                   >
-                    {language === 'bg' ? 'Качени снимки' : 'Uploaded Images'} ({uploadedFiles.length})
+                    {'Uploaded Images'} ({uploadedFiles.length})
                   </h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-h-64 overflow-y-auto">
                     {uploadedFiles.slice(0, 6).map((file, index) => (
@@ -799,7 +793,7 @@ export default function AdminPanel() {
                             rel="noopener noreferrer"
                             className="opacity-0 group-hover:opacity-100 text-white text-xs px-2 py-1 bg-black bg-opacity-75 rounded"
                           >
-                            {language === 'bg' ? 'Отвори' : 'Open'}
+                            {'Open'}
                           </a>
                         </div>
                         <p 

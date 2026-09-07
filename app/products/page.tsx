@@ -17,10 +17,10 @@ export default function ProductsPage() {
   const t = translations[language];
 
   useEffect(() => {
-    const pageTitle = t.products || (language === 'bg' ? 'Артикули' : 'Items');
+    const pageTitle = t.products || 'Products';
     const storeName = settings?.storename || '';
     document.title = storeName ? `${pageTitle} - ${storeName}` : pageTitle;
-  }, [language, t, settings?.storename]);
+  }, [t, settings?.storename]);
 
   useEffect(() => {
     const adminState = localStorage.getItem('isAdmin');

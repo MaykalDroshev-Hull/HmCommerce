@@ -50,9 +50,7 @@ export default function QuickLoginModal({
       if (response.status === 429) {
         const retryAfter = response.headers.get('Retry-After')
         const retryMinutes = retryAfter ? Math.ceil(parseInt(retryAfter) / 60) : 15
-        setError(language === 'bg' 
-          ? `Твърде много опити. Моля, изчакайте ${retryMinutes} минути.`
-          : `Too many attempts. Please wait ${retryMinutes} minutes.`)
+        setError(`Too many attempts. Please wait ${retryMinutes} minutes.`)
         return
       }
 
@@ -111,9 +109,7 @@ export default function QuickLoginModal({
       }
 
     } catch (err: any) {
-      setError(language === 'bg' 
-        ? 'Възникна грешка. Моля, опитайте отново.' 
-        : 'An error occurred. Please try again.')
+      setError('An error occurred. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -147,7 +143,7 @@ export default function QuickLoginModal({
           className="text-2xl font-bold mb-2"
           style={{ color: theme.colors.text }}
         >
-          {t.loginTitle || (language === 'bg' ? 'Вход' : 'Login')}
+          {t.loginTitle || 'Login'}
         </h2>
         <p 
           className="text-sm mb-6"
@@ -161,16 +157,17 @@ export default function QuickLoginModal({
           <div 
             className="mb-4 p-3 rounded-lg flex items-start gap-2"
             style={{ 
-              backgroundColor: theme.colors.surface,
-              border: `1px solid ${theme.colors.border}`
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              color: '#ef4444'
             }}
           >
-            <AlertCircle size={18} style={{ color: '#ef4444', marginTop: '2px' }} />
-            <span className="text-sm" style={{ color: '#ef4444' }}>{error}</span>
+            <AlertCircle size={18} className="shrink-0 mt-0.5" />
+            <span className="text-sm">{error}</span>
           </div>
         )}
 
-        {/* Login form */}
+        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Email field */}
           <div>
@@ -178,7 +175,7 @@ export default function QuickLoginModal({
               className="block text-sm font-medium mb-1.5"
               style={{ color: theme.colors.text }}
             >
-              {t.email || 'Email'}
+              {t.email}
             </label>
             <div className="relative">
               <Mail 
@@ -197,7 +194,7 @@ export default function QuickLoginModal({
                   borderColor: theme.colors.border,
                   color: theme.colors.text
                 }}
-                placeholder={language === 'bg' ? 'Имейл адрес' : 'Email address'}
+                placeholder="Email address"
                 disabled={isLoading}
               />
             </div>
@@ -228,7 +225,7 @@ export default function QuickLoginModal({
                   borderColor: theme.colors.border,
                   color: theme.colors.text
                 }}
-                placeholder={language === 'bg' ? 'Парола' : 'Password'}
+                placeholder="Password"
                 disabled={isLoading}
               />
               <button
@@ -253,8 +250,8 @@ export default function QuickLoginModal({
             }}
           >
             {isLoading 
-              ? (language === 'bg' ? 'Влизане...' : 'Logging in...')
-              : t.loginButton || (language === 'bg' ? 'Вход' : 'Login')
+              ? 'Logging in...'
+              : (t.loginButton || 'Login')
             }
           </button>
         </form>
@@ -266,7 +263,7 @@ export default function QuickLoginModal({
             className="text-sm underline hover:opacity-80 transition-opacity"
             style={{ color: theme.colors.primary }}
           >
-            {language === 'bg' ? 'Нямате профил? Регистрирайте се' : "Don't have an account? Register"}
+            Don&apos;t have an account? Register
           </a>
         </div>
       </div>

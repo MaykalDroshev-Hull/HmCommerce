@@ -155,7 +155,7 @@ export default function OrdersPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(language === 'bg' ? 'bg-BG' : 'en-US', {
+    return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -190,13 +190,13 @@ export default function OrdersPage() {
             className="text-2xl sm:text-3xl font-bold"
             style={{ color: theme.colors.text }}
           >
-            {language === 'bg' ? 'Поръчки' : 'Orders'}
+            {'Orders'}
           </h1>
           <p
             className="mt-1 sm:mt-2 text-sm sm:text-base"
             style={{ color: theme.colors.textSecondary }}
           >
-            {language === 'bg' ? 'Управление на поръчки' : 'Manage and view all orders'}
+            {'Manage and view all orders'}
           </p>
         </div>
 
@@ -211,7 +211,7 @@ export default function OrdersPage() {
             }}
           >
             <p className="text-xs sm:text-sm font-medium opacity-75" style={{ color: theme.colors.textSecondary }}>
-              {language === 'bg' ? 'Всички поръчки' : 'Total Orders'}
+              {'Total Orders'}
             </p>
             <p className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">{orders.length}</p>
           </div>
@@ -224,7 +224,7 @@ export default function OrdersPage() {
             }}
           >
             <p className="text-xs sm:text-sm font-medium opacity-75" style={{ color: theme.colors.textSecondary }}>
-              {language === 'bg' ? 'Изчакващи' : 'Pending'}
+              {'Pending'}
             </p>
             <p className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">{pendingOrders}</p>
           </div>
@@ -237,7 +237,7 @@ export default function OrdersPage() {
             }}
           >
             <p className="text-xs sm:text-sm font-medium opacity-75" style={{ color: theme.colors.textSecondary }}>
-              {language === 'bg' ? 'Изпратени' : 'Shipped'}
+              {'Shipped'}
             </p>
             <p className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">{shippedOrders}</p>
           </div>
@@ -250,7 +250,7 @@ export default function OrdersPage() {
             }}
           >
             <p className="text-xs sm:text-sm font-medium opacity-75" style={{ color: theme.colors.textSecondary }}>
-              {language === 'bg' ? 'Общо приходи' : 'Total Revenue'}
+              {'Total Revenue'}
             </p>
             <p className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">€{totalRevenue.toFixed(2)}</p>
           </div>
@@ -269,7 +269,7 @@ export default function OrdersPage() {
               border: `1px solid ${theme.colors.border}`
             }}
           >
-            {language === 'bg' ? 'Всички' : 'All'}
+            {'All'}
           </button>
           {['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'].map((status) => (
             <button
@@ -303,7 +303,7 @@ export default function OrdersPage() {
             </div>
           ) : orders.length === 0 ? (
             <div className="p-8 text-center" style={{ color: theme.colors.textSecondary }}>
-              {language === 'bg' ? 'Няма поръчки' : 'No orders found'}
+              {'No orders found'}
             </div>
           ) : (
             <table className="w-full">
@@ -313,22 +313,22 @@ export default function OrdersPage() {
                   style={{ borderColor: theme.colors.border }}
                 >
                   <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium uppercase" style={{ color: theme.colors.textSecondary }}>
-                    {language === 'bg' ? 'Поръчка' : 'Order ID'}
+                    {'Order ID'}
                   </th>
                   <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium uppercase" style={{ color: theme.colors.textSecondary }}>
-                    {language === 'bg' ? 'Клиент' : 'Customer'}
+                    {'Customer'}
                   </th>
                   <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium uppercase" style={{ color: theme.colors.textSecondary }}>
-                    {language === 'bg' ? 'Статус' : 'Status'}
+                    {'Status'}
                   </th>
                   <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium uppercase" style={{ color: theme.colors.textSecondary }}>
-                    {language === 'bg' ? 'Сума' : 'Total'}
+                    {'Total'}
                   </th>
                   <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium uppercase" style={{ color: theme.colors.textSecondary }}>
-                    {language === 'bg' ? 'Дата' : 'Date'}
+                    {'Date'}
                   </th>
                   <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium uppercase" style={{ color: theme.colors.textSecondary }}>
-                    {language === 'bg' ? 'Действия' : 'Actions'}
+                    {'Actions'}
                   </th>
                 </tr>
               </thead>
@@ -381,7 +381,7 @@ export default function OrdersPage() {
                             color: theme.colors.primary,
                             backgroundColor: selectedOrder?.orderid === order.orderid ? theme.colors.secondary : 'transparent'
                           }}
-                          title={language === 'bg' ? 'Виж детайли' : 'View details'}
+                          title={'View details'}
                         >
                           <Eye size={16} />
                         </button>
@@ -396,11 +396,11 @@ export default function OrdersPage() {
                             color: theme.colors.text
                           }}
                         >
-                          <option value="pending">{language === 'bg' ? 'Изчаква' : 'Pending'}</option>
-                          <option value="confirmed">{language === 'bg' ? 'Потвърдена' : 'Confirmed'}</option>
-                          <option value="shipped">{language === 'bg' ? 'Изпратена' : 'Shipped'}</option>
-                          <option value="delivered">{language === 'bg' ? 'Доставена' : 'Delivered'}</option>
-                          <option value="cancelled">{language === 'bg' ? 'Отменена' : 'Cancelled'}</option>
+                          <option value="pending">{'Pending'}</option>
+                          <option value="confirmed">{'Confirmed'}</option>
+                          <option value="shipped">{'Shipped'}</option>
+                          <option value="delivered">{'Delivered'}</option>
+                          <option value="cancelled">{'Cancelled'}</option>
                         </select>
                       </div>
                     </td>
@@ -427,7 +427,7 @@ export default function OrdersPage() {
             >
               <div className="p-4 sm:p-6 border-b flex items-center justify-between" style={{ borderColor: theme.colors.border }}>
                 <h2 className="text-xl font-bold">
-                  {language === 'bg' ? 'Детайли на поръчка' : 'Order Details'} - {selectedOrder.orderid}
+                  {'Order Details'} - {selectedOrder.orderid}
                 </h2>
                 <button
                   onClick={() => setSelectedOrder(null)}
@@ -441,21 +441,21 @@ export default function OrdersPage() {
                 {/* Customer Info */}
                 <div>
                   <h3 className="font-semibold mb-2" style={{ color: theme.colors.text }}>
-                    {language === 'bg' ? 'Информация за клиента' : 'Customer Information'}
+                    {'Customer Information'}
                   </h3>
                   <div className="space-y-1 text-sm" style={{ color: theme.colors.textSecondary }}>
-                    <p><strong>{language === 'bg' ? 'Име:' : 'Name:'}</strong> {selectedOrder.customerfirstname} {selectedOrder.customerlastname}</p>
-                    <p><strong>{language === 'bg' ? 'Имейл:' : 'Email:'}</strong> {selectedOrder.customeremail}</p>
-                    <p><strong>{language === 'bg' ? 'Телефон:' : 'Phone:'}</strong> {selectedOrder.customertelephone}</p>
-                    <p><strong>{language === 'bg' ? 'Град:' : 'City:'}</strong> {selectedOrder.customercity}</p>
-                    <p><strong>{language === 'bg' ? 'Държава:' : 'Country:'}</strong> {selectedOrder.customercountry}</p>
+                    <p><strong>{'Name:'}</strong> {selectedOrder.customerfirstname} {selectedOrder.customerlastname}</p>
+                    <p><strong>{'Email:'}</strong> {selectedOrder.customeremail}</p>
+                    <p><strong>{'Phone:'}</strong> {selectedOrder.customertelephone}</p>
+                    <p><strong>{'City:'}</strong> {selectedOrder.customercity}</p>
+                    <p><strong>{'Country:'}</strong> {selectedOrder.customercountry}</p>
                   </div>
                 </div>
 
                 {/* Order Items */}
                 <div>
                   <h3 className="font-semibold mb-2" style={{ color: theme.colors.text }}>
-                    {language === 'bg' ? 'Поръчани артикули' : 'Order Items'}
+                    {'Order Items'}
                   </h3>
                   <div className="space-y-2">
                     {selectedOrder.order_items?.map((item) => (
@@ -478,7 +478,7 @@ export default function OrdersPage() {
                               </p>
                             )}
                             <p className="text-sm opacity-75">
-                              {language === 'bg' ? 'Количество:' : 'Quantity:'} {item.quantity}
+                              {'Quantity:'} {item.quantity}
                             </p>
                           </div>
                           <p className="font-medium">€{(item.price * item.quantity).toFixed(2)}</p>
@@ -499,19 +499,19 @@ export default function OrdersPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span style={{ color: theme.colors.textSecondary }}>
-                        {language === 'bg' ? 'Междинна сума:' : 'Subtotal:'}
+                        {'Subtotal:'}
                       </span>
                       <span style={{ color: theme.colors.text }}>€{selectedOrder.subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span style={{ color: theme.colors.textSecondary }}>
-                        {language === 'bg' ? 'Доставка:' : 'Delivery:'}
+                        {'Delivery:'}
                       </span>
                       <span style={{ color: theme.colors.text }}>€{selectedOrder.deliverycost.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between font-bold text-lg pt-2 border-t" style={{ borderColor: theme.colors.border }}>
                       <span style={{ color: theme.colors.text }}>
-                        {language === 'bg' ? 'Обща сума:' : 'Total:'}
+                        {'Total:'}
                       </span>
                       <span style={{ color: theme.colors.primary }}>€{selectedOrder.total.toFixed(2)}</span>
                     </div>

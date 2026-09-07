@@ -38,9 +38,9 @@ export interface GroupedStockProduct {
 
 const SIZE_ORDER = ['xxs', 'xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', '2xl', '3xl', '4xl', '5xl'];
 
-const COLOR_KEYS = ['color', 'colour', 'цвят', 'cvyat'];
+const COLOR_KEYS = ['color', 'colour', 'cvyat'];
 
-const SIZE_KEYS = ['size', 'razmer', 'размер'];
+const SIZE_KEYS = ['size', 'razmer'];
 
 function normalizeKey(value: string): string {
   return value.trim().toLowerCase();

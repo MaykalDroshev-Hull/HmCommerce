@@ -27,7 +27,7 @@ const FAQS = [
   },
   {
     q: 'What is your UK returns policy?',
-    a: 'We offer hassle-free 30-day returns on all unworn items with original tags intact. Simply contact support@m-bsomething.co.uk to receive a pre-paid Royal Mail return label.',
+    a: 'We offer hassle-free 30-day returns on all unworn items with original tags intact. Simply contact support@mb-paws.co.uk with your order details for straightforward return instructions.',
   },
 ];
 
@@ -36,7 +36,7 @@ const REVIEWS = [
     author: 'James W. (Cotswolds)',
     dog: 'Labrador Retriever • Size L',
     rating: 5,
-    title: 'Outstanding British build quality',
+    title: 'Outstanding build quality',
     comment: 'The zinc-alloy buckle feels indestructible, and the Heathered Graphite colour looks gorgeous on my black lab. Handles muddy woodland walks effortlessly.',
   },
   {
@@ -185,7 +185,7 @@ export default function ProductView({ product }: ProductViewProps) {
               Crafted For Performance
             </h2>
             <p className="text-2xl sm:text-3xl font-bold text-neutral-950 tracking-tight">
-              Minimalist design. Maximum British weather endurance.
+              Minimalist design. Maximum all-weather endurance.
             </p>
           </div>
 

@@ -2,32 +2,39 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Image from 'next/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useStoreSettings } from '@/context/StoreSettingsContext';
-import { translations } from '@/lib/translations';
-import { CheckCircle, Mail, Clock, Package, Truck, MapPin } from 'lucide-react';
-import type { EcontOfficesData, EcontOffice } from '@/types/econt';
+import { CheckCircle, Package, Truck, MapPin, Mail, ArrowRight } from 'lucide-react';
 
 interface OrderItem {
-  orderitemid: string;
+  id: string;
+  orderid: string;
+  productid: string;
   quantity: number;
   price: number;
-  product?: {
+  product: {
     name: string;
+    images?: string[];
     brand?: string;
     model?: string;
     color?: string;
     size?: string;
-    imageUrl: string;
   };
 }
 
 interface Order {
   orderid: string;
+  createdat: string;
+  total: number;
+  subtotal: number;
+  deliverycost: number;
+  discountcode?: string;
+  discountamount?: number;
+  paymentmethod: string;
+  deliverystatus: string;
   customerfirstname: string;
   customerlastname: string;
   customeremail: string;
@@ -35,33 +42,22 @@ interface Order {
   customercountry: string;
   customercity: string;
   deliverytype: string;
-  deliverynotes: string | null;
-  econtoffice: string | null;
-  deliverystreet: string | null;
-  deliverystreetnumber: string | null;
-  deliveryentrance: string | null;
-  deliveryfloor: string | null;
-  deliveryapartment: string | null;
-  subtotal: number;
-  deliverycost: number;
-  discountcode: string | null;
-  discounttype: string | null;
-  discountvalue: number | null;
-  discountamount: number | null;
-  total: number;
-  status: string;
-  createdat: string;
-  items: OrderItem[];
+  econtoffice?: string;
+  deliverystreet?: string;
+  deliverystreetnumber?: string;
+  deliveryentrance?: string;
+  deliveryfloor?: string;
+  deliveryapartment?: string;
+  deliverynotes?: string;
+  items?: OrderItem[];
 }
 
 function CheckoutSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { language } = useLanguage();
   const { theme } = useTheme();
   const { settings } = useStoreSettings();
-  const t = translations[language || 'en'];
-
+  
   const [orderId, setOrderId] = useState<string>('');
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,11 +65,10 @@ function CheckoutSuccessContent() {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const pageTitle = language === 'bg' ? 'Поръчката е успешна' : 'Order Successful';
-    const storeName = settings?.storename || '';
-    document.title = storeName ? `${pageTitle} - ${storeName}` : pageTitle;
-  }, [language, settings?.storename]);
-  const [econtOffices, setEcontOffices] = useState<EcontOfficesData | null>(null);
+    const pageTitle = 'Order Successful';
+    const storeName = settings?.storename || 'MB-Paws';
+    document.title = `${pageTitle} - ${storeName}`;
+  }, [settings?.storename]);
 
   useEffect(() => {
     const adminState = localStorage.getItem('isAdmin');
@@ -91,17 +86,7 @@ function CheckoutSuccessContent() {
 
     setOrderId(orderIdParam);
     fetchOrderDetails(orderIdParam);
-    loadEcontOffices();
   }, [searchParams, router]);
-
-  const loadEcontOffices = async () => {
-    try {
-      const response = await fetch('/data/econt-offices.json');
-      const data: EcontOfficesData = await response.json();
-      setEcontOffices(data);
-    } catch (error) {
-    }
-  };
 
   const fetchOrderDetails = async (id: string) => {
     try {
@@ -133,19 +118,19 @@ function CheckoutSuccessContent() {
   const getDeliveryTypeLabel = (type: string) => {
     switch (type) {
       case 'office':
-        return language === 'bg' ? 'Офис на Еконт' : 'Econt Office';
+        return 'Collection Point';
       case 'address':
-        return language === 'bg' ? 'Адрес' : 'Address';
+        return 'Tracked Delivery';
       case 'econtomat':
-        return language === 'bg' ? 'Еконтомат' : 'Econtomat';
+        return 'Parcel Locker';
       default:
-        return type;
+        return 'Standard Tracked Delivery';
     }
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString(language === 'bg' ? 'bg-BG' : 'en-US', {
+    return date.toLocaleDateString('en-GB', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -154,40 +139,21 @@ function CheckoutSuccessContent() {
     });
   };
 
-  const getEcontOffice = (officeId: string): EcontOffice | null => {
-    if (!econtOffices || !officeId) return null;
-    
-    // Search through all cities and their offices
-    for (const city in econtOffices.officesByCity) {
-      const offices = econtOffices.officesByCity[city];
-      const office = offices.find((o: EcontOffice) => o.id === officeId);
-      if (office) {
-        return office;
-      }
-    }
-    
-    // If not found, return null
-    return null;
-  };
-
-  const getEcontOfficeName = (officeId: string): string => {
-    const office = getEcontOffice(officeId);
-    return office ? office.name : officeId;
-  };
-
-  if (!orderId) {
-    return null; // Will redirect
-  }
-
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div 
+        className="min-h-screen flex flex-col transition-colors duration-300"
+        style={{ backgroundColor: theme.colors.background }}
+      >
         <Header isAdmin={isAdmin} setIsAdmin={handleSetIsAdmin} />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div 
+              className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4"
+              style={{ borderColor: theme.colors.primary }}
+            />
             <p style={{ color: theme.colors.textSecondary }}>
-              {language === 'bg' ? 'Зареждане на детайли за поръчката...' : 'Loading order details...'}
+              Loading order details...
             </p>
           </div>
         </div>
@@ -198,16 +164,43 @@ function CheckoutSuccessContent() {
 
   if (error || !order) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div 
+        className="min-h-screen flex flex-col transition-colors duration-300"
+        style={{ backgroundColor: theme.colors.background }}
+      >
         <Header isAdmin={isAdmin} setIsAdmin={handleSetIsAdmin} />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center max-w-md">
-            <p className="text-red-600 mb-4">{error || 'Order not found'}</p>
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div 
+            className="max-w-md w-full rounded-lg p-6 text-center transition-colors duration-300"
+            style={{ 
+              backgroundColor: theme.colors.cardBg,
+              border: `1px solid ${theme.colors.border}`
+            }}
+          >
+            <div className="text-red-500 mb-4">
+              <Package size={48} className="mx-auto" />
+            </div>
+            <h2 
+              className="text-xl font-bold mb-2 transition-colors duration-300"
+              style={{ color: theme.colors.text }}
+            >
+              Order Not Found
+            </h2>
+            <p 
+              className="text-sm mb-6 transition-colors duration-300"
+              style={{ color: theme.colors.textSecondary }}
+            >
+              {error || 'Unable to retrieve your order details.'}
+            </p>
             <button
               onClick={() => router.push('/')}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="w-full py-3 rounded-lg font-medium transition-colors duration-300"
+              style={{
+                backgroundColor: theme.colors.primary,
+                color: '#fff'
+              }}
             >
-              {language === 'bg' ? 'Върни се в началото' : 'Return to Home'}
+              Return to Home
             </button>
           </div>
         </div>
@@ -216,428 +209,208 @@ function CheckoutSuccessContent() {
     );
   }
 
-  const isGradientTheme = theme.id === 'gradient';
-
   return (
-    <div className="min-h-screen flex flex-col">
+    <div 
+      className="min-h-screen flex flex-col transition-colors duration-300"
+      style={{ backgroundColor: theme.colors.background }}
+    >
       <Header isAdmin={isAdmin} setIsAdmin={handleSetIsAdmin} />
-      <div 
-        className="flex-1 transition-colors duration-300"
-        style={{ 
-          background: isGradientTheme ? theme.colors.background : theme.colors.background
-        }}
-      >
-        <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
-          {/* Success Header */}
-          <div className="text-center mb-8">
-            <div 
-              className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4"
-              style={{ backgroundColor: theme.colors.primary + '20' }}
-            >
-              <CheckCircle size={32} style={{ color: theme.colors.primary }} />
-            </div>
-            <h1 
-              className="text-3xl sm:text-4xl font-bold mb-2 transition-colors duration-300"
+      
+      <div className="flex-1 max-w-4xl w-full mx-auto px-4 py-8">
+        <div 
+          className="rounded-xl p-6 sm:p-8 mb-8 text-center transition-colors duration-300"
+          style={{
+            backgroundColor: theme.colors.cardBg,
+            border: `1px solid ${theme.colors.border}`,
+            boxShadow: theme.effects.shadow
+          }}
+        >
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 mb-4">
+            <CheckCircle size={32} />
+          </div>
+          <h1 
+            className="text-2xl sm:text-3xl font-bold mb-2 transition-colors duration-300 uppercase tracking-tight"
+            style={{ color: theme.colors.text }}
+          >
+            Order Placed Successfully!
+          </h1>
+          <p 
+            className="text-sm sm:text-base max-w-md mx-auto transition-colors duration-300 leading-relaxed"
+            style={{ color: theme.colors.textSecondary }}
+          >
+            Thank you for your order! We have received your purchase and will dispatch your items promptly. A confirmation email has been sent to you.
+          </p>
+        </div>
+
+        <div 
+          className="rounded-xl p-6 mb-8 transition-colors duration-300"
+          style={{
+            backgroundColor: theme.colors.cardBg,
+            border: `1px solid ${theme.colors.border}`,
+            boxShadow: theme.effects.shadow
+          }}
+        >
+          <div className="flex items-center justify-between pb-4 border-b" style={{ borderColor: theme.colors.border }}>
+            <h2 
+              className="text-lg font-bold uppercase tracking-wider transition-colors duration-300"
               style={{ color: theme.colors.text }}
             >
-              {language === 'bg' ? 'Поръчката е приета успешно!' : 'Order Placed Successfully!'}
-            </h1>
-            <p 
-              className="text-lg transition-colors duration-300"
-              style={{ color: theme.colors.textSecondary }}
-            >
-              {language === 'bg' 
-                ? 'Благодарим за поръчката! Ще обработим поръчката ви възможно най-бързо и ще ви информираме по имейл за всяка промяна в статуса.'
-                : 'Thank you for your order! We will process your order as soon as possible and keep you updated via email.'}
-            </p>
+              Order Summary
+            </h2>
+            <div className="text-right">
+              <span className="text-xs block" style={{ color: theme.colors.textSecondary }}>
+                Order Number
+              </span>
+              <span className="text-sm font-mono font-bold" style={{ color: theme.colors.primary }}>
+                #{order.orderid.slice(0, 8)}
+              </span>
+            </div>
           </div>
 
-          {/* Order Summary Card */}
+          <div className="py-4 text-xs sm:text-sm" style={{ color: theme.colors.textSecondary }}>
+            <span>Order Date: {formatDate(order.createdat)}</span>
+          </div>
+
+          {/* Ordered Items */}
+          {order.items && order.items.length > 0 && (
+            <div className="py-4 border-t border-b" style={{ borderColor: theme.colors.border }}>
+              <h3 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: theme.colors.text }}>
+                Ordered Items
+              </h3>
+              <div className="space-y-4">
+                {order.items.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between gap-4 text-xs sm:text-sm">
+                    <div>
+                      <p className="font-bold text-neutral-900" style={{ color: theme.colors.text }}>
+                        {item.product?.brand || 'MB-Paws'} {item.product?.model || item.product?.name}
+                      </p>
+                      <p className="text-neutral-500 text-[11px] mt-0.5">
+                        {item.product?.color && `Colour: ${item.product.color} · `}
+                        {item.product?.size && `Size: ${item.product.size} · `}
+                        Qty: {item.quantity}
+                      </p>
+                    </div>
+                    <span className="font-bold text-neutral-900" style={{ color: theme.colors.text }}>
+                      £{(item.price * item.quantity).toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Totals */}
+          <div className="pt-4 space-y-2 text-xs sm:text-sm">
+            <div className="flex justify-between" style={{ color: theme.colors.textSecondary }}>
+              <span>Subtotal:</span>
+              <span className="font-semibold" style={{ color: theme.colors.text }}>
+                £{order.subtotal.toFixed(2)}
+              </span>
+            </div>
+
+            {order.discountcode && order.discountamount && order.discountamount > 0 && (
+              <div className="flex justify-between text-emerald-600">
+                <span>Discount ({order.discountcode}):</span>
+                <span>-£{order.discountamount.toFixed(2)}</span>
+              </div>
+            )}
+
+            <div className="flex justify-between" style={{ color: theme.colors.textSecondary }}>
+              <span>Delivery ({getDeliveryTypeLabel(order.deliverytype)}):</span>
+              <span className="font-semibold" style={{ color: theme.colors.text }}>
+                {order.deliverycost === 0 ? 'FREE' : `£${order.deliverycost.toFixed(2)}`}
+              </span>
+            </div>
+
+            <div className="flex justify-between text-base sm:text-lg font-bold pt-3 border-t" style={{ borderColor: theme.colors.border }}>
+              <span style={{ color: theme.colors.text }}>Total:</span>
+              <span style={{ color: theme.colors.primary }}>£{order.total.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Customer & Delivery Information */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 text-xs sm:text-sm">
+          {/* Customer */}
           <div 
-            className="rounded-lg mb-8 p-6 transition-colors duration-300"
+            className="rounded-xl p-6 transition-colors duration-300"
             style={{
               backgroundColor: theme.colors.cardBg,
               border: `1px solid ${theme.colors.border}`
             }}
           >
-            <h2 
-              className="text-xl font-semibold mb-6 transition-colors duration-300"
-              style={{ color: theme.colors.text }}
-            >
-              {language === 'bg' ? 'Резюме на поръчката' : 'Order Summary'}
-            </h2>
-
-            {/* Order ID */}
-            <div className="mb-6 pb-6 border-b" style={{ borderColor: theme.colors.border }}>
-              <p 
-                className="text-sm mb-2 transition-colors duration-300"
-                style={{ color: theme.colors.textSecondary }}
-              >
-                {language === 'bg' ? 'Номер на поръчка' : 'Order Number'}
+            <h3 className="font-bold uppercase tracking-wider mb-3 text-neutral-900" style={{ color: theme.colors.text }}>
+              Customer Details
+            </h3>
+            <div className="space-y-1.5" style={{ color: theme.colors.textSecondary }}>
+              <p className="font-bold text-neutral-900" style={{ color: theme.colors.text }}>
+                {order.customerfirstname} {order.customerlastname}
               </p>
-              <p 
-                className="text-2xl font-bold font-mono transition-colors duration-300"
-                style={{ color: theme.colors.text }}
-              >
-                #{order.orderid}
-              </p>
-              <p 
-                className="text-sm mt-2 transition-colors duration-300"
-                style={{ color: theme.colors.textSecondary }}
-              >
-                {formatDate(order.createdat)}
-              </p>
-            </div>
-
-            {/* Order Items */}
-            <div className="mb-6">
-              <h3 
-                className="text-lg font-medium mb-4 transition-colors duration-300"
-                style={{ color: theme.colors.text }}
-              >
-                {language === 'bg' ? 'Поръчани артикули' : 'Order Items'}
-              </h3>
-              <div className="space-y-4">
-                {order.items.map((item) => (
-                  <div 
-                    key={item.orderitemid} 
-                    className="flex gap-4 pb-4 border-b last:border-b-0 last:pb-0"
-                    style={{ borderColor: theme.colors.border }}
-                  >
-                    <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
-                      <Image
-                        src={item.product?.imageUrl || '/image.png'}
-                        alt={item.product?.name || 'Product'}
-                        fill
-                        className="object-cover"
-                        sizes="80px"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 
-                        className="font-medium mb-1 transition-colors duration-300"
-                        style={{ color: theme.colors.text }}
-                      >
-                        {item.product?.name || 'Unknown Product'}
-                      </h4>
-                      {(item.product?.brand || item.product?.model) && (
-                        <p 
-                          className="text-sm mb-1 transition-colors duration-300"
-                          style={{ color: theme.colors.textSecondary }}
-                        >
-                          {item.product?.brand} {item.product?.model}
-                        </p>
-                      )}
-                      <div className="flex flex-wrap gap-2 text-sm">
-                        {item.product?.color && (
-                          <span 
-                            className="transition-colors duration-300"
-                            style={{ color: theme.colors.textSecondary }}
-                          >
-                            {language === 'bg' ? 'Цвят' : 'Color'}: {item.product.color}
-                          </span>
-                        )}
-                        {item.product?.size && (
-                          <span 
-                            className="transition-colors duration-300"
-                            style={{ color: theme.colors.textSecondary }}
-                          >
-                            {language === 'bg' ? 'Размер' : 'Size'}: {item.product.size}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex justify-between items-center mt-2">
-                        <span 
-                          className="text-sm transition-colors duration-300"
-                          style={{ color: theme.colors.textSecondary }}
-                        >
-                          {language === 'bg' ? 'Количество' : 'Quantity'}: {item.quantity}
-                        </span>
-                        <span 
-                          className="font-medium transition-colors duration-300"
-                          style={{ color: theme.colors.text }}
-                        >
-                          €{(item.price * item.quantity).toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Order Totals */}
-            <div className="pt-4 border-t" style={{ borderColor: theme.colors.border }}>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span style={{ color: theme.colors.textSecondary }}>
-                    {language === 'bg' ? 'Междинна сума' : 'Subtotal'}:
-                  </span>
-                  <span style={{ color: theme.colors.text }}>€{order.subtotal.toFixed(2)}</span>
-                </div>
-                {order.discountcode && order.discountamount && order.discountamount > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span style={{ color: theme.colors.textSecondary }}>
-                      {language === 'bg' ? 'Отстъпка' : 'Discount'} ({order.discountcode}):
-                    </span>
-                    <span className="text-green-600">-€{order.discountamount.toFixed(2)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-sm">
-                  <span style={{ color: theme.colors.textSecondary }}>
-                    {language === 'bg' ? 'Доставка' : 'Delivery'} ({getDeliveryTypeLabel(order.deliverytype)}):
-                  </span>
-                  <span style={{ color: theme.colors.text }}>€{order.deliverycost.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-lg font-bold pt-2 border-t" style={{ borderColor: theme.colors.border }}>
-                  <span style={{ color: theme.colors.text }}>
-                    {language === 'bg' ? 'Обща сума' : 'Total'}:
-                  </span>
-                  <span style={{ color: theme.colors.primary }}>€{order.total.toFixed(2)}</span>
-                </div>
-              </div>
+              <p>{order.customeremail}</p>
+              <p>{order.customertelephone}</p>
+              <p>{order.customercity}, {order.customercountry || 'United Kingdom'}</p>
             </div>
           </div>
 
-          {/* Customer & Delivery Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {/* Customer Info */}
-            <div 
-              className="rounded-lg p-6 transition-colors duration-300"
-              style={{
-                backgroundColor: theme.colors.cardBg,
-                border: `1px solid ${theme.colors.border}`
-              }}
-            >
-              <h3 
-                className="text-lg font-semibold mb-4 transition-colors duration-300"
-                style={{ color: theme.colors.text }}
-              >
-                {language === 'bg' ? 'Информация за клиента' : 'Customer Information'}
-              </h3>
-              <div className="space-y-2 text-sm">
-                <p style={{ color: theme.colors.text }}>
-                  <strong>{order.customerfirstname} {order.customerlastname}</strong>
-                </p>
-                <p style={{ color: theme.colors.textSecondary }}>
-                  {order.customeremail}
-                </p>
-                <p style={{ color: theme.colors.textSecondary }}>
-                  {order.customertelephone}
-                </p>
-                <p style={{ color: theme.colors.textSecondary }}>
-                  {order.customercity}, {order.customercountry}
-                </p>
-              </div>
-            </div>
-
-            {/* Delivery Info */}
-            <div 
-              className="rounded-lg p-6 transition-colors duration-300"
-              style={{
-                backgroundColor: theme.colors.cardBg,
-                border: `1px solid ${theme.colors.border}`
-              }}
-            >
-              <h3 
-                className="text-lg font-semibold mb-4 transition-colors duration-300"
-                style={{ color: theme.colors.text }}
-              >
-                {language === 'bg' ? 'Информация за доставка' : 'Delivery Information'}
-              </h3>
-              <div className="space-y-2 text-sm">
-                <p style={{ color: theme.colors.textSecondary }}>
-                  <strong style={{ color: theme.colors.text }}>
-                    {language === 'bg' ? 'Тип доставка' : 'Delivery Type'}:
-                  </strong> {getDeliveryTypeLabel(order.deliverytype)}
-                </p>
-                
-                {/* Econt Office Details */}
-                {order.deliverytype === 'office' && order.econtoffice && (() => {
-                  const office = getEcontOffice(order.econtoffice);
-                  return office ? (
-                    <div>
-                      <p style={{ color: theme.colors.textSecondary }}>
-                        <strong style={{ color: theme.colors.text }}>
-                          {language === 'bg' ? 'Офис на Еконт' : 'Econt Office'}:
-                        </strong> {office.name}
-                      </p>
-                      <p style={{ color: theme.colors.textSecondary }} className="mt-1">
-                        {office.address}
-                      </p>
-                    </div>
-                  ) : (
-                    <p style={{ color: theme.colors.textSecondary }}>
-                      <strong style={{ color: theme.colors.text }}>
-                        {language === 'bg' ? 'Офис на Еконт' : 'Econt Office'}:
-                      </strong> {order.econtoffice}
-                    </p>
-                  );
-                })()}
-                
-                {/* Address Details */}
-                {order.deliverytype === 'address' && (order.deliverystreet || order.deliverystreetnumber) && (
-                  <div className="mt-3 pt-3 border-t" style={{ borderColor: theme.colors.border }}>
-                    <strong style={{ color: theme.colors.text }}>
-                      {language === 'bg' ? 'Адрес за доставка' : 'Delivery Address'}:
-                    </strong>
-                    <div className="mt-2 space-y-1">
-                      {order.deliverystreet && order.deliverystreetnumber && (
-                        <p style={{ color: theme.colors.textSecondary }}>
-                          {order.deliverystreet} {order.deliverystreetnumber}
-                        </p>
-                      )}
-                      {(order.deliveryentrance || order.deliveryfloor || order.deliveryapartment) && (
-                        <p style={{ color: theme.colors.textSecondary }}>
-                          {order.deliveryentrance && (language === 'bg' ? `Вход ${order.deliveryentrance}` : `Entrance ${order.deliveryentrance}`)}
-                          {order.deliveryfloor && `, ${language === 'bg' ? 'Етаж' : 'Floor'} ${order.deliveryfloor}`}
-                          {order.deliveryapartment && `, ${language === 'bg' ? 'Ап.' : 'Apt.'} ${order.deliveryapartment}`}
-                        </p>
-                      )}
-                      <p style={{ color: theme.colors.textSecondary }}>
-                        {order.customercity}, {order.customercountry}
-                      </p>
-                    </div>
-                  </div>
-                )}
-                
-                {order.deliverynotes && (
-                  <p style={{ color: theme.colors.textSecondary, borderColor: theme.colors.border }} className="mt-3 pt-3 border-t">
-                    <strong style={{ color: theme.colors.text }}>
-                      {language === 'bg' ? 'Бележки' : 'Notes'}:
-                    </strong> {order.deliverynotes}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Next Steps */}
+          {/* Delivery */}
           <div 
-            className="rounded-lg p-6 mb-8 transition-colors duration-300"
+            className="rounded-xl p-6 transition-colors duration-300"
             style={{
-              backgroundColor: theme.colors.primary + '10',
-              border: `1px solid ${theme.colors.primary + '30'}`
+              backgroundColor: theme.colors.cardBg,
+              border: `1px solid ${theme.colors.border}`
             }}
           >
-            <div className="flex items-start gap-4">
-              <Mail size={24} style={{ color: theme.colors.primary }} className="flex-shrink-0 mt-1" />
-              <div>
-                <h3 
-                  className="text-lg font-semibold mb-2 transition-colors duration-300"
-                  style={{ color: theme.colors.text }}
-                >
-                  {language === 'bg' ? 'Следващи стъпки' : 'Next Steps'}
-                </h3>
-                <p 
-                  className="text-sm leading-relaxed transition-colors duration-300"
-                  style={{ color: theme.colors.textSecondary }}
-                >
-                  {language === 'bg' 
-                    ? 'Ще обработим поръчката ви възможно най-бързо. Ще получите имейл потвърждение с детайли за поръчката и ще ви информираме по имейл за всяка промяна в статуса на поръчката, включително когато бъде изпратена.'
-                    : 'We will process your order as soon as possible. You will receive an email confirmation with your order details, and we will keep you updated via email about any changes to your order status, including when it has been shipped.'}
+            <h3 className="font-bold uppercase tracking-wider mb-3 text-neutral-900" style={{ color: theme.colors.text }}>
+              Delivery Information
+            </h3>
+            <div className="space-y-1.5" style={{ color: theme.colors.textSecondary }}>
+              <p><strong style={{ color: theme.colors.text }}>Method:</strong> {getDeliveryTypeLabel(order.deliverytype)}</p>
+              {order.deliverystreet && (
+                <p><strong style={{ color: theme.colors.text }}>Address:</strong> {order.deliverystreet} {order.deliverystreetnumber || ''}</p>
+              )}
+              <p>{order.customercity}, {order.customercountry || 'United Kingdom'}</p>
+              {order.deliverynotes && (
+                <p className="pt-2 border-t mt-2" style={{ borderColor: theme.colors.border }}>
+                  <strong style={{ color: theme.colors.text }}>Notes:</strong> {order.deliverynotes}
                 </p>
-              </div>
+              )}
             </div>
-          </div>
-
-          {/* Order Status Timeline */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div 
-              className="rounded-lg p-4 text-center transition-colors duration-300"
-              style={{
-                backgroundColor: theme.colors.cardBg,
-                border: `1px solid ${theme.colors.border}`
-              }}
-            >
-              <Package size={24} style={{ color: theme.colors.primary }} className="mx-auto mb-2" />
-              <h4 
-                className="font-medium mb-1 transition-colors duration-300"
-                style={{ color: theme.colors.text }}
-              >
-                {language === 'bg' ? 'Поръчката е получена' : 'Order Received'}
-              </h4>
-              <p 
-                className="text-xs transition-colors duration-300"
-                style={{ color: theme.colors.textSecondary }}
-              >
-                {language === 'bg' ? 'Обработва се' : 'Processing'}
-              </p>
-            </div>
-
-            <div 
-              className="rounded-lg p-4 text-center transition-colors duration-300 opacity-75"
-              style={{
-                backgroundColor: theme.colors.cardBg,
-                border: `1px solid ${theme.colors.border}`
-              }}
-            >
-              <Truck size={24} style={{ color: theme.colors.textSecondary }} className="mx-auto mb-2" />
-              <h4 
-                className="font-medium mb-1 transition-colors duration-300"
-                style={{ color: theme.colors.text }}
-              >
-                {language === 'bg' ? 'В транзит' : 'In Transit'}
-              </h4>
-              <p 
-                className="text-xs transition-colors duration-300"
-                style={{ color: theme.colors.textSecondary }}
-              >
-                {language === 'bg' ? 'Подготвя се за изпращане' : 'Preparing for shipment'}
-              </p>
-            </div>
-
-            <div 
-              className="rounded-lg p-4 text-center transition-colors duration-300 opacity-75"
-              style={{
-                backgroundColor: theme.colors.cardBg,
-                border: `1px solid ${theme.colors.border}`
-              }}
-            >
-              <MapPin size={24} style={{ color: theme.colors.textSecondary }} className="mx-auto mb-2" />
-              <h4 
-                className="font-medium mb-1 transition-colors duration-300"
-                style={{ color: theme.colors.text }}
-              >
-                {language === 'bg' ? 'Доставена' : 'Delivered'}
-              </h4>
-              <p 
-                className="text-xs transition-colors duration-300"
-                style={{ color: theme.colors.textSecondary }}
-              >
-                {language === 'bg' ? 'Очаква се 2-3 дни' : 'Estimated 2-3 days'}
-              </p>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button
-              onClick={() => router.push('/')}
-              className="flex-1 py-3 px-6 rounded-lg font-medium transition-colors duration-300"
-              style={{
-                backgroundColor: theme.colors.primary,
-                color: '#fff'
-              }}
-            >
-              {language === 'bg' ? 'Продължи пазаруването' : 'Continue Shopping'}
-            </button>
-            {settings?.email && (
-              <a
-                href={`mailto:${settings.email}?subject=${encodeURIComponent(language === 'bg' ? 'Въпрос за поръчка' : 'Order Question')} #${order.orderid}`}
-                className="flex-1 py-3 px-6 rounded-lg font-medium text-center transition-colors duration-300"
-                style={{
-                  border: `1px solid ${theme.colors.border}`,
-                  color: theme.colors.text,
-                  backgroundColor: theme.colors.background
-                }}
-              >
-                {language === 'bg' ? 'Свържи се с нас' : 'Contact Us'}
-              </a>
-            )}
           </div>
         </div>
+
+        {/* Next Steps Card */}
+        <div className="rounded-xl p-6 mb-8 bg-neutral-50 border border-neutral-200">
+          <div className="flex items-start gap-3">
+            <Mail size={20} className="text-neutral-900 shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-bold text-neutral-950 text-sm uppercase tracking-wide mb-1">
+                What Happens Next?
+              </h3>
+              <p className="text-xs text-neutral-600 leading-relaxed">
+                Your order is being prepared for dispatch. You will receive an email tracking confirmation as soon as your parcel has been handed over to the courier.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Actions */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            type="button"
+            onClick={() => router.push('/')}
+            className="flex-1 py-3 px-6 rounded-lg bg-neutral-950 text-white font-bold text-xs uppercase tracking-wider hover:bg-neutral-800 transition-colors text-center"
+          >
+            Continue Shopping
+          </button>
+          <a
+            href={`mailto:${settings?.email || 'support@mb-paws.co.uk'}?subject=Order Question %23${order.orderid.slice(0, 8)}`}
+            className="flex-1 py-3 px-6 rounded-lg border border-neutral-300 text-neutral-900 font-bold text-xs uppercase tracking-wider hover:bg-neutral-100 transition-colors text-center"
+          >
+            Contact Support
+          </a>
+        </div>
       </div>
+
       <Footer />
     </div>
   );
@@ -647,7 +420,7 @@ export default function CheckoutSuccessPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-neutral-950 border-r-transparent" />
       </div>
     }>
       <CheckoutSuccessContent />

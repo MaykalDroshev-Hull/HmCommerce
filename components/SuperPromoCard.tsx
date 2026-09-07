@@ -18,8 +18,6 @@ export default function SuperPromoCard({ item }: SuperPromoCardProps) {
   const { theme } = useTheme();
   const { addItem, openCart } = useCart();
   const t = translations[language];
-  const bgnPrice = item.promoPrice * 1.95;
-  const originalBgnPrice = item.originalPrice * 1.95;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -90,7 +88,7 @@ export default function SuperPromoCard({ item }: SuperPromoCardProps) {
         </Link>
 
         <p className="text-xs mb-3" style={{ color: theme.colors.textSecondary }}>
-          {[item.color, item.size ? `${language === 'bg' ? 'размер' : 'size'} ${item.size}` : '']
+          {[item.color, item.size ? `Size ${item.size}` : '']
             .filter(Boolean)
             .join(' • ')}
         </p>
@@ -100,13 +98,13 @@ export default function SuperPromoCard({ item }: SuperPromoCardProps) {
             className="text-xs sm:text-sm line-through"
             style={{ color: theme.colors.textSecondary }}
           >
-            €{item.originalPrice.toFixed(2)} / {originalBgnPrice.toFixed(2)} лв
+            £{item.originalPrice.toFixed(2)}
           </div>
           <div className="text-lg sm:text-xl font-bold" style={{ color: '#dc2626' }}>
-            €{item.promoPrice.toFixed(2)} / {bgnPrice.toFixed(2)} лв
+            £{item.promoPrice.toFixed(2)}
           </div>
           <div className="text-[10px] sm:text-xs mt-0.5" style={{ color: theme.colors.textSecondary }}>
-            {t.inclVAT}
+            {t.inclVAT || 'Inclusive of VAT'}
           </div>
         </div>
 
@@ -119,14 +117,14 @@ export default function SuperPromoCard({ item }: SuperPromoCardProps) {
               style={{ backgroundColor: theme.colors.primary }}
             >
               <ShoppingCart size={16} />
-              {t.expressAdd}
+              {t.expressAdd || 'Add to Bag'}
             </button>
           ) : (
             <div
               className="w-full px-4 py-2.5 rounded-xl text-center text-sm font-medium"
               style={{ backgroundColor: theme.colors.secondary, color: theme.colors.textSecondary }}
             >
-              {t.outOfStockTitle}
+              {t.outOfStockTitle || 'Out of Stock'}
             </div>
           )}
 
@@ -135,7 +133,7 @@ export default function SuperPromoCard({ item }: SuperPromoCardProps) {
             className="inline-flex items-center justify-center gap-1.5 text-xs font-medium"
             style={{ color: theme.colors.primary }}
           >
-            {t.viewProductDetails || (language === 'bg' ? 'Виж продукта' : 'View product')}
+            {t.viewProductDetails || 'View Product'}
             <ExternalLink size={12} />
           </Link>
         </div>

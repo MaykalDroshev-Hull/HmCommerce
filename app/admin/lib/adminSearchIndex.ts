@@ -16,54 +16,54 @@ export const adminSearchIndex: SearchableItem[] = [
     type: 'page',
     path: '/admin',
     title: 'Dashboard',
-    titleBg: 'Табло',
-    description: 'Преглед на продажбите и активността',
-    keywords: ['dashboard', 'overview', 'home', 'main', 'табло', 'начало']
+    titleBg: '',
+    description: '',
+    keywords: ['dashboard', 'overview', 'home', 'main', ]
   },
   {
     id: 'dashboard-key-metrics',
     type: 'section',
     path: '/admin',
     title: 'Key Metrics',
-    titleBg: 'Ключови показатели',
+    titleBg: '',
     parentPath: '/admin',
-    keywords: ['metrics', 'statistics', 'stats', 'key', 'показатели', 'статистика']
+    keywords: ['metrics', 'statistics', 'stats', 'key', ]
   },
   {
     id: 'dashboard-weekly-orders',
     type: 'section',
     path: '/admin',
     title: 'Weekly Orders Chart',
-    titleBg: 'Графика на поръчките за седмицата',
+    titleBg: '',
     parentPath: '/admin',
-    keywords: ['chart', 'orders', 'weekly', 'graph', 'графика', 'поръчки']
+    keywords: ['chart', 'orders', 'weekly', 'graph', ]
   },
   {
     id: 'dashboard-product-type-performance',
     type: 'section',
     path: '/admin',
     title: 'Orders by Category',
-    titleBg: 'Поръчки по Категория',
+    titleBg: '',
     parentPath: '/admin',
-    keywords: ['product type', 'performance', 'category', 'Категория', 'категория']
+    keywords: ['product type', 'performance', 'category', ]
   },
   {
     id: 'dashboard-recent-orders',
     type: 'section',
     path: '/admin',
     title: 'Recent Orders',
-    titleBg: 'Последни поръчки',
+    titleBg: '',
     parentPath: '/admin',
-    keywords: ['recent', 'orders', 'latest', 'последни', 'поръчки']
+    keywords: ['recent', 'orders', 'latest', ]
   },
   {
     id: 'dashboard-top-products',
     type: 'section',
     path: '/admin',
     title: 'Top Products',
-    titleBg: 'Топ артикули',
+    titleBg: '',
     parentPath: '/admin',
-    keywords: ['top', 'products', 'best', 'selling', 'топ', 'артикули']
+    keywords: ['top', 'products', 'best', 'selling', ]
   },
 
   // Properties
@@ -72,81 +72,81 @@ export const adminSearchIndex: SearchableItem[] = [
     type: 'page',
     path: '/admin/properties',
     title: 'Characteristics',
-    titleBg: 'Характеристики',
-    description: 'Управляване на характеристиките на артикулите и техните стойности',
-    keywords: ['properties', 'attributes', 'characteristics', 'характеристики', 'атрибути']
+    titleBg: '',
+    description: '',
+    keywords: ['properties', 'attributes', 'characteristics', ]
   },
   {
     id: 'properties-list',
     type: 'section',
     path: '/admin/properties',
     title: 'Characteristics List',
-    titleBg: 'Списък с характеристики',
+    titleBg: '',
     parentPath: '/admin/properties',
-    keywords: ['list', 'all', 'списък']
+    keywords: ['list', 'all', ]
   },
   {
     id: 'properties-add',
     type: 'action',
     path: '/admin/properties',
     title: 'Add Characteristic',
-    titleBg: 'Добави характеристика',
+    titleBg: '',
     parentPath: '/admin/properties',
-    keywords: ['add', 'create', 'new', 'добави', 'създай']
+    keywords: ['add', 'create', 'new', ]
   },
   {
     id: 'property-name',
     type: 'field',
     path: '/admin/properties',
     title: 'Property Name',
-    titleBg: 'Име на характеристика',
+    titleBg: '',
     parentPath: '/admin/properties',
-    keywords: ['name', 'title', 'име']
+    keywords: ['name', 'title', ]
   },
   {
     id: 'property-description',
     type: 'field',
     path: '/admin/properties',
     title: 'Description',
-    titleBg: 'Описание',
+    titleBg: '',
     parentPath: '/admin/properties',
-    keywords: ['description', 'details', 'описание']
+    keywords: ['description', 'details', ]
   },
   {
     id: 'property-data-type',
     type: 'field',
     path: '/admin/properties',
     title: 'Data Type',
-    titleBg: 'Тип данни',
+    titleBg: '',
     parentPath: '/admin/properties',
-    keywords: ['data type', 'type', 'тип данни', 'тип']
+    keywords: ['data type', 'type', ]
   },
   {
     id: 'property-values',
     type: 'section',
     path: '/admin/properties',
     title: 'Property Values',
-    titleBg: 'Стойности на характеристика',
+    titleBg: '',
     parentPath: '/admin/properties',
-    keywords: ['values', 'options', 'choices', 'стойности', 'опции']
+    keywords: ['values', 'options', 'choices', ]
   },
   {
     id: 'property-add-value',
     type: 'action',
     path: '/admin/properties',
     title: 'Add Property Value',
-    titleBg: 'Добави стойност',
+    titleBg: '',
     parentPath: '/admin/properties',
-    keywords: ['add value', 'new value', 'добави стойност']
+    keywords: ['add value', 'new value', ]
   },
   {
     id: 'property-display-order',
     type: 'field',
     path: '/admin/properties',
     title: 'Display Order',
-    titleBg: 'Ред на показване',
+    titleBg: '',
     parentPath: '/admin/properties',
-    keywords: ['order', 'sort', 'display', 'ред', 'подреждане']
+    keywords: ['order', 'sort', 'display', ]
   },
 
   // Product Types
@@ -155,54 +155,54 @@ export const adminSearchIndex: SearchableItem[] = [
     type: 'page',
     path: '/admin/product-types',
     title: 'Categories',
-    titleBg: 'Категории',
-    description: 'Управляване на категориите на артикулите',
-    keywords: ['product types', 'categories', 'types', 'категории', 'типове']
+    titleBg: '',
+    description: '',
+    keywords: ['product types', 'categories', 'types', ]
   },
   {
     id: 'product-types-list',
     type: 'section',
     path: '/admin/product-types',
     title: 'Categories List',
-    titleBg: 'Списък с категории',
+    titleBg: '',
     parentPath: '/admin/product-types',
-    keywords: ['list', 'all', 'списък']
+    keywords: ['list', 'all', ]
   },
   {
     id: 'product-types-add',
     type: 'action',
     path: '/admin/product-types',
     title: 'Add Category',
-    titleBg: 'Добави категория',
+    titleBg: '',
     parentPath: '/admin/product-types',
-    keywords: ['add', 'create', 'new', 'добави', 'създай']
+    keywords: ['add', 'create', 'new', ]
   },
   {
     id: 'product-type-name',
     type: 'field',
     path: '/admin/product-types',
     title: 'Product Type Name',
-    titleBg: 'Име на Категория',
+    titleBg: '',
     parentPath: '/admin/product-types',
-    keywords: ['name', 'title', 'име']
+    keywords: ['name', 'title', ]
   },
   {
     id: 'product-type-code',
     type: 'field',
     path: '/admin/product-types',
     title: 'Code',
-    titleBg: 'Код',
+    titleBg: '',
     parentPath: '/admin/product-types',
-    keywords: ['code', 'identifier', 'код']
+    keywords: ['code', 'identifier', ]
   },
   {
     id: 'product-types-manage-properties',
     type: 'action',
     path: '/admin/product-types',
     title: 'Manage Properties',
-    titleBg: 'Управлявай характеристиките',
+    titleBg: '',
     parentPath: '/admin/product-types',
-    keywords: ['manage', 'properties', 'configure', 'управлявай', 'характеристики']
+    keywords: ['manage', 'properties', 'configure', ]
   },
 
   // Products
@@ -211,144 +211,144 @@ export const adminSearchIndex: SearchableItem[] = [
     type: 'page',
     path: '/admin/products',
     title: 'Items',
-    titleBg: 'Артикули',
-    description: 'Управляване на артикулите и техните варианти',
-    keywords: ['products', 'items', 'goods', 'артикули', 'стоки']
+    titleBg: '',
+    description: '',
+    keywords: ['products', 'items', 'goods', ]
   },
   {
     id: 'products-list',
     type: 'section',
     path: '/admin/products',
     title: 'Items List',
-    titleBg: 'Списък с артикули',
+    titleBg: '',
     parentPath: '/admin/products',
-    keywords: ['list', 'all', 'списък']
+    keywords: ['list', 'all', ]
   },
   {
     id: 'products-add',
     type: 'action',
     path: '/admin/products',
     title: 'Add Item',
-    titleBg: 'Добави артикул',
+    titleBg: '',
     parentPath: '/admin/products',
-    keywords: ['add', 'create', 'new', 'добави', 'създай']
+    keywords: ['add', 'create', 'new', ]
   },
   {
     id: 'product-name',
     type: 'field',
     path: '/admin/products',
     title: 'Product Name',
-    titleBg: 'Име на продукт',
+    titleBg: '',
     parentPath: '/admin/products',
-    keywords: ['name', 'title', 'име']
+    keywords: ['name', 'title', ]
   },
   {
     id: 'product-sku',
     type: 'field',
     path: '/admin/products',
     title: 'SKU',
-    titleBg: 'SKU',
+    titleBg: '',
     parentPath: '/admin/products',
-    keywords: ['sku', 'code', 'identifier', 'код']
+    keywords: ['sku', 'code', 'identifier', ]
   },
   {
     id: 'product-description',
     type: 'field',
     path: '/admin/products',
     title: 'Description',
-    titleBg: 'Описание',
+    titleBg: '',
     parentPath: '/admin/products',
-    keywords: ['description', 'details', 'описание']
+    keywords: ['description', 'details', ]
   },
   {
     id: 'product-main-category',
     type: 'field',
     path: '/admin/products',
     title: 'Main Category',
-    titleBg: 'Основна категория',
+    titleBg: '',
     parentPath: '/admin/products',
-    keywords: ['category', 'main', 'primary', 'категория', 'основна']
+    keywords: ['category', 'main', 'primary', ]
   },
   {
     id: 'product-type',
     type: 'field',
     path: '/admin/products',
     title: 'Product Type',
-    titleBg: 'Категория',
+    titleBg: '',
     parentPath: '/admin/products',
-    keywords: ['type', 'product type', 'тип', 'Категория']
+    keywords: ['type', 'product type', ]
   },
   {
     id: 'product-featured',
     type: 'field',
     path: '/admin/products',
     title: 'Featured Product',
-    titleBg: 'Избран продукт',
+    titleBg: '',
     parentPath: '/admin/products',
-    keywords: ['featured', 'highlighted', 'promoted', 'избран', 'промотиран']
+    keywords: ['featured', 'highlighted', 'promoted', ]
   },
   {
     id: 'product-variant-properties',
     type: 'section',
     path: '/admin/products',
     title: 'Variant Properties',
-    titleBg: 'Характеристики на вариантите',
+    titleBg: '',
     parentPath: '/admin/products',
-    keywords: ['variants', 'properties', 'options', 'варианти', 'характеристики']
+    keywords: ['variants', 'properties', 'options', ]
   },
   {
     id: 'product-generate-variants',
     type: 'action',
     path: '/admin/products',
     title: 'Generate Variants',
-    titleBg: 'Генерирай варианти',
+    titleBg: '',
     parentPath: '/admin/products',
-    keywords: ['generate', 'create variants', 'генерирай', 'варианти']
+    keywords: ['generate', 'create variants', ]
   },
   {
     id: 'product-variants',
     type: 'section',
     path: '/admin/products',
     title: 'Variants',
-    titleBg: 'Варианти',
+    titleBg: '',
     parentPath: '/admin/products',
-    keywords: ['variants', 'options', 'versions', 'варианти']
+    keywords: ['variants', 'options', 'versions', ]
   },
   {
     id: 'variant-price',
     type: 'field',
     path: '/admin/products',
     title: 'Price',
-    titleBg: 'Цена',
+    titleBg: '',
     parentPath: '/admin/products',
-    keywords: ['price', 'cost', 'amount', 'цена']
+    keywords: ['price', 'cost', 'amount', ]
   },
   {
     id: 'variant-quantity',
     type: 'field',
     path: '/admin/products',
     title: 'Quantity',
-    titleBg: 'Количество',
+    titleBg: '',
     parentPath: '/admin/products',
-    keywords: ['quantity', 'stock', 'amount', 'количество', 'наличност']
+    keywords: ['quantity', 'stock', 'amount', ]
   },
   {
     id: 'variant-image',
     type: 'field',
     path: '/admin/products',
     title: 'Image',
-    titleBg: 'Изображение',
+    titleBg: '',
     parentPath: '/admin/products',
-    keywords: ['image', 'photo', 'picture', 'изображение', 'снимка']
+    keywords: ['image', 'photo', 'picture', ]
   },
   {
     id: 'variant-primary',
     type: 'field',
     path: '/admin/products',
     title: 'Primary Image',
-    titleBg: 'Основно изображение',
+    titleBg: '',
     parentPath: '/admin/products',
-    keywords: ['primary', 'main', 'default', 'основно']
+    keywords: ['primary', 'main', 'default', ]
   },
 
   // Sales
@@ -357,9 +357,9 @@ export const adminSearchIndex: SearchableItem[] = [
     type: 'page',
     path: '/admin/sales',
     title: 'Sales',
-    titleBg: 'Продажби',
-    description: 'Преглед и управление на продажбите',
-    keywords: ['sales', 'transactions', 'revenue', 'продажби', 'транзакции']
+    titleBg: '',
+    description: '',
+    keywords: ['sales', 'transactions', 'revenue', ]
   },
 
   // Customers
@@ -368,81 +368,81 @@ export const adminSearchIndex: SearchableItem[] = [
     type: 'page',
     path: '/admin/customers',
     title: 'Customers',
-    titleBg: 'Клиенти',
-    description: 'Управляване и преглед на клиентската база',
-    keywords: ['customers', 'users', 'clients', 'клиенти', 'потребители']
+    titleBg: '',
+    description: '',
+    keywords: ['customers', 'users', 'clients', ]
   },
   {
     id: 'customers-total',
     type: 'section',
     path: '/admin/customers',
     title: 'Total Customers',
-    titleBg: 'Общо клиенти',
+    titleBg: '',
     parentPath: '/admin/customers',
-    keywords: ['total', 'all', 'общо']
+    keywords: ['total', 'all', ]
   },
   {
     id: 'customers-active',
     type: 'section',
     path: '/admin/customers',
     title: 'Active Customers',
-    titleBg: 'Активни клиенти',
+    titleBg: '',
     parentPath: '/admin/customers',
-    keywords: ['active', 'engaged', 'активни']
+    keywords: ['active', 'engaged', ]
   },
   {
     id: 'customer-name',
     type: 'field',
     path: '/admin/customers',
     title: 'Name',
-    titleBg: 'Име',
+    titleBg: '',
     parentPath: '/admin/customers',
-    keywords: ['name', 'име']
+    keywords: ['name', ]
   },
   {
     id: 'customer-email',
     type: 'field',
     path: '/admin/customers',
     title: 'Email',
-    titleBg: 'Имейл',
+    titleBg: '',
     parentPath: '/admin/customers',
-    keywords: ['email', 'e-mail', 'имейл']
+    keywords: ['email', 'e-mail', ]
   },
   {
     id: 'customer-total-orders',
     type: 'field',
     path: '/admin/customers',
     title: 'Total Orders',
-    titleBg: 'Общо поръчки',
+    titleBg: '',
     parentPath: '/admin/customers',
-    keywords: ['orders', 'total', 'поръчки', 'общо']
+    keywords: ['orders', 'total', ]
   },
   {
     id: 'customer-total-spent',
     type: 'field',
     path: '/admin/customers',
     title: 'Total Spent',
-    titleBg: 'Общо похарчено',
+    titleBg: '',
     parentPath: '/admin/customers',
-    keywords: ['spent', 'revenue', 'total', 'похарчено', 'общо']
+    keywords: ['spent', 'revenue', 'total', ]
   },
   {
     id: 'customer-last-order',
     type: 'field',
     path: '/admin/customers',
     title: 'Last Order',
-    titleBg: 'Последна поръчка',
+    titleBg: '',
     parentPath: '/admin/customers',
-    keywords: ['last', 'recent', 'последна']
+    keywords: ['last', 'recent', ]
   },
   {
     id: 'customer-joined',
     type: 'field',
     path: '/admin/customers',
     title: 'Joined',
-    titleBg: 'Регистриран',
+    titleBg: '',
     parentPath: '/admin/customers',
-    keywords: ['joined', 'registered', 'created', 'регистриран']
+    keywords: ['joined', 'registered', 'created', ]
   },
 
   // Analytics
@@ -451,45 +451,45 @@ export const adminSearchIndex: SearchableItem[] = [
     type: 'page',
     path: '/admin/analytics',
     title: 'Analytics',
-    titleBg: 'Доклади',
-    description: 'Преглед на показателите за производителност на магазина',
-    keywords: ['analytics', 'reports', 'statistics', 'доклади', 'аналитика']
+    titleBg: '',
+    description: '',
+    keywords: ['analytics', 'reports', 'statistics', ]
   },
   {
     id: 'analytics-total-orders',
     type: 'field',
     path: '/admin/analytics',
     title: 'Total Orders',
-    titleBg: 'Общо поръчки',
+    titleBg: '',
     parentPath: '/admin/analytics',
-    keywords: ['orders', 'total', 'поръчки']
+    keywords: ['orders', 'total', ]
   },
   {
     id: 'analytics-total-revenue',
     type: 'field',
     path: '/admin/analytics',
     title: 'Total Revenue',
-    titleBg: 'Общ приход',
+    titleBg: '',
     parentPath: '/admin/analytics',
-    keywords: ['revenue', 'income', 'total', 'приход']
+    keywords: ['revenue', 'income', 'total', ]
   },
   {
     id: 'analytics-total-customers',
     type: 'field',
     path: '/admin/analytics',
     title: 'Total Customers',
-    titleBg: 'Общо клиенти',
+    titleBg: '',
     parentPath: '/admin/analytics',
-    keywords: ['customers', 'total', 'клиенти']
+    keywords: ['customers', 'total', ]
   },
   {
     id: 'analytics-average-order-value',
     type: 'field',
     path: '/admin/analytics',
     title: 'Average Order Value',
-    titleBg: 'Средна стойност на поръчка',
+    titleBg: '',
     parentPath: '/admin/analytics',
-    keywords: ['average', 'order value', 'mean', 'средна', 'стойност']
+    keywords: ['average', 'order value', 'mean', ]
   },
 
   // Visitors
@@ -498,99 +498,99 @@ export const adminSearchIndex: SearchableItem[] = [
     type: 'page',
     path: '/admin/visitors',
     title: 'Visitors',
-    titleBg: 'Посетители',
-    description: 'Преглед на аналитиката за посетителите',
-    keywords: ['visitors', 'analytics', 'traffic', 'посетители', 'трафик']
+    titleBg: '',
+    description: '',
+    keywords: ['visitors', 'analytics', 'traffic', ]
   },
   {
     id: 'visitors-summary',
     type: 'section',
     path: '/admin/visitors',
     title: 'Visitor Summary',
-    titleBg: 'Обобщение на посетителите',
+    titleBg: '',
     parentPath: '/admin/visitors',
-    keywords: ['summary', 'overview', 'обобщение']
+    keywords: ['summary', 'overview', ]
   },
   {
     id: 'visitors-total',
     type: 'field',
     path: '/admin/visitors',
     title: 'Total Visitors',
-    titleBg: 'Общо посетители',
+    titleBg: '',
     parentPath: '/admin/visitors',
-    keywords: ['visitors', 'total', 'посетители']
+    keywords: ['visitors', 'total', ]
   },
   {
     id: 'visitors-sessions',
     type: 'field',
     path: '/admin/visitors',
     title: 'Total Sessions',
-    titleBg: 'Общо сесии',
+    titleBg: '',
     parentPath: '/admin/visitors',
-    keywords: ['sessions', 'total', 'сесии']
+    keywords: ['sessions', 'total', ]
   },
   {
     id: 'visitors-page-views',
     type: 'field',
     path: '/admin/visitors',
     title: 'Total Page Views',
-    titleBg: 'Общо преглеждания',
+    titleBg: '',
     parentPath: '/admin/visitors',
-    keywords: ['page views', 'views', 'преглеждания']
+    keywords: ['page views', 'views', ]
   },
   {
     id: 'visitors-bounce-rate',
     type: 'field',
     path: '/admin/visitors',
     title: 'Bounce Rate',
-    titleBg: 'Процент на отказ',
+    titleBg: '',
     parentPath: '/admin/visitors',
-    keywords: ['bounce rate', 'bounce', 'отказ']
+    keywords: ['bounce rate', 'bounce', ]
   },
   {
     id: 'visitors-top-countries',
     type: 'section',
     path: '/admin/visitors',
     title: 'Top Countries',
-    titleBg: 'Топ държави',
+    titleBg: '',
     parentPath: '/admin/visitors',
-    keywords: ['countries', 'top', 'държави']
+    keywords: ['countries', 'top', ]
   },
   {
     id: 'visitors-device-types',
     type: 'section',
     path: '/admin/visitors',
     title: 'Device Types',
-    titleBg: 'Типове устройства',
+    titleBg: '',
     parentPath: '/admin/visitors',
-    keywords: ['devices', 'types', 'устройства']
+    keywords: ['devices', 'types', ]
   },
   {
     id: 'visitors-browsers',
     type: 'section',
     path: '/admin/visitors',
     title: 'Browsers',
-    titleBg: 'Браузъри',
+    titleBg: '',
     parentPath: '/admin/visitors',
-    keywords: ['browsers', 'браузъри']
+    keywords: ['browsers', ]
   },
   {
     id: 'visitors-operating-systems',
     type: 'section',
     path: '/admin/visitors',
     title: 'Operating Systems',
-    titleBg: 'Операционни системи',
+    titleBg: '',
     parentPath: '/admin/visitors',
-    keywords: ['operating systems', 'os', 'системи']
+    keywords: ['operating systems', 'os', ]
   },
   {
     id: 'visitors-referrer-sources',
     type: 'section',
     path: '/admin/visitors',
     title: 'Referrer Sources',
-    titleBg: 'Източници на трафик',
+    titleBg: '',
     parentPath: '/admin/visitors',
-    keywords: ['referrer', 'sources', 'traffic', 'източници']
+    keywords: ['referrer', 'sources', 'traffic', ]
   },
 
   // Finance
@@ -599,72 +599,72 @@ export const adminSearchIndex: SearchableItem[] = [
     type: 'page',
     path: '/admin/finance',
     title: 'Finance',
-    titleBg: 'Финанси',
-    description: 'Преглед на финансовите данни и транзакциите',
-    keywords: ['finance', 'financial', 'money', 'transactions', 'финанси', 'пари']
+    titleBg: '',
+    description: '',
+    keywords: ['finance', 'financial', 'money', 'transactions', ]
   },
   {
     id: 'finance-total-revenue',
     type: 'field',
     path: '/admin/finance',
     title: 'Total Revenue',
-    titleBg: 'Общ приход',
+    titleBg: '',
     parentPath: '/admin/finance',
-    keywords: ['revenue', 'income', 'total', 'приход']
+    keywords: ['revenue', 'income', 'total', ]
   },
   {
     id: 'finance-total-orders',
     type: 'field',
     path: '/admin/finance',
     title: 'Total Orders',
-    titleBg: 'Общо поръчки',
+    titleBg: '',
     parentPath: '/admin/finance',
-    keywords: ['orders', 'total', 'поръчки']
+    keywords: ['orders', 'total', ]
   },
   {
     id: 'finance-average-order-value',
     type: 'field',
     path: '/admin/finance',
     title: 'Average Order Value',
-    titleBg: 'Средна стойност на поръчка',
+    titleBg: '',
     parentPath: '/admin/finance',
-    keywords: ['average', 'order value', 'средна']
+    keywords: ['average', 'order value', ]
   },
   {
     id: 'finance-monthly-revenue',
     type: 'field',
     path: '/admin/finance',
     title: 'Monthly Revenue',
-    titleBg: 'Месечен приход',
+    titleBg: '',
     parentPath: '/admin/finance',
-    keywords: ['monthly', 'revenue', 'месечен', 'приход']
+    keywords: ['monthly', 'revenue', ]
   },
   {
     id: 'finance-pending-payments',
     type: 'field',
     path: '/admin/finance',
     title: 'Pending Payments',
-    titleBg: 'Изчакващи плащания',
+    titleBg: '',
     parentPath: '/admin/finance',
-    keywords: ['pending', 'payments', 'изчакващи']
+    keywords: ['pending', 'payments', ]
   },
   {
     id: 'finance-net-revenue',
     type: 'field',
     path: '/admin/finance',
     title: 'Net Revenue',
-    titleBg: 'Нетен приход',
+    titleBg: '',
     parentPath: '/admin/finance',
-    keywords: ['net', 'revenue', 'нетен']
+    keywords: ['net', 'revenue', ]
   },
   {
     id: 'finance-transactions',
     type: 'section',
     path: '/admin/finance',
     title: 'Transactions',
-    titleBg: 'Транзакции',
+    titleBg: '',
     parentPath: '/admin/finance',
-    keywords: ['transactions', 'транзакции']
+    keywords: ['transactions', ]
   },
 
   // Discounts
@@ -673,81 +673,81 @@ export const adminSearchIndex: SearchableItem[] = [
     type: 'page',
     path: '/admin/discounts',
     title: 'Discounts',
-    titleBg: 'Отстъпки',
-    description: 'Управляване на кодове за отстъпки',
-    keywords: ['discounts', 'coupons', 'promo', 'codes', 'отстъпки', 'промоции']
+    titleBg: '',
+    description: '',
+    keywords: ['discounts', 'coupons', 'promo', 'codes', ]
   },
   {
     id: 'discounts-list',
     type: 'section',
     path: '/admin/discounts',
     title: 'Discounts List',
-    titleBg: 'Списък с отстъпки',
+    titleBg: '',
     parentPath: '/admin/discounts',
-    keywords: ['list', 'all', 'списък']
+    keywords: ['list', 'all', ]
   },
   {
     id: 'discounts-add',
     type: 'action',
     path: '/admin/discounts',
     title: 'Add Discount',
-    titleBg: 'Добави отстъпка',
+    titleBg: '',
     parentPath: '/admin/discounts',
-    keywords: ['add', 'create', 'new', 'добави']
+    keywords: ['add', 'create', 'new', ]
   },
   {
     id: 'discount-code',
     type: 'field',
     path: '/admin/discounts',
     title: 'Discount Code',
-    titleBg: 'Код на отстъпка',
+    titleBg: '',
     parentPath: '/admin/discounts',
-    keywords: ['code', 'coupon', 'код']
+    keywords: ['code', 'coupon', ]
   },
   {
     id: 'discount-description',
     type: 'field',
     path: '/admin/discounts',
     title: 'Description',
-    titleBg: 'Описание',
+    titleBg: '',
     parentPath: '/admin/discounts',
-    keywords: ['description', 'details', 'описание']
+    keywords: ['description', 'details', ]
   },
   {
     id: 'discount-type',
     type: 'field',
     path: '/admin/discounts',
     title: 'Discount Type',
-    titleBg: 'Тип отстъпка',
+    titleBg: '',
     parentPath: '/admin/discounts',
-    keywords: ['type', 'percentage', 'fixed', 'тип']
+    keywords: ['type', 'percentage', 'fixed', ]
   },
   {
     id: 'discount-value',
     type: 'field',
     path: '/admin/discounts',
     title: 'Discount Value',
-    titleBg: 'Стойност на отстъпка',
+    titleBg: '',
     parentPath: '/admin/discounts',
-    keywords: ['value', 'amount', 'percentage', 'стойност']
+    keywords: ['value', 'amount', 'percentage', ]
   },
   {
     id: 'discount-active',
     type: 'field',
     path: '/admin/discounts',
     title: 'Active',
-    titleBg: 'Активна',
+    titleBg: '',
     parentPath: '/admin/discounts',
-    keywords: ['active', 'enabled', 'активна']
+    keywords: ['active', 'enabled', ]
   },
   {
     id: 'discount-expires',
     type: 'field',
     path: '/admin/discounts',
     title: 'Expires At',
-    titleBg: 'Изтича на',
+    titleBg: '',
     parentPath: '/admin/discounts',
-    keywords: ['expires', 'expiry', 'expiration', 'изтича']
+    keywords: ['expires', 'expiry', 'expiration', ]
   },
 
   // Media
@@ -756,36 +756,36 @@ export const adminSearchIndex: SearchableItem[] = [
     type: 'page',
     path: '/admin/media',
     title: 'Media',
-    titleBg: 'Медия',
-    description: 'Управляване на медийни файлове',
-    keywords: ['media', 'files', 'images', 'photos', 'upload', 'медия', 'файлове', 'изображения']
+    titleBg: '',
+    description: '',
+    keywords: ['media', 'files', 'images', 'photos', 'upload', ]
   },
   {
     id: 'media-library',
     type: 'section',
     path: '/admin/media',
     title: 'Media Library',
-    titleBg: 'Медийна библиотека',
+    titleBg: '',
     parentPath: '/admin/media',
-    keywords: ['library', 'files', 'библиотека']
+    keywords: ['library', 'files', ]
   },
   {
     id: 'media-upload',
     type: 'action',
     path: '/admin/media',
     title: 'Upload Media',
-    titleBg: 'Качи медия',
+    titleBg: '',
     parentPath: '/admin/media',
-    keywords: ['upload', 'add', 'качи', 'добави']
+    keywords: ['upload', 'add', ]
   },
   {
     id: 'media-folder',
     type: 'field',
     path: '/admin/media',
     title: 'Folder',
-    titleBg: 'Папка',
+    titleBg: '',
     parentPath: '/admin/media',
-    keywords: ['folder', 'directory', 'папка']
+    keywords: ['folder', 'directory', ]
   },
 
   // Settings
@@ -794,178 +794,178 @@ export const adminSearchIndex: SearchableItem[] = [
     type: 'page',
     path: '/admin/settings',
     title: 'Settings',
-    titleBg: 'Настройки',
-    description: 'Управляване на настройките на магазина',
-    keywords: ['settings', 'configuration', 'config', 'preferences', 'настройки', 'конфигурация']
+    titleBg: '',
+    description: '',
+    keywords: ['settings', 'configuration', 'config', 'preferences', ]
   },
   {
     id: 'settings-store-information',
     type: 'section',
     path: '/admin/settings',
     title: 'Store Information',
-    titleBg: 'Информация за магазина',
+    titleBg: '',
     parentPath: '/admin/settings',
-    keywords: ['store', 'information', 'details', 'магазин', 'информация']
+    keywords: ['store', 'information', 'details', ]
   },
   {
     id: 'settings-store-name',
     type: 'field',
     path: '/admin/settings',
     title: 'Store Name',
-    titleBg: 'Име на магазина',
+    titleBg: '',
     parentPath: '/admin/settings',
-    keywords: ['store name', 'name', 'име', 'магазин']
+    keywords: ['store name', 'name', ]
   },
   {
     id: 'settings-email',
     type: 'field',
     path: '/admin/settings',
     title: 'Email',
-    titleBg: 'Имейл',
+    titleBg: '',
     parentPath: '/admin/settings',
-    keywords: ['email', 'e-mail', 'имейл']
+    keywords: ['email', 'e-mail', ]
   },
   {
     id: 'settings-telephone',
     type: 'field',
     path: '/admin/settings',
     title: 'Telephone Number',
-    titleBg: 'Телефонен номер',
+    titleBg: '',
     parentPath: '/admin/settings',
-    keywords: ['telephone', 'phone', 'number', 'телефон']
+    keywords: ['telephone', 'phone', 'number', ]
   },
   {
     id: 'settings-year-creation',
     type: 'field',
     path: '/admin/settings',
     title: 'Year of Creation',
-    titleBg: 'Година на създаване',
+    titleBg: '',
     parentPath: '/admin/settings',
-    keywords: ['year', 'creation', 'founded', 'година', 'създаване']
+    keywords: ['year', 'creation', 'founded', ]
   },
   {
     id: 'settings-closing-remarks',
     type: 'field',
     path: '/admin/settings',
     title: 'Closing Remarks',
-    titleBg: 'Заключителни думи',
+    titleBg: '',
     parentPath: '/admin/settings',
-    keywords: ['closing', 'remarks', 'message', 'заключителни', 'думи']
+    keywords: ['closing', 'remarks', 'message', ]
   },
   {
     id: 'settings-about-us',
     type: 'section',
     path: '/admin/settings',
     title: 'About Us Page',
-    titleBg: 'Страница "За нас"',
+    titleBg: '',
     parentPath: '/admin/settings',
-    keywords: ['about us', 'about', 'за нас']
+    keywords: ['about us', 'about', ]
   },
   {
     id: 'settings-about-us-photo',
     type: 'field',
     path: '/admin/settings',
     title: 'About Us Photo',
-    titleBg: 'Снимка за страницата "За нас"',
+    titleBg: '',
     parentPath: '/admin/settings',
-    keywords: ['photo', 'image', 'picture', 'снимка']
+    keywords: ['photo', 'image', 'picture', ]
   },
   {
     id: 'settings-about-us-text',
     type: 'field',
     path: '/admin/settings',
     title: 'About Us Text',
-    titleBg: 'Текст за страницата "За нас"',
+    titleBg: '',
     parentPath: '/admin/settings',
-    keywords: ['text', 'content', 'текст']
+    keywords: ['text', 'content', ]
   },
   {
     id: 'settings-logo',
     type: 'field',
     path: '/admin/settings',
     title: 'Logo',
-    titleBg: 'Лого',
+    titleBg: '',
     parentPath: '/admin/settings',
-    keywords: ['logo', 'brand', 'лого']
+    keywords: ['logo', 'brand', ]
   },
   {
     id: 'settings-hero-image',
     type: 'field',
     path: '/admin/settings',
     title: 'Hero Image',
-    titleBg: 'Hero изображение',
+    titleBg: '',
     parentPath: '/admin/settings',
-    keywords: ['hero', 'image', 'banner', 'изображение']
+    keywords: ['hero', 'image', 'banner', ]
   },
   {
     id: 'settings-appearance',
     type: 'section',
     path: '/admin/settings',
     title: 'Appearance',
-    titleBg: 'Външен вид',
+    titleBg: '',
     parentPath: '/admin/settings',
-    keywords: ['appearance', 'theme', 'design', 'външен вид', 'тема']
+    keywords: ['appearance', 'theme', 'design', ]
   },
   {
     id: 'settings-color-palette',
     type: 'field',
     path: '/admin/settings',
     title: 'Color Palette',
-    titleBg: 'Цветова палитра',
+    titleBg: '',
     parentPath: '/admin/settings',
-    keywords: ['color', 'palette', 'theme', 'цветова', 'палитра']
+    keywords: ['color', 'palette', 'theme', ]
   },
   {
     id: 'settings-language',
     type: 'field',
     path: '/admin/settings',
     title: 'Language',
-    titleBg: 'Език',
+    titleBg: '',
     parentPath: '/admin/settings',
-    keywords: ['language', 'lang', 'език']
+    keywords: ['language', 'lang', ]
   },
   {
     id: 'settings-banner',
     type: 'section',
     path: '/admin/settings',
     title: 'Banner',
-    titleBg: 'Банер',
+    titleBg: '',
     parentPath: '/admin/settings',
-    keywords: ['banner', 'notification', 'банер']
+    keywords: ['banner', 'notification', ]
   },
   {
     id: 'settings-banner-text',
     type: 'field',
     path: '/admin/settings',
     title: 'Banner Text',
-    titleBg: 'Текст на банера',
+    titleBg: '',
     parentPath: '/admin/settings',
-    keywords: ['banner text', 'text', 'message', 'текст']
+    keywords: ['banner text', 'text', 'message', ]
   },
   {
     id: 'settings-banner-duration',
     type: 'field',
     path: '/admin/settings',
     title: 'Rotation Duration',
-    titleBg: 'Продължителност на ротация',
+    titleBg: '',
     parentPath: '/admin/settings',
-    keywords: ['duration', 'rotation', 'time', 'продължителност']
+    keywords: ['duration', 'rotation', 'time', ]
   },
   {
     id: 'settings-social-media',
     type: 'section',
     path: '/admin/settings',
     title: 'Social Media',
-    titleBg: 'Социални мрежи',
+    titleBg: '',
     parentPath: '/admin/settings',
-    keywords: ['social media', 'social', 'networks', 'социални', 'мрежи']
+    keywords: ['social media', 'social', 'networks', ]
   },
   {
     id: 'settings-discord',
     type: 'field',
     path: '/admin/settings',
     title: 'Discord URL',
-    titleBg: 'Discord URL',
+    titleBg: '',
     parentPath: '/admin/settings',
     keywords: ['discord', 'url', 'link']
   },
@@ -974,7 +974,7 @@ export const adminSearchIndex: SearchableItem[] = [
     type: 'field',
     path: '/admin/settings',
     title: 'Facebook URL',
-    titleBg: 'Facebook URL',
+    titleBg: '',
     parentPath: '/admin/settings',
     keywords: ['facebook', 'url', 'link']
   },
@@ -983,7 +983,7 @@ export const adminSearchIndex: SearchableItem[] = [
     type: 'field',
     path: '/admin/settings',
     title: 'Pinterest URL',
-    titleBg: 'Pinterest URL',
+    titleBg: '',
     parentPath: '/admin/settings',
     keywords: ['pinterest', 'url', 'link']
   },
@@ -992,7 +992,7 @@ export const adminSearchIndex: SearchableItem[] = [
     type: 'field',
     path: '/admin/settings',
     title: 'YouTube URL',
-    titleBg: 'YouTube URL',
+    titleBg: '',
     parentPath: '/admin/settings',
     keywords: ['youtube', 'url', 'link']
   },
@@ -1001,7 +1001,7 @@ export const adminSearchIndex: SearchableItem[] = [
     type: 'field',
     path: '/admin/settings',
     title: 'Instagram URL',
-    titleBg: 'Instagram URL',
+    titleBg: '',
     parentPath: '/admin/settings',
     keywords: ['instagram', 'url', 'link']
   },
@@ -1010,7 +1010,7 @@ export const adminSearchIndex: SearchableItem[] = [
     type: 'field',
     path: '/admin/settings',
     title: 'X (Twitter) URL',
-    titleBg: 'X (Twitter) URL',
+    titleBg: '',
     parentPath: '/admin/settings',
     keywords: ['x', 'twitter', 'url', 'link']
   },
@@ -1019,7 +1019,7 @@ export const adminSearchIndex: SearchableItem[] = [
     type: 'field',
     path: '/admin/settings',
     title: 'TikTok URL',
-    titleBg: 'TikTok URL',
+    titleBg: '',
     parentPath: '/admin/settings',
     keywords: ['tiktok', 'url', 'link']
   },
@@ -1028,9 +1028,9 @@ export const adminSearchIndex: SearchableItem[] = [
     type: 'action',
     path: '/admin/settings',
     title: 'Save Settings',
-    titleBg: 'Запази настройки',
+    titleBg: '',
     parentPath: '/admin/settings',
-    keywords: ['save', 'store', 'запази']
+    keywords: ['save', 'store', ]
   },
 
   // Orders
@@ -1039,53 +1039,53 @@ export const adminSearchIndex: SearchableItem[] = [
     type: 'page',
     path: '/admin/orders',
     title: 'Orders',
-    titleBg: 'Поръчки',
-    description: 'Управляване на поръчките',
-    keywords: ['orders', 'purchases', 'transactions', 'поръчки', 'покупки']
+    titleBg: '',
+    description: '',
+    keywords: ['orders', 'purchases', 'transactions', ]
   },
   {
     id: 'orders-list',
     type: 'section',
     path: '/admin/orders',
     title: 'Orders List',
-    titleBg: 'Списък с поръчки',
+    titleBg: '',
     parentPath: '/admin/orders',
-    keywords: ['list', 'all', 'списък']
+    keywords: ['list', 'all', ]
   },
   {
     id: 'order-status',
     type: 'field',
     path: '/admin/orders',
     title: 'Order Status',
-    titleBg: 'Статус на поръчка',
+    titleBg: '',
     parentPath: '/admin/orders',
-    keywords: ['status', 'state', 'статус']
+    keywords: ['status', 'state', ]
   },
   {
     id: 'order-customer',
     type: 'field',
     path: '/admin/orders',
     title: 'Customer',
-    titleBg: 'Клиент',
+    titleBg: '',
     parentPath: '/admin/orders',
-    keywords: ['customer', 'client', 'клиент']
+    keywords: ['customer', 'client', ]
   },
   {
     id: 'order-total',
     type: 'field',
     path: '/admin/orders',
     title: 'Total',
-    titleBg: 'Общо',
+    titleBg: '',
     parentPath: '/admin/orders',
-    keywords: ['total', 'amount', 'общо']
+    keywords: ['total', 'amount', ]
   },
   {
     id: 'order-date',
     type: 'field',
     path: '/admin/orders',
     title: 'Date',
-    titleBg: 'Дата',
+    titleBg: '',
     parentPath: '/admin/orders',
-    keywords: ['date', 'created', 'дата']
+    keywords: ['date', 'created', ]
   }
 ];

@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      errors.push(language === 'bg' ? 'Невалиден формат на имейл адреса' : 'Invalid email format')
+      errors.push('Invalid email format')
     }
 
     return {
@@ -69,13 +69,13 @@ export default function ForgotPasswordPage() {
     e.preventDefault()
     
     if (!resetData.email) {
-      setError(language === 'bg' ? 'Моля, въведете имейл адреса си' : 'Please enter your email address')
+      setError('Please enter your email address')
       return
     }
 
     const emailValidation = validateEmail(resetData.email)
     if (!emailValidation.isValid) {
-      setError(language === 'bg' ? 'Моля, въведете валиден имейл адрес' : 'Please enter a valid email address')
+      setError('Please enter a valid email address')
       return
     }
 
@@ -94,13 +94,13 @@ export default function ForgotPasswordPage() {
 
       if (!response.ok) {
         // Translate error messages
-        let errorMessage = data.error || (language === 'bg' ? 'Грешка при изпращането на заявката' : 'Error sending request')
+        let errorMessage = data.error || ('Error sending request')
         if (errorMessage === 'User not found' || errorMessage === 'Email not found') {
-          errorMessage = language === 'bg' ? 'Потребител с този имейл адрес не е намерен' : 'User with this email address not found'
+          errorMessage = 'User with this email address not found'
         } else if (errorMessage === 'Internal server error') {
-          errorMessage = language === 'bg' ? 'Вътрешна грешка на сървъра. Моля, опитайте отново.' : 'Internal server error. Please try again.'
+          errorMessage = 'Internal server error. Please try again.'
         } else if (errorMessage.includes('Invalid') || errorMessage.includes('invalid')) {
-          errorMessage = language === 'bg' ? 'Невалиден имейл адрес' : 'Invalid email address'
+          errorMessage = 'Invalid email address'
         }
         throw new Error(errorMessage)
       }
@@ -110,9 +110,9 @@ export default function ForgotPasswordPage() {
 
     } catch (err: any) {
       // Translate error messages
-      let errorMessage = err.message || (language === 'bg' ? 'Грешка при изпращането на заявката' : 'Error sending request')
+      let errorMessage = err.message || ('Error sending request')
       if (errorMessage === 'Internal server error' || errorMessage.includes('fetch')) {
-        errorMessage = language === 'bg' ? 'Възникна грешка. Моля, опитайте отново.' : 'An error occurred. Please try again.'
+        errorMessage = 'An error occurred. Please try again.'
       }
       setError(errorMessage)
     } finally {
@@ -177,7 +177,7 @@ export default function ForgotPasswordPage() {
               className={styles.btn}
               disabled={isLoading}
             >
-              {isLoading ? (language === 'bg' ? 'Изпращам...' : 'Sending...') : t.sendResetLink}
+              {isLoading ? ('Sending...') : t.sendResetLink}
             </button>
 
             <div className={styles.linkTxt}>

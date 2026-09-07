@@ -28,7 +28,7 @@ export default function ThemeSwitcher() {
   };
 
   const getThemeName = (theme: typeof themes[0]) => {
-    return language === 'bg' ? theme.nameBg : theme.name;
+    return theme.name;
   };
 
   return (
@@ -47,7 +47,7 @@ export default function ThemeSwitcher() {
         <div className="absolute right-0 mt-2 w-56 sm:w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-y-auto">
           <div className="p-2">
             <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">
-              {language === 'bg' ? 'Теми' : 'Themes'}
+              Themes
             </div>
             {themes.map((t) => (
               <button

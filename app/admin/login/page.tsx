@@ -55,7 +55,7 @@ export default function AdminLoginPage() {
     
     if (!formData.username.trim() || !formData.password.trim()) {
       setError({
-        message: "Моля, въведете имейл адрес и парола",
+        message: "Please enter your email address and password",
         type: "warning"
       });
       return;
@@ -91,7 +91,7 @@ export default function AdminLoginPage() {
 
           if (sessionError) {
             setError({
-              message: 'Грешка при създаване на сесия. Моля, опитайте отново.',
+              message: 'Error creating session. Please try again.',
               type: 'error'
             });
             return;
@@ -107,13 +107,13 @@ export default function AdminLoginPage() {
         router.push('/admin');
       } else {
         setError({
-          message: result.error || "Невалиден имейл адрес или парола",
+          message: result.error || "Invalid email address or password",
           type: "error"
         });
       }
     } catch (err) {
       setError({
-        message: "Възникна грешка при влизане. Моля, опитайте отново.",
+        message: "An error occurred during sign in. Please try again.",
         type: "error"
       });
     } finally {
@@ -144,10 +144,10 @@ export default function AdminLoginPage() {
               <Lock size={24} className="sm:w-8 sm:h-8 text-blue-600 dark:text-blue-400" />
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">
-              Администрация
+              Administration
             </h1>
             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 px-2">
-              Влезте в административния панел
+              Sign in to the Admin Panel
             </p>
           </div>
 
@@ -168,7 +168,7 @@ export default function AdminLoginPage() {
             {/* Email Field */}
             <div>
               <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
-                Имейл адрес
+                Email Address
               </label>
               <div className="relative">
                 <User className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -177,7 +177,7 @@ export default function AdminLoginPage() {
                   value={formData.username}
                   onChange={(e) => handleInputChange('username', e.target.value)}
                   className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2.5 sm:py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                  placeholder="Въведете имейл адрес"
+                  placeholder="Enter email address"
                   disabled={isLoading}
                   autoComplete="email"
                 />
@@ -187,7 +187,7 @@ export default function AdminLoginPage() {
             {/* Password Field */}
             <div>
               <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
-                Парола
+                Password
               </label>
               <div className="relative">
                 <Lock className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -196,7 +196,7 @@ export default function AdminLoginPage() {
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
                   className="w-full pl-9 sm:pl-10 pr-11 sm:pr-12 py-2.5 sm:py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                  placeholder="Въведете парола"
+                  placeholder="Enter password"
                   disabled={isLoading}
                   autoComplete="current-password"
                 />
@@ -205,7 +205,7 @@ export default function AdminLoginPage() {
                   onClick={togglePasswordVisibility}
                   className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 touch-manipulation"
                   disabled={isLoading}
-                  aria-label={showPassword ? "Скрий парола" : "Покажи парола"}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff size={18} className="sm:w-5 sm:h-5" /> : <Eye size={18} className="sm:w-5 sm:h-5" />}
                 </button>
@@ -221,10 +221,10 @@ export default function AdminLoginPage() {
               {isLoading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white"></div>
-                  <span>Влизане...</span>
+                  <span>Signing in...</span>
                 </>
               ) : (
-                <span>Влезте в системата</span>
+                <span>Sign in</span>
               )}
             </button>
           </form>
@@ -235,7 +235,7 @@ export default function AdminLoginPage() {
               onClick={() => router.push('/')}
               className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors py-2 px-2 touch-manipulation"
             >
-              ← Обратно към началната страница
+              ← Back to store
             </button>
           </div>
         </div>

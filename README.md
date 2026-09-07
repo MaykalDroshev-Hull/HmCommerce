@@ -1,102 +1,118 @@
-# ModaBox - E-commerce Store
+# MB-Paws (MB-paws.co.uk) - Premium Canine Adventure Gear
 
-A comprehensive, modern e-commerce platform built with Next.js 16, featuring a complete admin panel, multi-language support, and advanced product management capabilities.
+A modern, high-performance e-commerce platform built with Next.js 16 and Supabase, tailored for the British market (**[MB-paws.co.uk](https://mb-paws.co.uk)**). Engineered with a minimalist editorial design, fast page loads, comprehensive product variant management, Klarna 3-installment payments, and a full-featured admin dashboard.
+
+---
+
+## 🐾 Overview
+
+**MB-Paws** delivers technical, minimalist canine gear designed for durability, all-weather performance, and everyday adventure. The storefront is optimized for the UK market (`en-GB`), featuring British Pound Sterling (`£` / GBP) pricing, tracked delivery thresholds, Klarna Pay in 3, Apple Pay, PayPal, and Stripe checkout.
+
+- **Storefront Domain**: [https://mb-paws.co.uk](https://mb-paws.co.uk)
+- **Support Email**: `support@mb-paws.co.uk`
+- **Orders Email**: `orders@mb-paws.co.uk`
+- **Primary Market**: United Kingdom (en-GB, GBP £)
+
+---
 
 ## 🚀 Features
 
-### 🛍️ Store Features
-- **Product Catalog** - Organized categories (Clothes, Shoes, Accessories, For Him, For Her)
-- **Product Variants** - Size, color, and custom property management
-- **Advanced Search & Filtering** - Search by brand, model, color with real-time filtering
-- **Shopping Cart** - Persistent cart with quantity management
-- **Secure Checkout** - Complete order processing with multiple delivery options
-- **Product Image Gallery** - Multiple product images with primary image selection
-- **Responsive Design** - Mobile-first approach with Tailwind CSS
-- **Hero Banner** - Customizable hero section with background images
-- **Theme System** - Multiple color themes including gradient options
-
-### 🌐 Internationalization
-- **Multi-language Support** - English and Bulgarian translations
-- **Dynamic Language Switching** - Real-time language toggle
-- **RTL Support Ready** - Infrastructure for right-to-left languages
+### 🛍️ Storefront & Customer Experience
+- **Flagship & Catalog Experience**: 2-column desktop layout with 2x2 image gallery, sticky purchase panel, and fluid mobile slider.
+- **Sticky Add-to-Bag Banner**:
+  - **Desktop**: Top sticky bar with product name, selected colour swatch, selected size, and instant `ADD TO BAG - £[PRICE]`.
+  - **Mobile**: Fixed bottom sticky bar with full-width CTA.
+- **Klarna Pay in 3**: Dynamic calculation ("3 payments of £[X.XX] at 0% interest with Klarna") and compliance disclaimers.
+- **Delivery & Returns**: Free tracked delivery over £30, 30-day hassle-free returns.
+- **Payment Options**: Stripe (Cards, Apple Pay, Klarna), PayPal, and Cash on Delivery.
+- **Persistent Cart & Fast Checkout**: Zustand-powered cart drawer and streamlined checkout flow.
+- **SEO & Social Metadata**: Rich OpenGraph tags, Twitter cards, dynamic canonical URLs, and Schema.org `OnlineStore` and `Product` structured JSON-LD.
 
 ### 👨‍💼 Admin Panel
-- **Dashboard Analytics** - Sales overview, recent orders, top products
-- **Product Management** - Complete CRUD operations with variant generation
-- **Order Management** - Track and update order statuses (Pending, Confirmed, Shipped, Delivered, Cancelled)
-- **Customer Management** - View customer details, order history, and spending analytics
-- **Discount System** - Create and manage promotional codes with usage tracking
-- **Financial Overview** - Revenue tracking, transaction history, and period comparisons
-- **Media Library** - Upload and manage product images and media files
-- **Store Settings** - Customize store name, logo, colors, and appearance
-- **Product Types & Properties** - Flexible product categorization system
-- **Analytics** - Sales trends and performance insights
+- **Dashboard Analytics**: Sales metrics, recent orders, weekly revenue charts, and top-selling items.
+- **Product Management**: Full CRUD operations with multi-image uploads, dynamic variant generation (size, colour), and inventory control.
+- **Order Management**: Order tracking, status updates (Pending, Confirmed, Shipped, Delivered, Cancelled), and customer history.
+- **Promotions & Discounts**: Promotional codes with usage tracking and discount percentages.
+- **Store Settings**: Customise store name, branding, notification emails, delivery rates, and banner announcements.
+- **Media Library**: Supabase Storage-backed image management with preview and copy-to-clipboard functionality.
 
-### 🛠️ Technical Features
-- **Authentication** - Supabase-based admin authentication with session management
-- **Email Integration** - Order notifications via Nodemailer
-- **State Management** - Zustand for client-side state, React Context for app-wide state
-- **Database** - Supabase PostgreSQL with real-time capabilities
-- **File Storage** - Supabase Storage for media files
-- **Type Safety** - Full TypeScript implementation
-- **Performance** - Optimized with Next.js 16 App Router and image optimization
+### 🛠️ Technical Highlights
+- **Framework**: Next.js 16 (App Router), React 18, TypeScript.
+- **Styling**: Tailwind CSS with sleek monochrome design system and minimal layout shifts.
+- **Database & Auth**: Supabase PostgreSQL with Row Level Security (RLS) and Supabase Auth.
+- **Transactional Emails**: Resend integration for order confirmations, notifications, and customer communications.
+- **Strict Compliance**: Adheres to project rules (zero coloured emojis, UK spelling, single currency GBP £).
+
+---
 
 ## 🛠️ Tech Stack
 
 - **Frontend:** Next.js 16 (App Router), React 18, TypeScript
-- **Styling:** Tailwind CSS, PostCSS, Autoprefixer
+- **Styling:** Tailwind CSS, PostCSS
 - **State Management:** Zustand, React Context
 - **Database:** Supabase (PostgreSQL)
 - **Authentication:** Supabase Auth
-- **File Storage:** Supabase Storage
-- **Icons:** Lucide React, React Icons
-- **Carousels:** React Slick
-- **Email:** Nodemailer
-- **Deployment:** Ready for Vercel/Netlify
+- **File Storage:** Supabase Storage (`products` bucket)
+- **Email:** Resend API & Nodemailer
+- **Payments:** Stripe SDK, PayPal SDK
+- **Icons:** Lucide React (monochrome only)
+- **Deployment:** Vercel
+
+---
 
 ## 📁 Project Structure
 
 ```
-├── app/                          # Next.js App Router pages
-│   ├── admin/                    # Admin panel pages
-│   │   ├── analytics/           # Sales analytics
-│   │   ├── customers/           # Customer management
-│   │   ├── discounts/           # Discount codes
-│   │   ├── finance/             # Financial overview
-│   │   ├── media/               # Media library
-│   │   ├── products/            # Product management
-│   │   ├── sales/               # Order management
-│   │   ├── settings/            # Store settings
-│   │   └── product-types/       # Product type management
-│   ├── api/                     # API routes
-│   ├── checkout/                # Checkout process
-│   ├── products/                # Product catalog
-│   ├── about/                   # About page
-│   └── [category]/              # Dynamic category pages
-├── components/                  # Reusable React components
-├── context/                     # React Context providers
-├── lib/                         # Utilities and configurations
-│   ├── supabase/               # Database client
-│   ├── translations.ts         # Multi-language translations
-│   └── themes.ts               # Theme configurations
-├── store/                      # Zustand stores
-├── types/                      # TypeScript type definitions
-└── public/                     # Static assets
+├── app/                          # Next.js App Router
+│   ├── layout.tsx                # Root layout (metadata, fonts, JSON-LD)
+│   ├── page.tsx                  # Home / Flagship product page
+│   ├── products/                 # Product catalog & [id] product pages
+│   ├── checkout/                 # Checkout flow & order success
+│   ├── admin/                    # Admin dashboard & management tools
+│   │   ├── products/             # Product catalog management
+│   │   ├── orders/               # Orders & order statuses
+│   │   ├── customers/            # Customer records
+│   │   ├── discounts/            # Promo codes & discounts
+│   │   ├── finance/              # Revenue & financial reporting
+│   │   └── settings/             # Store configuration
+│   ├── api/                      # Backend API routes (checkout, products, settings, emails)
+│   ├── for-him/                  # Outdoor canine gear category
+│   ├── for-her/                  # Collection category
+│   ├── accessories/              # Leads, collars & hardware
+│   └── about/                    # About brand page
+├── components/                   # Reusable UI components
+│   ├── Header.tsx                # Sticky header & announcement bar
+│   ├── Footer.tsx                # Brand footer with UK support details
+│   ├── ProductDetails.tsx        # Purchase panel, swatches, Klarna widget
+│   ├── ProductStickyBanner.tsx   # Desktop & mobile sticky add-to-bag bar
+│   ├── ProductMediaGallery.tsx   # 2x2 desktop grid & mobile gallery
+│   └── CartDrawer.tsx            # Persistent slide-out shopping cart
+├── context/                      # React Context providers (Auth, StoreSettings)
+├── lib/                          # Utility libraries & services
+│   ├── supabase/                 # Supabase client & server utilities
+│   ├── mail.ts                   # Resend transactional email handler
+│   └── storefront-url.ts         # Canonical storefront URL utilities
+├── store/                        # Zustand stores (cart, theme)
+└── public/                       # Static assets & robots.txt
 ```
+
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 18.x or 20.x
 - npm or yarn
-- Supabase account and project
+- Supabase account with active database
+- Resend API key for transactional emails
+- Stripe & PayPal developer accounts
 
 ### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd eCommerceForClothes
+   git clone https://github.com/MaykalDroshev-Hull/HmCommerce.git
+   cd HmCommerce
    ```
 
 2. **Install dependencies**
@@ -104,115 +120,71 @@ A comprehensive, modern e-commerce platform built with Next.js 16, featuring a c
    npm install
    ```
 
-3. **Environment Setup**
-   Create a `.env.local` file with your credentials:
+3. **Configure environment variables**
+   Copy `.env.example` to `.env.local`:
+   ```bash
+   cp .env.example .env.local
+   ```
+   Populate `.env.local` with your credentials:
    ```env
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   # Site URL
+   NEXT_PUBLIC_SITE_URL=https://mb-paws.co.uk
+
+   # Resend Email
+   RESEND_API_KEY=re_xxxxxxxx
+   RESEND_FROM_EMAIL=orders@mb-paws.co.uk
+   RESEND_FROM_NAME="MB-Paws"
+   ADMIN_EMAIL=you@yourdomain.co.uk
+   CONTACT_EMAIL=support@mb-paws.co.uk
+
+   # Supabase Configurations
+   DATABASE_URL=postgresql://postgres:[PASSWORD]@...supabase.com:5432/postgres
+   DIRECT_URL=postgresql://postgres:[PASSWORD]@...supabase.co:5432/postgres
+   NEXT_PUBLIC_SUPABASE_URL=https://[YOUR-PROJECT].supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
    SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-   NEXT_PUBLIC_EMAIL=your-email@gmail.com
-   NEXT_PUBLIC_EMAIL_PASS=your_gmail_app_password
+
+   # Payment Gateways
+   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxxxxxxx
+   STRIPE_SECRET_KEY=sk_test_xxxxxxxx
+   STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxx
+   NEXT_PUBLIC_PAYPAL_CLIENT_ID=your_paypal_client_id
+   PAYPAL_CLIENT_SECRET=your_paypal_client_secret
    ```
 
-4. **Database Setup**
-   Run the SQL migrations in your Supabase dashboard to create the required tables for products, orders, customers, etc.
+4. **Run database migrations**
+   Ensure your Supabase PostgreSQL instance has the tables from `schema.txt` applied.
 
-5. **Run the development server**
+5. **Start development server**
    ```bash
    npm run dev
    ```
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-6. **Open your browser**
-   Navigate to [http://localhost:3000](http://localhost:3000)
+---
 
 ## 📄 Available Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run clean` - Clean build files
+- `npm run dev` – Launch local Next.js development server
+- `npm run build` – Create optimized production build
+- `npm run start` – Start production server
+- `npm run lint` – Run TypeScript type-checking (`tsc --noEmit`)
+- `npm run clean` – Purge `.next` build cache
 
-## 🌐 Pages & Routes
-
-### Public Pages
-- `/` - Home page with hero section and featured products
-- `/products` - Product catalog with filtering and search
-- `/products/[id]` - Individual product details
-- `/[category]` - Category-specific product listings (clothes, shoes, accessories, for-him, for-her)
-- `/about` - About page with company information
-- `/checkout` - Shopping cart and checkout process
-
-### Admin Pages
-- `/admin` - Admin dashboard with analytics
-- `/admin/products` - Product management
-- `/admin/sales` - Order management
-- `/admin/customers` - Customer management
-- `/admin/discounts` - Discount code management
-- `/admin/finance` - Financial overview
-- `/admin/analytics` - Sales analytics
-- `/admin/media` - Media library
-- `/admin/settings` - Store settings
-- `/admin/product-types` - Product type management
-
-## 🔧 Configuration
-
-### Store Settings
-Customize your store through the admin panel:
-- Store name and logo
-- Color themes and palettes
-- Language preferences
-- Hero banner images
-
-### Product Management
-- Create product types and properties
-- Add products with variants
-- Upload multiple product images
-- Set pricing and inventory
-- Control product visibility
-
-## 📧 Email Configuration
-
-Configure email settings in your environment for order notifications:
-```env
-NEXT_PUBLIC_EMAIL=your-email@gmail.com
-NEXT_PUBLIC_EMAIL_PASS=your_gmail_app_password
-```
-
-**Note:** For Gmail, you'll need to create an App Password (not your regular password). Enable 2-Step Verification in your Google Account, then generate an App Password from the Security settings.
+---
 
 ## 🚀 Deployment
 
-For detailed step-by-step deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md)
+The project is optimized for zero-config deployment on **Vercel**:
 
-### Quick Overview
-1. Create a new project on Vercel
-2. Create a new database on Supabase
-3. Run the database schema (from `schema.txt`)
-4. Run database migrations (`migration-add-subtitle.sql`, `migration-add-related-products.sql`)
-5. Create Supabase Storage bucket (`products`)
-6. Add environment variables to Vercel
-7. Create an admin user in Supabase
-8. Deploy and verify
+1. Import the repository into Vercel.
+2. Add the environment variables from `.env.local` in Project Settings.
+3. Configure the custom domain **`mb-paws.co.uk`** (with DNS records pointing to Vercel).
+4. Verify Supabase Storage public access for product images (`products` bucket).
+5. Set up MX / webhook records in Resend to enable incoming and outgoing mail via `orders@mb-paws.co.uk` and `support@mb-paws.co.uk`.
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete instructions with troubleshooting tips.
-
-### Supported Platforms
-The app is compatible with any platform supporting Next.js:
-- **Vercel** (Recommended - see deployment guide)
-- Netlify
-- Railway
-- Digital Ocean App Platform
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
+This project is proprietary software for **MB-Paws** ([MB-paws.co.uk](https://mb-paws.co.uk)). All rights reserved.

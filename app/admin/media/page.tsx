@@ -24,7 +24,7 @@ export default function MediaPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    document.title = t.mediaLibrary || t.media || (language === 'bg' ? 'Медия' : 'Media');
+    document.title = t.mediaLibrary || t.media || ('Media');
   }, [language, t]);
   const [isLoading, setIsLoading] = useState(true);
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
@@ -238,8 +238,8 @@ export default function MediaPage() {
         >
           {folderFiles.length === 0 ? (
             <EmptyState
-              title={language === 'bg' ? 'Няма файлове' : 'No Files'}
-              description={language === 'bg' ? `Няма файлове в папката "${getFolderDisplayName(selectedFolder)}". Качете файлове, за да започнете.` : `No files in the "${getFolderDisplayName(selectedFolder)}" folder. Upload files to get started.`}
+              title={'No Files'}
+              description={`No files in the "${getFolderDisplayName(selectedFolder)}" folder. Upload files to get started.`}
               icon={ImageIcon}
             />
           ) : (
@@ -307,7 +307,7 @@ export default function MediaPage() {
                 <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between w-full">
                   <div>
                     <p className="text-xs sm:text-sm text-gray-700">
-                      {t.showingTransactions || 'Showing'} <span className="font-medium">{startIndex + 1}</span> {language === 'bg' ? 'до' : 'to'} <span className="font-medium">{Math.min(endIndex, folderFiles.length)}</span> {language === 'bg' ? 'от' : 'of'} <span className="font-medium">{folderFiles.length}</span> {language === 'bg' ? 'файла' : 'files'}
+                      {t.showingTransactions || 'Showing'} <span className="font-medium">{startIndex + 1}</span> {'to'} <span className="font-medium">{Math.min(endIndex, folderFiles.length)}</span> {'of'} <span className="font-medium">{folderFiles.length}</span> {'files'}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">

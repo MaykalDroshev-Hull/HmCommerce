@@ -111,43 +111,43 @@ export default function AdminSidebar({ currentPath, collapsed: externalCollapsed
     },
     {
       id: 'product-types',
-      label: language === 'bg' ? 'Категории' : 'Categories',
+      label: 'Categories',
       path: '/admin/product-types',
       icon: Tag
     },
     {
       id: 'properties',
-      label: language === 'bg' ? 'Характеристики' : 'Characteristics',
+      label: 'Characteristics',
       path: '/admin/properties',
       icon: Settings
     },
     {
       id: 'products',
-      label: language === 'bg' ? 'Артикули' : 'Items',
+      label: 'Items',
       path: '/admin/products',
       icon: Package
     },
     {
       id: 'stock',
-      label: language === 'bg' ? 'Наличности' : 'Stock',
+      label: 'Stock',
       path: '/admin/stock',
       icon: Boxes
     },
     {
       id: 'stock-in',
-      label: language === 'bg' ? 'Заприхождаване' : 'Receive stock',
+      label: 'Receive stock',
       path: '/admin/stock-in',
       icon: ClipboardList
     },
     {
       id: 'order-new',
-      label: language === 'bg' ? 'Нова поръчка' : 'New order',
+      label: 'New order',
       path: '/admin/order-new',
       icon: ShoppingCart
     },
     {
       id: 'sales',
-      label: language === 'bg' ? 'Продажби' : 'Sales',
+      label: 'Sales',
       path: '/admin/sales',
       icon: BarChart3
     },
@@ -159,7 +159,7 @@ export default function AdminSidebar({ currentPath, collapsed: externalCollapsed
     },
     {
       id: 'analytics',
-      label: language === 'bg' ? 'Доклади' : 'Analytics',
+      label: 'Analytics',
       path: '/admin/analytics',
       icon: TrendingUp
     },
@@ -171,13 +171,13 @@ export default function AdminSidebar({ currentPath, collapsed: externalCollapsed
     },
     {
       id: 'finance',
-      label: language === 'bg' ? 'Финанси' : 'Finance',
+      label: 'Finance',
       path: '/admin/finance',
       icon: DollarSign
     },
     {
       id: 'discounts',
-      label: language === 'bg' ? 'Отстъпки' : 'Discounts',
+      label: 'Discounts',
       path: '/admin/discounts',
       icon: Percent
     },
@@ -189,7 +189,7 @@ export default function AdminSidebar({ currentPath, collapsed: externalCollapsed
     },
     {
       id: 'media',
-      label: language === 'bg' ? 'Медия' : 'Media',
+      label: 'Media',
       path: '/admin/media',
       icon: ImageIcon
     },
@@ -261,7 +261,7 @@ export default function AdminSidebar({ currentPath, collapsed: externalCollapsed
                 className="text-base sm:text-lg font-bold"
                 style={{ color: theme.colors.text }}
               >
-                {language === 'bg' ? 'Админ панел' : 'Admin Panel'}
+                {'Admin Panel'}
               </h2>
             )}
           </div>
@@ -371,7 +371,7 @@ export default function AdminSidebar({ currentPath, collapsed: externalCollapsed
               e.currentTarget.style.backgroundColor = theme.colors.secondary;
               e.currentTarget.style.color = theme.colors.text;
             }}
-            title={isCollapsed ? (language === 'bg' ? 'Разгъни страничната лента' : 'Expand sidebar') : (language === 'bg' ? 'Свий страничната лента' : 'Collapse sidebar')}
+            title={isCollapsed ? ('Expand sidebar') : ('Collapse sidebar')}
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {isCollapsed ? (
@@ -380,13 +380,13 @@ export default function AdminSidebar({ currentPath, collapsed: externalCollapsed
               <>
                 <ChevronLeft size={18} className="sm:w-5 sm:h-5 flex-shrink-0" />
                 <span className="text-xs sm:text-sm font-medium truncate">
-                  {language === 'bg' ? 'Свий страничната лента' : 'Collapse sidebar'}
+                  {'Collapse sidebar'}
                 </span>
               </>
             )}
             {isCollapsed && (
               <span className="sr-only">
-                {language === 'bg' ? 'Разгъни страничната лента' : 'Expand sidebar'}
+                {'Expand sidebar'}
               </span>
             )}
           </button>

@@ -18,10 +18,10 @@ export default function ForHerPage() {
   const { theme } = useTheme();
 
   useEffect(() => {
-    const pageTitle = language === 'bg' ? 'За Нея' : 'For Her';
+    const pageTitle = 'Harnesses';
     const storeName = settings?.storename || '';
     document.title = storeName ? `${pageTitle} - ${storeName}` : pageTitle;
-  }, [language, settings?.storename]);
+  }, [settings?.storename]);
 
   useEffect(() => {
     const adminState = localStorage.getItem('isAdmin');

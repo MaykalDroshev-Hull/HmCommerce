@@ -156,7 +156,7 @@ export async function PUT(
           })
           .eq('orderid', id);
         return NextResponse.json(
-          { success: false, error: res.error || 'Неуспешно връщане на наличност' },
+          { success: false, error: res.error || 'Failed to restock inventory' },
           { status: 500 }
         );
       }
@@ -177,7 +177,7 @@ export async function PUT(
           })
           .eq('orderid', id);
         return NextResponse.json(
-          { success: false, error: res.error || 'Неуспешно коригиране на наличност' },
+          { success: false, error: res.error || 'Failed to adjust stock' },
           { status: 500 }
         );
       }
@@ -215,10 +215,7 @@ export async function PUT(
             .limit(1)
             .single();
 
-          const language =
-            storeSettings?.language === 'bg' || storeSettings?.language === 'en'
-              ? storeSettings.language
-              : 'en';
+          const language = 'en';
 
           const orderDetails = buildOrderDetailsForEmail(id, existingOrder, customer, itemsWithDetails);
 
@@ -312,12 +309,12 @@ export async function PATCH(
 
     if (!body.customer?.fullName || !body.customer?.phone || !body.customer?.city) {
       return NextResponse.json(
-        { success: false, error: 'Липсват задължителни полета за клиент (име, телефон, град).' },
+        { success: false, error: 'Missing required customer fields (name, phone, city).' },
         { status: 400 }
       );
     }
     if (!body.items?.length) {
-      return NextResponse.json({ success: false, error: 'Добави поне един артикул.' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Please add at least one item.' }, { status: 400 });
     }
 
     const { data: existingOrder, error: fetchError } = await supabaseAdmin
@@ -362,7 +359,7 @@ export async function PATCH(
         {
           success: false,
           error:
-            'Поръчката е върната — артикулите не могат да се променят. Редактирай само клиент, доставка и бележки.',
+            'Order is returned — items cannot be modified. Edit customer, delivery, and notes only.',
         },
         { status: 400 }
       );
@@ -430,7 +427,7 @@ export async function PATCH(
       });
       if (!stockRes.ok) {
         return NextResponse.json(
-          { success: false, error: stockRes.error || 'Грешка при коригиране на наличност' },
+          { success: false, error: stockRes.error || 'Error adjusting stock' },
           { status: 500 }
         );
       }

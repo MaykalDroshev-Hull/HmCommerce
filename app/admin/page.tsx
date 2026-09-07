@@ -17,7 +17,7 @@ export default function AdminPage() {
   const t = translations[language];
 
   useEffect(() => {
-    document.title = t.dashboard || (language === 'bg' ? 'Табло' : 'Dashboard');
+    document.title = t.dashboard || ('Dashboard');
   }, [language, t]);
 
   useEffect(() => {

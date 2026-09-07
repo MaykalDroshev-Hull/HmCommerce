@@ -11,10 +11,10 @@ export default function CategoryPillsNav() {
   const { theme } = useTheme();
 
   const pills = [
-    { id: 'all', label: language === 'bg' ? 'Всички' : 'All', href: '/' },
-    { id: 'for-him', label: language === 'bg' ? 'За него' : 'For Him', href: '/for-him' },
-    { id: 'for-her', label: language === 'bg' ? 'За нея' : 'For Her', href: '/for-her' },
-    { id: 'accessories', label: language === 'bg' ? 'Аксесоари' : 'Accessories', href: '/accessories' },
+    { id: 'all', label: 'All', href: '/' },
+    { id: 'for-him', label: 'Collars', href: '/for-him' },
+    { id: 'for-her', label: 'Harnesses', href: '/for-her' },
+    { id: 'accessories', label: 'Accessories', href: '/accessories' },
   ];
 
   const activeId =

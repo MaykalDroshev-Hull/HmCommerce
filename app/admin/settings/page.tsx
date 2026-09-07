@@ -54,7 +54,7 @@ export default function AdminSettingsPage() {
   const t = translations[language || 'en'];
 
   useEffect(() => {
-    document.title = t.settings || (language === 'bg' ? 'Настройки' : 'Settings');
+    document.title = t.settings || ('Settings');
   }, [language, t]);
 
   const [settings, setSettings] = useState<StoreSettings | null>(null);
@@ -148,7 +148,7 @@ export default function AdminSettingsPage() {
         } else {
           // Create default settings if none exist
           const defaultSettings = {
-            storename: 'ModaBox',
+            storename: 'MB-Paws',
             logourl: null,
             themeid: 'default',
             language: 'en',
@@ -277,7 +277,7 @@ export default function AdminSettingsPage() {
       await refreshSettings();
       alert(t.settingsSaved);
     } catch (error) {
-      alert(language === 'bg' ? 'Грешка при запазване на настройките' : 'Error saving settings');
+      alert('Error saving settings');
     } finally {
       setIsSaving(false);
     }
@@ -348,10 +348,10 @@ export default function AdminSettingsPage() {
         } : null);
         setHasChanges(true);
       } else {
-        alert(language === 'bg' ? 'Грешка при качване на hero изображение' : 'Error uploading hero image');
+        alert('Error uploading hero image');
       }
     } catch (error) {
-      alert(language === 'bg' ? 'Грешка при качване на hero изображение' : 'Error uploading hero image');
+      alert('Error uploading hero image');
     }
 
     // Clear input
@@ -383,10 +383,10 @@ export default function AdminSettingsPage() {
         setSettings(prev => prev ? { ...prev, aboutusphoto: result.url ?? null } : null);
         setHasChanges(true);
       } else {
-        alert(language === 'bg' ? 'Грешка при качване на изображение' : 'Error uploading image');
+        alert('Error uploading image');
       }
     } catch (error) {
-      alert(language === 'bg' ? 'Грешка при качване на изображение' : 'Error uploading image');
+      alert('Error uploading image');
     }
 
     // Clear input
@@ -460,15 +460,13 @@ export default function AdminSettingsPage() {
       if (uploadedTestimonials.length > 0) {
         setTestimonials(prev => [...prev, ...uploadedTestimonials].sort((a, b) => a.sortorder - b.sortorder));
         if (uploadedTestimonials.length < validFiles.length) {
-          alert(language === 'bg' 
-            ? `Качени са ${uploadedTestimonials.length} от ${validFiles.length} изображения` 
-            : `Uploaded ${uploadedTestimonials.length} of ${validFiles.length} images`);
+          alert(`Uploaded ${uploadedTestimonials.length} of ${validFiles.length} images`);
         }
       } else {
-        alert(language === 'bg' ? 'Грешка при качване на изображения' : 'Error uploading images');
+        alert('Error uploading images');
       }
     } catch (error) {
-      alert(language === 'bg' ? 'Грешка при качване на отзиви' : 'Error uploading testimonials');
+      alert('Error uploading testimonials');
     } finally {
       setIsUploadingTestimonial(false);
       event.target.value = '';
@@ -476,7 +474,7 @@ export default function AdminSettingsPage() {
   };
 
   const handleTestimonialDelete = async (testimonialId: string) => {
-    if (!confirm(language === 'bg' ? 'Сигурни ли сте, че искате да изтриете този отзив?' : 'Are you sure you want to delete this testimonial?')) {
+    if (!confirm('Are you sure you want to delete this testimonial?')) {
       return;
     }
 
@@ -489,10 +487,10 @@ export default function AdminSettingsPage() {
       if (result.success) {
         setTestimonials(prev => prev.filter(t => t.testimonialid !== testimonialId));
       } else {
-        alert(language === 'bg' ? 'Грешка при изтриване на отзив' : 'Error deleting testimonial');
+        alert('Error deleting testimonial');
       }
     } catch (error) {
-      alert(language === 'bg' ? 'Грешка при изтриване на отзив' : 'Error deleting testimonial');
+      alert('Error deleting testimonial');
     }
   };
 
@@ -527,7 +525,7 @@ export default function AdminSettingsPage() {
 
       setTestimonials(updates);
     } catch (error) {
-      alert(language === 'bg' ? 'Грешка при пренареждане на отзиви' : 'Error reordering testimonials');
+      alert('Error reordering testimonials');
     }
   };
 
@@ -583,7 +581,7 @@ export default function AdminSettingsPage() {
       <AdminLayout currentPath="/admin/settings">
         <div className="text-center py-12">
           <p style={{ color: theme.colors.textSecondary }}>
-            {language === 'bg' ? 'Грешка при зареждане на настройките' : 'Error loading settings'}
+            {'Error loading settings'}
           </p>
         </div>
       </AdminLayout>
@@ -653,13 +651,11 @@ export default function AdminSettingsPage() {
                     borderColor: settings.storename.length > 25 ? '#ef4444' : theme.colors.border,
                     color: theme.colors.text
                   }}
-                  placeholder={language === 'bg' ? 'Въведете име на магазина' : 'Enter store name'}
+                  placeholder={'Enter store name'}
                 />
                 <div className="mt-1 flex justify-between items-center">
                   <p className="text-xs" style={{ color: theme.colors.textSecondary }}>
-                    {language === 'bg' 
-                      ? 'Ограничение: максимум 25 символа (за да се побере на 2 реда на мобилни устройства)'
-                      : 'Limit: 25 characters (to fit on 2 lines on mobile devices)'}
+                    {'Limit: 25 characters (to fit on 2 lines on mobile devices)'}
                   </p>
                   <span 
                     className="text-xs font-medium"
@@ -682,7 +678,7 @@ export default function AdminSettingsPage() {
                   className="block text-sm font-medium mb-2"
                   style={{ color: theme.colors.text }}
                 >
-                  {language === 'bg' ? 'Имейл' : 'Email'}
+                  {'Email'}
                 </label>
                 <input
                   id="settings-email"
@@ -695,7 +691,7 @@ export default function AdminSettingsPage() {
                     borderColor: theme.colors.border,
                     color: theme.colors.text
                   }}
-                  placeholder={language === 'bg' ? 'example@store.com' : 'example@store.com'}
+                  placeholder={'example@store.com'}
                 />
               </div>
 
@@ -705,7 +701,7 @@ export default function AdminSettingsPage() {
                   className="block text-sm font-medium mb-2"
                   style={{ color: theme.colors.text }}
                 >
-                  {language === 'bg' ? 'Телефонен номер' : 'Telephone Number'}
+                  {'Telephone Number'}
                 </label>
                 <input
                   id="settings-telephone"
@@ -718,7 +714,7 @@ export default function AdminSettingsPage() {
                     borderColor: theme.colors.border,
                     color: theme.colors.text
                   }}
-                  placeholder={language === 'bg' ? '+359 123 456 789' : '+1 234 567 8900'}
+                  placeholder={'+1 234 567 8900'}
                 />
               </div>
 
@@ -728,7 +724,7 @@ export default function AdminSettingsPage() {
                   className="block text-sm font-medium mb-2"
                   style={{ color: theme.colors.text }}
                 >
-                  {language === 'bg' ? 'Година на създаване' : 'Year of Creation'}
+                  {'Year of Creation'}
                 </label>
                 <input
                   id="settings-year-creation"
@@ -753,7 +749,7 @@ export default function AdminSettingsPage() {
                   className="block text-sm font-medium mb-2"
                   style={{ color: theme.colors.text }}
                 >
-                  {language === 'bg' ? 'Заключителни думи' : 'Closing Remarks'}
+                  {'Closing Remarks'}
                 </label>
                 <textarea
                   id="settings-closing-remarks"
@@ -766,13 +762,13 @@ export default function AdminSettingsPage() {
                     color: theme.colors.text,
                     minHeight: '120px'
                   }}
-                  placeholder={language === 'bg' ? 'Въведете заключителни думи или съобщение за магазина' : 'Enter closing remarks or message for the store'}
+                  placeholder={'Enter closing remarks or message for the store'}
                 />
                 <p
                   className="text-sm mt-1"
                   style={{ color: theme.colors.textSecondary }}
                 >
-                  {language === 'bg' ? 'Опционално съобщение, което ще се показва на сайта' : 'Optional message that will be displayed on the store'}
+                  {'Optional message that will be displayed on the store'}
                 </p>
               </div>
 
@@ -782,7 +778,7 @@ export default function AdminSettingsPage() {
                   className="text-lg font-semibold mb-4"
                   style={{ color: theme.colors.text }}
                 >
-                  {language === 'bg' ? 'Страница "За нас"' : 'About Us Page'}
+                  {'About Us Page'}
                 </h3>
 
                 {/* About Us Photo */}
@@ -791,7 +787,7 @@ export default function AdminSettingsPage() {
                     className="block text-sm font-medium mb-2"
                     style={{ color: theme.colors.text }}
                   >
-                    {language === 'bg' ? 'Снимка за страницата "За нас"' : 'About Us Photo'}
+                    {'About Us Photo'}
                   </label>
                   <div className="flex items-center gap-4">
                     <div
@@ -823,7 +819,7 @@ export default function AdminSettingsPage() {
                         }}
                       >
                         <Upload size={16} />
-                        {language === 'bg' ? 'Качи снимка' : 'Upload Photo'}
+                        {'Upload Photo'}
                         <input
                           type="file"
                           accept="image/*"
@@ -843,7 +839,7 @@ export default function AdminSettingsPage() {
                             color: '#fff'
                           }}
                         >
-                          {language === 'bg' ? 'Премахни снимка' : 'Remove Photo'}
+                          {'Remove Photo'}
                         </button>
                       )}
                     </div>
@@ -852,7 +848,7 @@ export default function AdminSettingsPage() {
                     className="text-sm mt-2"
                     style={{ color: theme.colors.textSecondary }}
                   >
-                    {language === 'bg' ? 'Максимален размер: 5MB' : 'Max size: 5MB'}
+                    {'Max size: 5MB'}
                   </p>
                 </div>
 
@@ -862,7 +858,7 @@ export default function AdminSettingsPage() {
                     className="block text-sm font-medium mb-2"
                     style={{ color: theme.colors.text }}
                   >
-                    {language === 'bg' ? 'Текст за страницата "За нас"' : 'About Us Text'}
+                    {'About Us Text'}
                   </label>
                   <RichTextEditor
                     value={settings.aboutustext || ''}
@@ -874,7 +870,7 @@ export default function AdminSettingsPage() {
                     className="text-sm mt-2"
                     style={{ color: theme.colors.textSecondary }}
                   >
-                    {language === 'bg' ? 'Използвайте редактора за форматиране на текста с удебелен шрифт, курсив, списъци и др.' : 'Use the editor to format text with bold, italic, lists, and more'}
+                    {'Use the editor to format text with bold, italic, lists, and more'}
                   </p>
                 </div>
               </div>
@@ -940,7 +936,7 @@ export default function AdminSettingsPage() {
                   className="block text-sm font-medium mb-2"
                   style={{ color: theme.colors.text }}
                 >
-                  {language === 'bg' ? 'Hero изображение' : 'Hero Image'}
+                  {'Hero Image'}
                 </label>
                 <div className="flex items-center gap-4">
                   <div
@@ -977,21 +973,21 @@ export default function AdminSettingsPage() {
                       }}
                     >
                       <Upload size={16} />
-                      {language === 'bg' ? 'Качи Hero изображение' : 'Upload Hero Image'}
+                      {'Upload Hero Image'}
                     </label>
                     {settings.heroimageurl && (
                       <button
                         onClick={() => handleSettingChange('heroimageurl', null)}
                         className="block mt-2 text-sm text-red-600 hover:text-red-700 transition-colors"
                       >
-                        {language === 'bg' ? 'Премахни изображение' : 'Remove Image'}
+                        {'Remove Image'}
                       </button>
                     )}
                     <p
                       className="text-sm mt-1"
                       style={{ color: theme.colors.textSecondary }}
                     >
-                      {language === 'bg' ? 'Изображение или GIF за началната страница (препоръчително: 1920x1080px, макс. 5MB)' : 'Image or GIF for the home page (recommended: 1920x1080px, max 5MB)'}
+                      {'Image or GIF for the home page (recommended: 1920x1080px, max 5MB)'}
                     </p>
                   </div>
                 </div>
@@ -1003,15 +999,13 @@ export default function AdminSettingsPage() {
                       className="block text-sm font-medium mb-2"
                       style={{ color: theme.colors.text }}
                     >
-                      {language === 'bg' ? 'Точка на фокус (Focus Point)' : 'Focus Point'}
+                      {'Focus Point'}
                     </label>
                     <p
                       className="text-sm mb-4"
                       style={{ color: theme.colors.textSecondary }}
                     >
-                      {language === 'bg' 
-                        ? 'Кликнете върху изображението, за да зададете точката на фокус. Важната област ще остане видима на всички размери на екрана.' 
-                        : 'Click on the image to set the focus point. The important area will remain visible on all screen sizes.'}
+                      {'Click on the image to set the focus point. The important area will remain visible on all screen sizes.'}
                     </p>
                     <HeroImageFocusEditor
                       imageUrl={settings.heroimageurl}
@@ -1079,7 +1073,7 @@ export default function AdminSettingsPage() {
               className="text-xl font-semibold mb-6"
               style={{ color: theme.colors.text }}
             >
-              {language === 'bg' ? 'Банер' : 'Banner'}
+              {'Banner'}
             </h2>
 
             <div className="space-y-6">
@@ -1089,7 +1083,7 @@ export default function AdminSettingsPage() {
                   className="block text-sm font-medium mb-2"
                   style={{ color: theme.colors.text }}
                 >
-                  {language === 'bg' ? 'Текст на банера (по един ред на ред)' : 'Banner Text (one line per row)'}
+                  {'Banner Text (one line per row)'}
                 </label>
                 <textarea
                   value={settings.bannertext || ''}
@@ -1102,13 +1096,13 @@ export default function AdminSettingsPage() {
                     minHeight: '120px',
                     fontFamily: 'monospace'
                   }}
-                  placeholder={language === 'bg' ? 'Въведете текст на банера\nВсеки ред ще се показва отделно' : 'Enter banner text\nEach line will be displayed separately'}
+                  placeholder={'Enter banner text\nEach line will be displayed separately'}
                 />
                 <p
                   className="text-sm mt-1"
                   style={{ color: theme.colors.textSecondary }}
                 >
-                  {language === 'bg' ? 'Всеки ред ще се ротира автоматично' : 'Each line will rotate automatically'}
+                  {'Each line will rotate automatically'}
                 </p>
               </div>
 
@@ -1118,7 +1112,7 @@ export default function AdminSettingsPage() {
                   className="block text-sm font-medium mb-2"
                   style={{ color: theme.colors.text }}
                 >
-                  {language === 'bg' ? 'Продължителност на ротация (секунди)' : 'Rotation Duration (seconds)'}
+                  {'Rotation Duration (seconds)'}
                 </label>
                 <input
                   type="number"
@@ -1136,7 +1130,7 @@ export default function AdminSettingsPage() {
                   className="text-sm mt-1"
                   style={{ color: theme.colors.textSecondary }}
                 >
-                  {language === 'bg' ? 'Време между смяна на редовете' : 'Time between line changes'}
+                  {'Time between line changes'}
                 </p>
               </div>
             </div>
@@ -1155,7 +1149,7 @@ export default function AdminSettingsPage() {
               className="text-xl font-semibold mb-6"
               style={{ color: theme.colors.text }}
             >
-              {language === 'bg' ? 'Социални мрежи (Оставете празно, ако не желаете да показвате линк)' : 'Social Media (Leave empty if you do not want to display a link)'}
+              {'Social Media (Leave empty if you do not want to display a link)'}
             </h2>
 
             <div className="space-y-4">
@@ -1335,7 +1329,7 @@ export default function AdminSettingsPage() {
               className="text-xl font-semibold mb-6"
               style={{ color: theme.colors.text }}
             >
-              {language === 'bg' ? 'Отзиви от клиенти' : 'Customer Testimonials'}
+              {'Customer Testimonials'}
             </h2>
 
             <div className="space-y-6">
@@ -1345,7 +1339,7 @@ export default function AdminSettingsPage() {
                   className="block text-sm font-medium mb-2"
                   style={{ color: theme.colors.text }}
                 >
-                  {language === 'bg' ? 'Добави нов отзив' : 'Add New Testimonial'}
+                  {'Add New Testimonial'}
                 </label>
                 <div className="flex items-center gap-4">
                   <input
@@ -1368,12 +1362,12 @@ export default function AdminSettingsPage() {
                     {isUploadingTestimonial ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        {language === 'bg' ? 'Качване...' : 'Uploading...'}
+                        {'Uploading...'}
                       </>
                     ) : (
                       <>
                         <Plus size={16} />
-                        {language === 'bg' ? 'Качи изображение' : 'Upload Image'}
+                        {'Upload Image'}
                       </>
                     )}
                   </label>
@@ -1381,7 +1375,7 @@ export default function AdminSettingsPage() {
                     className="text-sm"
                     style={{ color: theme.colors.textSecondary }}
                   >
-                    {language === 'bg' ? 'Можете да качите множество изображения. Максимален размер: 5MB на файл' : 'You can upload multiple images. Max size: 5MB per file'}
+                    {'You can upload multiple images. Max size: 5MB per file'}
                   </p>
                 </div>
               </div>
@@ -1400,7 +1394,7 @@ export default function AdminSettingsPage() {
                   }}
                 >
                   <p style={{ color: theme.colors.textSecondary }}>
-                    {language === 'bg' ? 'Няма добавени отзиви' : 'No testimonials added yet'}
+                    {'No testimonials added yet'}
                   </p>
                 </div>
               ) : (
@@ -1435,7 +1429,7 @@ export default function AdminSettingsPage() {
                               backgroundColor: index === 0 ? 'transparent' : theme.colors.secondary,
                               color: theme.colors.text
                             }}
-                            title={language === 'bg' ? 'Нагоре' : 'Move up'}
+                            title={'Move up'}
                           >
                             <ArrowUp size={16} />
                           </button>
@@ -1447,7 +1441,7 @@ export default function AdminSettingsPage() {
                               backgroundColor: index === testimonials.length - 1 ? 'transparent' : theme.colors.secondary,
                               color: theme.colors.text
                             }}
-                            title={language === 'bg' ? 'Надолу' : 'Move down'}
+                            title={'Move down'}
                           >
                             <ArrowDown size={16} />
                           </button>
@@ -1459,7 +1453,7 @@ export default function AdminSettingsPage() {
                             backgroundColor: '#ef4444',
                             color: '#ffffff'
                           }}
-                          title={language === 'bg' ? 'Изтрий' : 'Delete'}
+                          title={'Delete'}
                         >
                           <Trash2 size={16} />
                         </button>

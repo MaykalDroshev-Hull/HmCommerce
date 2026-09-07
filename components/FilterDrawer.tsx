@@ -314,9 +314,7 @@ export default function FilterDrawer({
     const formatOptionLabel = (value: string) => {
       if (!isSizeFilter) return value;
       const productCount = countProductsWithSizeInStock(products, value);
-      return language === 'bg'
-        ? `${value} (${productCount} арт.)`
-        : `${value} (${productCount})`;
+      return `${value} (${productCount})`;
     };
 
     const filteredValues = values.filter((value: string) =>
@@ -328,24 +326,30 @@ export default function FilterDrawer({
         ...prev,
         [propertyId]: {
           ...prev[propertyId],
-          isOpen: !prev[propertyId]?.isOpen,
-          searchTerm: ''
+          isOpen: !prev[propertyId]?.isOpen
         }
       }));
     };
 
-    const handleValueSelect = (value: string) => {
-      handleFilterChange(propertyId, value);
+    const handleSearchChange = (term: string) => {
       setDropdownStates(prev => ({
         ...prev,
-        [propertyId]: { ...prev[propertyId], isOpen: false, searchTerm: '' }
+        [propertyId]: {
+          ...prev[propertyId],
+          searchTerm: term
+        }
       }));
     };
 
-    const handleSearchChange = (searchTerm: string) => {
+    const handleValueSelect = (val: string) => {
+      handleFilterChange(propertyId, val);
       setDropdownStates(prev => ({
         ...prev,
-        [propertyId]: { ...prev[propertyId], searchTerm }
+        [propertyId]: {
+          ...prev[propertyId],
+          isOpen: false,
+          searchTerm: ''
+        }
       }));
     };
 
@@ -353,7 +357,10 @@ export default function FilterDrawer({
       handleFilterChange(propertyId, '');
       setDropdownStates(prev => ({
         ...prev,
-        [propertyId]: { ...prev[propertyId], isOpen: false, searchTerm: '' }
+        [propertyId]: {
+          ...prev[propertyId],
+          searchTerm: ''
+        }
       }));
     };
 
@@ -364,7 +371,7 @@ export default function FilterDrawer({
             <button
               type="button"
               onClick={toggleDropdown}
-              className="w-full px-3 py-2 text-sm border rounded-md transition-colors duration-300 flex items-center justify-between"
+              className="w-full flex items-center justify-between px-3 py-2 text-sm border rounded-md transition-colors duration-300"
               style={{
                 backgroundColor: theme.colors.surface,
                 borderColor: theme.colors.border,
@@ -374,9 +381,7 @@ export default function FilterDrawer({
               <span className={currentValue ? '' : 'opacity-50'}>
                 {currentValue
                   ? formatOptionLabel(currentValue)
-                  : language === 'bg'
-                    ? 'Изберете...'
-                    : 'Select...'}
+                  : 'Select...'}
               </span>
               <div className="flex items-center gap-1">
                 {currentValue && (
@@ -417,7 +422,7 @@ export default function FilterDrawer({
                     <Search size={14} className="absolute left-3 top-1/2 transform -translate-y-1/2 opacity-50" />
                     <input
                       type="text"
-                      placeholder={language === 'bg' ? 'Търси...' : 'Search...'}
+                      placeholder="Search..."
                       value={dropdownState.searchTerm}
                       onChange={(e) => handleSearchChange(e.target.value)}
                       className="w-full pl-9 pr-3 py-2 text-sm border rounded transition-colors duration-300"
@@ -434,7 +439,7 @@ export default function FilterDrawer({
                 <div className="max-h-40 overflow-y-auto">
                   {filteredValues.length === 0 ? (
                     <div className="px-3 py-2 text-sm opacity-50 text-center">
-                      {language === 'bg' ? 'Няма резултати' : 'No results'}
+                      No results
                     </div>
                   ) : (
                     <>
@@ -446,7 +451,7 @@ export default function FilterDrawer({
                           backgroundColor: !currentValue ? theme.colors.secondary : 'transparent'
                         }}
                       >
-                        {language === 'bg' ? 'Всички' : 'All'}
+                        All
                       </button>
                       {filteredValues.map((value: string) => (
                         <button
@@ -474,7 +479,7 @@ export default function FilterDrawer({
           <div className="flex gap-2">
             <input
               type="number"
-              placeholder={language === 'bg' ? 'Мин' : 'Min'}
+              placeholder="Min"
               value={selectedFilters[`${propertyId}_min`] || ''}
               onChange={(e) => handleFilterChange(`${propertyId}_min`, e.target.value ? Number(e.target.value) : '')}
               className="flex-1 px-3 py-2 text-sm border rounded-md transition-colors duration-300"
@@ -486,7 +491,7 @@ export default function FilterDrawer({
             />
             <input
               type="number"
-              placeholder={language === 'bg' ? 'Макс' : 'Max'}
+              placeholder="Max"
               value={selectedFilters[`${propertyId}_max`] || ''}
               onChange={(e) => handleFilterChange(`${propertyId}_max`, e.target.value ? Number(e.target.value) : '')}
               className="flex-1 px-3 py-2 text-sm border rounded-md transition-colors duration-300"
@@ -507,7 +512,7 @@ export default function FilterDrawer({
               <Search size={14} className="absolute left-3 top-1/2 transform -translate-y-1/2 opacity-50" />
               <input
                 type="text"
-                placeholder={language === 'bg' ? 'Търси...' : 'Search...'}
+                placeholder="Search..."
                 value={currentValue}
                 onChange={(e) => handleFilterChange(propertyId, e.target.value)}
                 className="w-full pl-9 pr-8 py-2 text-sm border rounded-md transition-colors duration-300"
@@ -580,7 +585,7 @@ export default function FilterDrawer({
                 className="text-lg md:text-xl font-semibold"
                 style={{ color: theme.colors.text }}
               >
-                {language === 'bg' ? 'Филтри' : 'Filters'}
+                Filters
               </h2>
               {getFilterCount() > 0 && (
                 <span
@@ -622,7 +627,7 @@ export default function FilterDrawer({
                   border: `1px solid ${theme.colors.border}`
                 }}
               >
-                {language === 'bg' ? 'Изчисти всички' : 'Clear All'}
+                Clear All
               </button>
             )}
 
@@ -687,7 +692,7 @@ export default function FilterDrawer({
                 className="text-sm text-center py-4"
                 style={{ color: theme.colors.textSecondary }}
               >
-                {language === 'bg' ? 'Няма налични филтри' : 'No filters available'}
+                No filters available
               </p>
             )}
           </div>
@@ -717,9 +722,7 @@ export default function FilterDrawer({
                 e.currentTarget.style.boxShadow = theme.effects.shadow;
               }}
             >
-              {language === 'bg' 
-                ? `Покажи ${filteredProducts.length} продукта` 
-                : `Show ${filteredProducts.length} products`}
+              {`Show ${filteredProducts.length} products`}
             </button>
           </div>
         </div>

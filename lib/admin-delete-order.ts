@@ -22,7 +22,7 @@ async function restoreStockForDeletion(orderId: string, items: OrderItemRow[], s
       delta: qty,
       movement_type: 'order_deleted',
       related_order_id: orderId,
-      note: 'Поръчка изтрита',
+      note: 'Order deleted',
       allowNegative: true,
     });
     if (!res.ok) return res;

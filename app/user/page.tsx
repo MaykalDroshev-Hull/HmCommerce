@@ -75,7 +75,7 @@ export default function UserPage() {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      errors.push(language === 'bg' ? 'Невалиден формат на имейл адреса' : 'Invalid email format')
+      errors.push('Invalid email format')
     }
 
     return {
@@ -137,9 +137,7 @@ export default function UserPage() {
       if (response.status === 429) {
         const retryAfter = response.headers.get('Retry-After')
         const retryMinutes = retryAfter ? Math.ceil(parseInt(retryAfter) / 60) : 15
-        setLoginError(language === 'bg' 
-          ? `Твърде много опити. Моля, изчакайте ${retryMinutes} минути.`
-          : `Too many attempts. Please wait ${retryMinutes} minutes.`)
+        setLoginError(`Too many attempts. Please wait ${retryMinutes} minutes.`)
         return
       }
 
@@ -149,7 +147,7 @@ export default function UserPage() {
         if (errorMessage === 'Invalid email or password' || errorMessage === 'Invalid email or password format') {
           errorMessage = t.invalidCredentials
         } else if (errorMessage === 'Internal server error') {
-          errorMessage = language === 'bg' ? 'Вътрешна грешка на сървъра. Моля, опитайте отново.' : 'Internal server error. Please try again.'
+          errorMessage = 'Internal server error. Please try again.'
         }
         setLoginError(errorMessage)
         return
@@ -188,7 +186,7 @@ export default function UserPage() {
       if (errorMessage === 'Invalid email or password' || errorMessage === 'Invalid email or password format') {
         errorMessage = t.invalidCredentials
       } else if (errorMessage === 'Internal server error' || errorMessage.includes('fetch')) {
-        errorMessage = language === 'bg' ? 'Възникна грешка. Моля, опитайте отново.' : 'An error occurred. Please try again.'
+        errorMessage = 'An error occurred. Please try again.'
       }
       setLoginError(errorMessage)
     } finally {
@@ -203,29 +201,27 @@ export default function UserPage() {
     if (registerData.email) {
       const emailValidation = validateEmail(registerData.email)
       if (!emailValidation.isValid) {
-        setRegisterError(language === 'bg' ? 'Моля, въведете валиден имейл адрес' : 'Please enter a valid email address')
+        setRegisterError('Please enter a valid email address')
         return
       }
     }
     
     // Validate phone
     if (!registerData.phone) {
-      setRegisterError(language === 'bg' ? 'Телефонът е задължителен' : 'Phone number is required')
+      setRegisterError('Phone number is required')
       return
     }
     
     const cleanedPhone = registerData.phone.replace(/\s/g, '')
     const phoneRegex = /^(\+359|0)[0-9]{9}$/
     if (!phoneRegex.test(cleanedPhone)) {
-      setRegisterError(language === 'bg' 
-        ? 'Невалиден формат на телефонния номер. Използвайте формат: +359XXXXXXXXX или 089XXXXXXX'
-        : 'Invalid phone format. Use: +359XXXXXXXXX or 089XXXXXXX')
+      setRegisterError('Invalid phone format. Use: +359XXXXXXXXX or 089XXXXXXX')
       return
     }
     
     // Validate password
     if (!registerData.password) {
-      setRegisterError(language === 'bg' ? 'Паролата е задължителна' : 'Password is required')
+      setRegisterError('Password is required')
       return
     }
     
@@ -277,23 +273,23 @@ export default function UserPage() {
         }
         
         if (!errorMessage) {
-          errorMessage = language === 'bg' ? 'Грешка при регистрация' : 'Registration failed'
+          errorMessage = 'Registration failed'
         }
         
         // Translate common error messages
         if (errorMessage === 'Email is already taken' || errorMessage === 'Email already exists') {
-          errorMessage = language === 'bg' ? 'Този имейл адрес вече е регистриран' : 'This email address is already registered'
+          errorMessage = 'This email address is already registered'
         } else if (errorMessage === 'Invalid email or password format' || errorMessage.includes('Invalid')) {
-          errorMessage = language === 'bg' ? 'Невалиден формат на данните' : 'Invalid data format'
+          errorMessage = 'Invalid data format'
         } else if (errorMessage === 'Internal server error') {
-          errorMessage = language === 'bg' ? 'Вътрешна грешка на сървъра. Моля, опитайте отново.' : 'Internal server error. Please try again.'
+          errorMessage = 'Internal server error. Please try again.'
         }
         
         setRegisterError(errorMessage)
         return
       }
 
-      setSuccess(language === 'bg' ? 'Успешна регистрация!' : 'Registration successful!')
+      setSuccess('Registration successful!')
       
       // Auto-fill login form
       setLoginData({
@@ -308,9 +304,9 @@ export default function UserPage() {
       
     } catch (err: any) {
       // Translate error messages
-      let errorMessage = err.message || (language === 'bg' ? 'Грешка при регистрация' : 'Registration failed')
+      let errorMessage = err.message || ('Registration failed')
       if (errorMessage === 'Internal server error' || errorMessage.includes('fetch')) {
-        errorMessage = language === 'bg' ? 'Възникна грешка. Моля, опитайте отново.' : 'An error occurred. Please try again.'
+        errorMessage = 'An error occurred. Please try again.'
       }
       setRegisterError(errorMessage)
     } finally {
@@ -404,7 +400,7 @@ export default function UserPage() {
               style={{ '--i': 3, '--j': 24 } as React.CSSProperties}
               disabled={isLoading}
             >
-              {isLoading ? (language === 'bg' ? 'Влизане...' : 'Logging in...') : t.loginButton}
+              {isLoading ? ('Logging in...') : t.loginButton}
             </button>
 
             <div className={`${styles.linkTxt} ${styles.animation}`} style={{ '--i': 5, '--j': 25 } as React.CSSProperties}>
@@ -427,7 +423,7 @@ export default function UserPage() {
             {t.welcomeBack}
           </h2>
           <p className={styles.animation} style={{ '--i': 1, '--j': 21 } as React.CSSProperties}>
-            {language === 'bg' ? 'Влезте в акаунта си за да пазарувате' : 'Login to your account to shop'}
+            {'Login to your account to shop'}
           </p>
         </div>
 
@@ -525,7 +521,7 @@ export default function UserPage() {
               style={{ '--i': 22, '--j': 5 } as React.CSSProperties}
               disabled={isLoading}
             >
-              {isLoading ? (language === 'bg' ? 'Регистрация...' : 'Registering...') : t.registerButton}
+              {isLoading ? ('Registering...') : t.registerButton}
             </button>
 
             {registerError && !isLogin && <div className={styles.errorMessage}>{registerError}</div>}
@@ -543,7 +539,7 @@ export default function UserPage() {
             {t.createAccount}
           </h2>
           <p className={styles.animation} style={{ '--i': 18, '--j': 1 } as React.CSSProperties}>
-            {language === 'bg' ? 'Създайте акаунт за бързо пазаруване' : 'Create an account for fast shopping'}
+            {'Create an account for fast shopping'}
           </p>
         </div>
 

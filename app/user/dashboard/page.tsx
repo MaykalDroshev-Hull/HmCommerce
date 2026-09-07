@@ -46,7 +46,7 @@ function FavoritesList({ userId, language }: { userId: string; language: string 
           }
         }
       } catch (err: any) {
-        setError(err.message || (language === 'bg' ? 'Грешка при зареждане на любимите' : 'Error loading favorites'))
+        setError(err.message || ('Error loading favorites'))
       } finally {
         setIsLoading(false)
       }
@@ -60,7 +60,7 @@ function FavoritesList({ userId, language }: { userId: string; language: string 
   if (isLoading) {
     return (
       <div className={styles.emptyState}>
-        <p>{language === 'bg' ? 'Зареждане...' : 'Loading...'}</p>
+        <p>{'Loading...'}</p>
       </div>
     )
   }
@@ -77,8 +77,8 @@ function FavoritesList({ userId, language }: { userId: string; language: string 
     return (
       <div className={styles.emptyState}>
         <Heart size={48} className={styles.emptyIcon} />
-        <h3>{t.favoritesEmpty || (language === 'bg' ? 'Все още няма любими' : 'No favorites yet')}</h3>
-        <p>{t.noFavoritesYet || (language === 'bg' ? 'Все още не сте добавили продукти в любими' : "You haven't favorited any products yet")}</p>
+        <h3>{t.favoritesEmpty || 'No favourites yet'}</h3>
+        <p>{t.noFavoritesYet || "You haven't added any products to your favourites yet"}</p>
       </div>
     )
   }
@@ -212,36 +212,41 @@ export default function DashboardPage() {
 
   // Load cities data
   const loadCities = async () => {
-    const bulgarianCities: CityOption[] = [
-      { name: 'Пловдив', postcode: '4000', displayName: 'Пловдив [4000]' },
-      { name: 'Варна', postcode: '9000', displayName: 'Варна [9000]' },
-      { name: 'Бургас', postcode: '8000', displayName: 'Бургас [8000]' },
-      { name: 'Русе', postcode: '7000', displayName: 'Русе [7000]' },
-      { name: 'Стара Загора', postcode: '6000', displayName: 'Стара Загора [6000]' },
-      { name: 'Плевен', postcode: '5800', displayName: 'Плевен [5800]' },
-      { name: 'Сливен', postcode: '8800', displayName: 'Сливен [8800]' },
-      { name: 'Добрич', postcode: '9300', displayName: 'Добрич [9300]' },
-      { name: 'Шумен', postcode: '9700', displayName: 'Шумен [9700]' },
-      { name: 'Перник', postcode: '2300', displayName: 'Перник [2300]' },
-      { name: 'Хасково', postcode: '6300', displayName: 'Хасково [6300]' },
-      { name: 'Ямбол', postcode: '8600', displayName: 'Ямбол [8600]' },
-      { name: 'Пазарджик', postcode: '4400', displayName: 'Пазарджик [4400]' },
-      { name: 'Благоевград', postcode: '2700', displayName: 'Благоевград [2700]' },
-      { name: 'Велико Търново', postcode: '5000', displayName: 'Велико Търново [5000]' },
-      { name: 'Враца', postcode: '3000', displayName: 'Враца [3000]' },
-      { name: 'Габрово', postcode: '5300', displayName: 'Габрово [5300]' },
-      { name: 'Асеновград', postcode: '4230', displayName: 'Асеновград [4230]' },
-      { name: 'Видин', postcode: '3700', displayName: 'Видин [3700]' },
-      { name: 'Кърджали', postcode: '6600', displayName: 'Кърджали [6600]' },
-      { name: 'Кюстендил', postcode: '2500', displayName: 'Кюстендил [2500]' },
-      { name: 'Ловеч', postcode: '5500', displayName: 'Ловеч [5500]' },
-      { name: 'Монтана', postcode: '3400', displayName: 'Монтана [3400]' },
-      { name: 'Търговище', postcode: '7700', displayName: 'Търговище [7700]' },
-      { name: 'Разград', postcode: '7200', displayName: 'Разград [7200]' },
-      { name: 'Силистра', postcode: '7500', displayName: 'Силистра [7500]' },
-      { name: 'Смолян', postcode: '4700', displayName: 'Смолян [4700]' }
+    const ukCities: CityOption[] = [
+      { name: 'London', postcode: 'EC1A', displayName: 'London [EC1A]' },
+      { name: 'Manchester', postcode: 'M1', displayName: 'Manchester [M1]' },
+      { name: 'Birmingham', postcode: 'B1', displayName: 'Birmingham [B1]' },
+      { name: 'Leeds', postcode: 'LS1', displayName: 'Leeds [LS1]' },
+      { name: 'Glasgow', postcode: 'G1', displayName: 'Glasgow [G1]' },
+      { name: 'Liverpool', postcode: 'L1', displayName: 'Liverpool [L1]' },
+      { name: 'Newcastle', postcode: 'NE1', displayName: 'Newcastle [NE1]' },
+      { name: 'Sheffield', postcode: 'S1', displayName: 'Sheffield [S1]' },
+      { name: 'Bristol', postcode: 'BS1', displayName: 'Bristol [BS1]' },
+      { name: 'Belfast', postcode: 'BT1', displayName: 'Belfast [BT1]' },
+      { name: 'Edinburgh', postcode: 'EH1', displayName: 'Edinburgh [EH1]' },
+      { name: 'Cardiff', postcode: 'CF10', displayName: 'Cardiff [CF10]' },
+      { name: 'Leicester', postcode: 'LE1', displayName: 'Leicester [LE1]' },
+      { name: 'Coventry', postcode: 'CV1', displayName: 'Coventry [CV1]' },
+      { name: 'Bradford', postcode: 'BD1', displayName: 'Bradford [BD1]' },
+      { name: 'Nottingham', postcode: 'NG1', displayName: 'Nottingham [NG1]' },
+      { name: 'Hull', postcode: 'HU1', displayName: 'Hull [HU1]' },
+      { name: 'Stoke-on-Trent', postcode: 'ST1', displayName: 'Stoke-on-Trent [ST1]' },
+      { name: 'Wolverhampton', postcode: 'WV1', displayName: 'Wolverhampton [WV1]' },
+      { name: 'Plymouth', postcode: 'PL1', displayName: 'Plymouth [PL1]' },
+      { name: 'Southampton', postcode: 'SO14', displayName: 'Southampton [SO14]' },
+      { name: 'Reading', postcode: 'RG1', displayName: 'Reading [RG1]' },
+      { name: 'Derby', postcode: 'DE1', displayName: 'Derby [DE1]' },
+      { name: 'Dudley', postcode: 'DY1', displayName: 'Dudley [DY1]' },
+      { name: 'Northampton', postcode: 'NN1', displayName: 'Northampton [NN1]' },
+      { name: 'Portsmouth', postcode: 'PO1', displayName: 'Portsmouth [PO1]' },
+      { name: 'Luton', postcode: 'LU1', displayName: 'Luton [LU1]' },
+      { name: 'Preston', postcode: 'PR1', displayName: 'Preston [PR1]' },
+      { name: 'Aberdeen', postcode: 'AB10', displayName: 'Aberdeen [AB10]' },
+      { name: 'Milton Keynes', postcode: 'MK9', displayName: 'Milton Keynes [MK9]' },
+      { name: 'Norwich', postcode: 'NR1', displayName: 'Norwich [NR1]' },
+      { name: 'Bournemouth', postcode: 'BH1', displayName: 'Bournemouth [BH1]' }
     ]
-    setCities(bulgarianCities)
+    setCities(ukCities)
   }
 
   // Load Econt offices data
@@ -261,7 +266,7 @@ export default function DashboardPage() {
       // Try to find the city in Econt offices - handle both display name format and plain city name
       let cityName = deliveryData.preferredCity
       
-      // If city is in display format like "Пловдив [4000]", extract just the city name
+      // If city is in display format like "London [EC1A]", extract just the city name
       const displayNameMatch = cityName.match(/^(.+?)\s*\[/)
       if (displayNameMatch) {
         cityName = displayNameMatch[1].trim()
@@ -336,10 +341,10 @@ export default function DashboardPage() {
         )
         setOrders(sortedOrders)
       } else {
-        setError(ordersData.error || (language === 'bg' ? 'Грешка при зареждане на поръчките' : 'Error loading orders'))
+        setError(ordersData.error || ('Error loading orders'))
       }
     } catch {
-      setError(language === 'bg' ? 'Грешка при зареждане на поръчките' : 'Error loading orders')
+      setError('Error loading orders')
     }
   }
 
@@ -357,11 +362,11 @@ export default function DashboardPage() {
   // Translate order status
   const translateStatus = (status: string): string => {
     const statusMap: Record<string, string> = {
-      'pending': language === 'bg' ? 'В очакване' : 'Pending',
-      'confirmed': language === 'bg' ? 'Потвърдена' : 'Confirmed',
-      'shipped': language === 'bg' ? 'Изпратена' : 'Shipped',
-      'delivered': language === 'bg' ? 'Доставена' : 'Delivered',
-      'cancelled': language === 'bg' ? 'Отказана' : 'Cancelled'
+      'pending': 'Pending',
+      'confirmed': 'Confirmed',
+      'shipped': 'Shipped',
+      'delivered': 'Delivered',
+      'cancelled': 'Cancelled'
     }
     return statusMap[status.toLowerCase()] || status
   }
@@ -451,10 +456,10 @@ export default function DashboardPage() {
       const data = await response.json()
       
       if (!response.ok) {
-        throw new Error(data.error || (language === 'bg' ? 'Грешка при обновяване на профила' : 'Error updating profile'))
+        throw new Error(data.error || ('Error updating profile'))
       }
       
-      setSuccess(language === 'bg' ? 'Профилът е обновен успешно!' : 'Profile updated successfully!')
+      setSuccess('Profile updated successfully!')
       setIsEditingProfile(false)
       
       // Update user context with new data
@@ -465,7 +470,7 @@ export default function DashboardPage() {
       })
       
     } catch (err: any) {
-      setError(err.message || (language === 'bg' ? 'Грешка при обновяване на профила' : 'Error updating profile'))
+      setError(err.message || ('Error updating profile'))
     } finally {
       setIsUpdating(false)
     }
@@ -498,10 +503,10 @@ export default function DashboardPage() {
       const data = await response.json()
       
       if (!response.ok) {
-        throw new Error(data.error || (language === 'bg' ? 'Грешка при обновяване на предпочитанията' : 'Error updating preferences'))
+        throw new Error(data.error || ('Error updating preferences'))
       }
       
-      setSuccess(language === 'bg' ? 'Предпочитанията са обновени успешно!' : 'Preferences updated successfully!')
+      setSuccess('Preferences updated successfully!')
       setIsEditingDelivery(false)
       
       // Update user context with new data
@@ -517,7 +522,7 @@ export default function DashboardPage() {
       })
       
     } catch (err: any) {
-      setError(err.message || (language === 'bg' ? 'Грешка при обновяване на предпочитанията' : 'Error updating preferences'))
+      setError(err.message || ('Error updating preferences'))
     } finally {
       setIsUpdating(false)
     }
@@ -527,12 +532,12 @@ export default function DashboardPage() {
     e.preventDefault()
     
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setError(language === 'bg' ? 'Новите пароли не съвпадат' : 'New passwords do not match')
+      setError('New passwords do not match')
       return
     }
     
     if (passwordData.newPassword.length < 8) {
-      setError(language === 'bg' ? 'Паролата трябва да е поне 8 символа дълга' : 'Password must be at least 8 characters long')
+      setError('Password must be at least 8 characters long')
       return
     }
     
@@ -554,14 +559,14 @@ export default function DashboardPage() {
       const data = await response.json()
       
       if (!response.ok) {
-        throw new Error(data.error || (language === 'bg' ? 'Грешка при промяна на паролата' : 'Error changing password'))
+        throw new Error(data.error || ('Error changing password'))
       }
       
-      setSuccess(language === 'bg' ? 'Паролата е променена успешно!' : 'Password changed successfully!')
+      setSuccess('Password changed successfully!')
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
       
     } catch (err: any) {
-      setError(err.message || (language === 'bg' ? 'Грешка при промяна на паролата' : 'Error changing password'))
+      setError(err.message || ('Error changing password'))
     } finally {
       setIsUpdating(false)
     }
@@ -596,16 +601,14 @@ export default function DashboardPage() {
           <div className={styles.userInfo}>
             <div>
               <h1>
-                {language === 'bg' 
-                  ? `Добре дошли обратно, ${user.name}!`
-                  : `Welcome back, ${user.name}!`}
+                {`Welcome back, ${user.name}!`}
               </h1>
               <p>{user.email}</p>
             </div>
           </div>
           <button onClick={handleLogout} className={styles.logoutBtn}>
             <LogOut size={20} />
-            {language === 'bg' ? 'Изход' : 'Logout'}
+            {'Logout'}
           </button>
         </header>
 
@@ -616,21 +619,21 @@ export default function DashboardPage() {
             onClick={() => setActiveTab('orders')}
           >
             <Package size={20} />
-            {language === 'bg' ? 'Поръчки' : 'Orders'}
+            {'Orders'}
           </button>
           <button
             className={`${styles.tab} ${activeTab === 'profile' ? styles.active : ''}`}
             onClick={() => setActiveTab('profile')}
           >
             <User size={20} />
-            {language === 'bg' ? 'Профил' : 'Profile'}
+            {'Profile'}
           </button>
           <button
             className={`${styles.tab} ${activeTab === 'favorites' ? styles.active : ''}`}
             onClick={() => setActiveTab('favorites')}
           >
             <Heart size={20} />
-            {t.myFavorites || (language === 'bg' ? 'Любими' : 'Favorites')}
+            {t.myFavorites || ('Favorites')}
           </button>
         </nav>
 
@@ -644,12 +647,12 @@ export default function DashboardPage() {
             <section className={styles.ordersSection}>
               <div className={styles.sectionHeader}>
                 <Package className={styles.sectionIcon} size={24} />
-                <h2>{language === 'bg' ? 'История на поръчките' : 'Order History'}</h2>
+                <h2>{'Order History'}</h2>
                 <button
                   onClick={handleRefreshOrders}
                   disabled={isRefreshing}
                   className={styles.refreshButton}
-                  title={language === 'bg' ? 'Обнови поръчките' : 'Refresh orders'}
+                  title={'Refresh orders'}
                 >
                   <RefreshCw size={18} className={isRefreshing ? styles.spinning : ''} />
                 </button>
@@ -665,11 +668,11 @@ export default function DashboardPage() {
                       <div className={styles.orderHeader}>
                         <div>
                           <h3>
-                            {language === 'bg' ? 'Поръчка #' : 'Order #'}{order.orderId}
+                            {'Order #'}{order.orderId}
                           </h3>
                           <p className={styles.orderDate}>
                             {new Date(order.orderDate).toLocaleDateString(
-                              language === 'bg' ? 'bg-BG' : 'en-US',
+                              'en-US',
                               { 
                                 year: 'numeric', 
                                 month: 'long', 
@@ -680,12 +683,12 @@ export default function DashboardPage() {
                             )}
                           </p>
                           <p className={styles.orderStatus}>
-                            {language === 'bg' ? 'Статус: ' : 'Status: '}
+                            {'Status: '}
                             <span className={styles.statusBadge}>{translateStatus(order.status)}</span>
                           </p>
                         </div>
                         <div className={styles.orderTotal}>
-                          {order.totalAmount.toFixed(2)} {language === 'bg' ? 'лв.' : 'BGN'}
+                          £{order.totalAmount.toFixed(2)}
                         </div>
                       </div>
                       <div className={styles.orderItems}>
@@ -693,12 +696,12 @@ export default function DashboardPage() {
                           <div key={index} className={styles.orderItem}>
                             <span className={styles.itemName}>{item.name}</span>
                             <span className={styles.itemQuantity}>x{item.quantity}</span>
-                            <span className={styles.itemPrice}>{item.totalPrice.toFixed(2)} {language === 'bg' ? 'лв.' : 'BGN'}</span>
+                            <span className={styles.itemPrice}>£{item.totalPrice.toFixed(2)}</span>
                           </div>
                         ))}
                         {order.items.length > 3 && (
                           <p className={styles.moreItems}>
-                            +{order.items.length - 3} {language === 'bg' ? 'още продукти' : 'more items'}
+                            +{order.items.length - 3} {'more items'}
                           </p>
                         )}
                       </div>
@@ -708,17 +711,15 @@ export default function DashboardPage() {
               ) : (
                 <div className={styles.emptyState}>
                   <Package size={48} className={styles.emptyIcon} />
-                  <h3>{language === 'bg' ? 'Все още нямате поръчки' : 'No orders yet'}</h3>
+                  <h3>{'No orders yet'}</h3>
                   <p>
-                    {language === 'bg' 
-                      ? 'Започнете първата си поръчка и ще я покажем тук!'
-                      : "Start your first order and we'll show it here!"}
+                    {"Start your first order and we'll show it here!"}
                   </p>
                   <button 
                     onClick={() => router.push('/products')}
                     className={styles.primaryBtn}
                   >
-                    {language === 'bg' ? 'Разгледайте продуктите' : 'Browse Products'}
+                    {'Browse Products'}
                   </button>
                 </div>
               )}
@@ -733,14 +734,14 @@ export default function DashboardPage() {
             <section className={styles.profileSection}>
               <div className={styles.sectionHeader}>
                 <User className={styles.sectionIcon} size={24} />
-                <h2>{language === 'bg' ? 'Лична информация' : 'Personal Information'}</h2>
+                <h2>{'Personal Information'}</h2>
                 {!isEditingProfile && (
                   <button 
                     onClick={handleEditProfile}
                     className={styles.editButton}
                   >
                     <Edit3 size={16} />
-                    {language === 'bg' ? 'Редактирай' : 'Edit'}
+                    {'Edit'}
                   </button>
                 )}
               </div>
@@ -748,23 +749,23 @@ export default function DashboardPage() {
               {!isEditingProfile ? (
                 <div className={styles.profileInfo}>
                   <div className={styles.infoRow}>
-                    <label>{language === 'bg' ? 'Име:' : 'Name:'}</label>
+                    <label>{'Name:'}</label>
                     <span>{user.name}</span>
                   </div>
                   <div className={styles.infoRow}>
-                    <label>{language === 'bg' ? 'Имейл:' : 'Email:'}</label>
+                    <label>{'Email:'}</label>
                     <span>{user.email}</span>
                   </div>
                   <div className={styles.infoRow}>
-                    <label>{language === 'bg' ? 'Телефон:' : 'Phone:'}</label>
-                    <span>{user.phone || (language === 'bg' ? 'Не е предоставен' : 'Not provided')}</span>
+                    <label>{'Phone:'}</label>
+                    <span>{user.phone || ('Not provided')}</span>
                   </div>
                   {user.created_at && (
                     <div className={styles.infoRow}>
-                      <label>{language === 'bg' ? 'Член от:' : 'Member since:'}</label>
+                      <label>{'Member since:'}</label>
                       <span>
                         {new Date(user.created_at).toLocaleDateString(
-                          language === 'bg' ? 'bg-BG' : 'en-US',
+                          'en-US',
                           { year: 'numeric', month: 'long', day: 'numeric' }
                         )}
                       </span>
@@ -774,7 +775,7 @@ export default function DashboardPage() {
               ) : (
                 <form onSubmit={handleProfileUpdate} className={styles.form}>
                   <div className={styles.formGroup}>
-                    <label htmlFor="profileName">{language === 'bg' ? 'Име' : 'Name'}</label>
+                    <label htmlFor="profileName">{'Name'}</label>
                     <input
                       type="text"
                       id="profileName"
@@ -785,7 +786,7 @@ export default function DashboardPage() {
                   </div>
                   
                   <div className={styles.formGroup}>
-                    <label htmlFor="profileEmail">{language === 'bg' ? 'Имейл' : 'Email'}</label>
+                    <label htmlFor="profileEmail">{'Email'}</label>
                     <input
                       type="email"
                       id="profileEmail"
@@ -796,13 +797,13 @@ export default function DashboardPage() {
                   </div>
                   
                   <div className={styles.formGroup}>
-                    <label htmlFor="profilePhone">{language === 'bg' ? 'Телефон' : 'Phone'}</label>
+                    <label htmlFor="profilePhone">{'Phone'}</label>
                     <input
                       type="tel"
                       id="profilePhone"
                       value={profileData.phone}
                       onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
-                      placeholder={language === 'bg' ? '0888123456 или +359888123456' : '0888123456 or +359888123456'}
+                      placeholder="07123 456789 or +44 7123 456789"
                       required
                     />
                   </div>
@@ -814,7 +815,7 @@ export default function DashboardPage() {
                       className={styles.cancelButton}
                       disabled={isUpdating}
                     >
-                      {language === 'bg' ? 'Отказ' : 'Cancel'}
+                      {'Cancel'}
                     </button>
                     <button 
                       type="submit" 
@@ -822,8 +823,8 @@ export default function DashboardPage() {
                       disabled={isUpdating}
                     >
                       {isUpdating 
-                        ? (language === 'bg' ? 'Запазване...' : 'Saving...')
-                        : (language === 'bg' ? 'Запази промените' : 'Save changes')}
+                        ? ('Saving...')
+                        : ('Save changes')}
                     </button>
                   </div>
                 </form>
@@ -834,14 +835,14 @@ export default function DashboardPage() {
             <section className={styles.settingsSection}>
               <div className={styles.sectionHeader}>
                 <Truck className={styles.sectionIcon} size={24} />
-                <h2>{language === 'bg' ? 'Предпочитания за доставка' : 'Delivery Preferences'}</h2>
+                <h2>{'Delivery Preferences'}</h2>
                 {!isEditingDelivery && (
                   <button 
                     onClick={() => setIsEditingDelivery(true)}
                     className={styles.editButton}
                   >
                     <Edit3 size={16} />
-                    {language === 'bg' ? 'Редактирай' : 'Edit'}
+                    {'Edit'}
                   </button>
                 )}
               </div>
@@ -849,24 +850,24 @@ export default function DashboardPage() {
               {!isEditingDelivery ? (
                 <div className={styles.profileInfo}>
                   <div className={styles.infoRow}>
-                    <label>{language === 'bg' ? 'Тип доставка:' : 'Delivery Type:'}</label>
+                    <label>{'Delivery Type:'}</label>
                     <span>
                       {deliveryData.preferredDeliveryType === 'office' 
-                        ? (language === 'bg' ? 'Офис' : 'Office')
+                        ? ('Office')
                         : deliveryData.preferredDeliveryType === 'address'
-                        ? (language === 'bg' ? 'Адрес' : 'Address')
-                        : (language === 'bg' ? 'Еконтомат' : 'Econtomat')}
+                        ? ('Address')
+                        : ('Econtomat')}
                     </span>
                   </div>
                   {deliveryData.preferredCity && (
                     <div className={styles.infoRow}>
-                      <label>{language === 'bg' ? 'Град:' : 'City:'}</label>
+                      <label>{'City:'}</label>
                       <span>{deliveryData.preferredCity}</span>
                     </div>
                   )}
                   {deliveryData.preferredDeliveryType === 'office' && deliveryData.preferredEcontOfficeId && (
                     <div className={styles.infoRow}>
-                      <label>{language === 'bg' ? 'Еконт офис:' : 'Econt Office:'}</label>
+                      <label>{'Econt Office:'}</label>
                       <span>
                         {selectedOffice ? selectedOffice.name : deliveryData.preferredEcontOfficeId}
                       </span>
@@ -874,13 +875,13 @@ export default function DashboardPage() {
                   )}
                   {deliveryData.preferredDeliveryType === 'office' && selectedOffice && (
                     <div className={styles.infoRow}>
-                      <label>{language === 'bg' ? 'Адрес на офис:' : 'Office Address:'}</label>
+                      <label>{'Office Address:'}</label>
                       <span>{selectedOffice.address}</span>
                     </div>
                   )}
                   {deliveryData.preferredDeliveryType === 'office' && selectedOffice && (
                     <div className={styles.infoRow}>
-                      <label>{language === 'bg' ? 'Работно време:' : 'Working Hours:'}</label>
+                      <label>{'Working Hours:'}</label>
                       <span>{selectedOffice.workingHours}</span>
                     </div>
                   )}
@@ -888,31 +889,31 @@ export default function DashboardPage() {
                     <>
                       {deliveryData.preferredStreet && (
                         <div className={styles.infoRow}>
-                          <label>{language === 'bg' ? 'Улица:' : 'Street:'}</label>
+                          <label>{'Street:'}</label>
                           <span>{deliveryData.preferredStreet}</span>
                         </div>
                       )}
                       {deliveryData.preferredStreetNumber && (
                         <div className={styles.infoRow}>
-                          <label>{language === 'bg' ? 'Номер:' : 'Number:'}</label>
+                          <label>{'Number:'}</label>
                           <span>{deliveryData.preferredStreetNumber}</span>
                         </div>
                       )}
                       {deliveryData.preferredEntrance && (
                         <div className={styles.infoRow}>
-                          <label>{language === 'bg' ? 'Вход:' : 'Entrance:'}</label>
+                          <label>{'Entrance:'}</label>
                           <span>{deliveryData.preferredEntrance}</span>
                         </div>
                       )}
                       {deliveryData.preferredFloor && (
                         <div className={styles.infoRow}>
-                          <label>{language === 'bg' ? 'Етаж:' : 'Floor:'}</label>
+                          <label>{'Floor:'}</label>
                           <span>{deliveryData.preferredFloor}</span>
                         </div>
                       )}
                       {deliveryData.preferredApartment && (
                         <div className={styles.infoRow}>
-                          <label>{language === 'bg' ? 'Апартамент:' : 'Apartment:'}</label>
+                          <label>{'Apartment:'}</label>
                           <span>{deliveryData.preferredApartment}</span>
                         </div>
                       )}
@@ -920,14 +921,14 @@ export default function DashboardPage() {
                   )}
                   {!deliveryData.preferredCity && (
                     <p className={styles.emptyState}>
-                      {language === 'bg' ? 'Няма запазени предпочитания за доставка' : 'No delivery preferences saved'}
+                      {'No delivery preferences saved'}
                     </p>
                   )}
                 </div>
               ) : (
                 <form onSubmit={handleDeliveryUpdate} className={styles.form}>
                   <div className={styles.formGroup}>
-                    <label>{language === 'bg' ? 'Тип доставка' : 'Delivery Type'}</label>
+                    <label>{'Delivery Type'}</label>
                     <select
                       value={deliveryData.preferredDeliveryType}
                       onChange={(e) => {
@@ -939,14 +940,14 @@ export default function DashboardPage() {
                         }))
                       }}
                     >
-                      <option value="office">{language === 'bg' ? 'Офис' : 'Office'}</option>
-                      <option value="address">{language === 'bg' ? 'Адрес' : 'Address'}</option>
-                      <option value="econtomat" disabled>{language === 'bg' ? 'Еконтомат (Неактивен)' : 'Econtomat (Disabled)'}</option>
+                      <option value="office">{'Office'}</option>
+                      <option value="address">{'Address'}</option>
+                      <option value="econtomat" disabled>{'Econtomat (Disabled)'}</option>
                     </select>
                   </div>
                   
                   <div className={styles.formGroup}>
-                    <label>{language === 'bg' ? 'Град' : 'City'}</label>
+                    <label>{'City'}</label>
                     <div className="relative" ref={cityDropdownRef}>
                       <input
                         type="text"
@@ -958,7 +959,7 @@ export default function DashboardPage() {
                           setSelectedOffice(null)
                         }}
                         onFocus={() => setShowCityDropdown(true)}
-                        placeholder={language === 'bg' ? 'Изберете град' : 'Select city'}
+                        placeholder={'Select city'}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                       {showCityDropdown && (
@@ -1004,13 +1005,13 @@ export default function DashboardPage() {
                   
                   {deliveryData.preferredDeliveryType === 'office' && deliveryData.preferredCity && econtOffices && (
                     <div className={styles.formGroup}>
-                      <label>{language === 'bg' ? 'Еконт офис' : 'Econt Office'}</label>
+                      <label>{'Econt Office'}</label>
                       <select
                         value={deliveryData.preferredEcontOfficeId || ''}
                         onChange={(e) => handleOfficeSelect(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
-                        <option value="">{language === 'bg' ? 'Изберете офис' : 'Select office'}</option>
+                        <option value="">{'Select office'}</option>
                         {(econtOffices.officesByCity[deliveryData.preferredCity] || []).map((office) => (
                           <option key={office.id} value={office.id}>
                             {office.name}
@@ -1021,11 +1022,11 @@ export default function DashboardPage() {
                         <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
                           <div className="space-y-1 text-sm">
                             <div>
-                              <span className="font-medium">{language === 'bg' ? 'Адрес:' : 'Address:'}</span>
+                              <span className="font-medium">{'Address:'}</span>
                               <p>{selectedOffice.address}</p>
                             </div>
                             <div>
-                              <span className="font-medium">{language === 'bg' ? 'Работно време:' : 'Working Hours:'}</span>
+                              <span className="font-medium">{'Working Hours:'}</span>
                               <p>{selectedOffice.workingHours}</p>
                             </div>
                           </div>
@@ -1037,16 +1038,16 @@ export default function DashboardPage() {
                   {deliveryData.preferredDeliveryType === 'address' && (
                     <>
                       <div className={styles.formGroup}>
-                        <label>{language === 'bg' ? 'Улица' : 'Street'}</label>
+                        <label>{'Street'}</label>
                         <input
                           type="text"
                           value={deliveryData.preferredStreet}
                           onChange={(e) => setDeliveryData(prev => ({ ...prev, preferredStreet: e.target.value }))}
-                          placeholder={language === 'bg' ? 'ул. Васил Левски' : 'Vasil Levski St'}
+                          placeholder="High Street"
                         />
                       </div>
                       <div className={styles.formGroup}>
-                        <label>{language === 'bg' ? 'Номер' : 'Street Number'}</label>
+                        <label>{'Street Number'}</label>
                         <input
                           type="text"
                           value={deliveryData.preferredStreetNumber}
@@ -1055,7 +1056,7 @@ export default function DashboardPage() {
                         />
                       </div>
                       <div className={styles.formGroup}>
-                        <label>{language === 'bg' ? 'Вход' : 'Entrance'}</label>
+                        <label>{'Entrance'}</label>
                         <input
                           type="text"
                           value={deliveryData.preferredEntrance}
@@ -1064,7 +1065,7 @@ export default function DashboardPage() {
                         />
                       </div>
                       <div className={styles.formGroup}>
-                        <label>{language === 'bg' ? 'Етаж' : 'Floor'}</label>
+                        <label>{'Floor'}</label>
                         <input
                           type="text"
                           value={deliveryData.preferredFloor}
@@ -1073,7 +1074,7 @@ export default function DashboardPage() {
                         />
                       </div>
                       <div className={styles.formGroup}>
-                        <label>{language === 'bg' ? 'Апартамент' : 'Apartment'}</label>
+                        <label>{'Apartment'}</label>
                         <input
                           type="text"
                           value={deliveryData.preferredApartment}
@@ -1107,7 +1108,7 @@ export default function DashboardPage() {
                       className={styles.cancelButton}
                       disabled={isUpdating}
                     >
-                      {language === 'bg' ? 'Отказ' : 'Cancel'}
+                      {'Cancel'}
                     </button>
                     <button 
                       type="submit" 
@@ -1115,8 +1116,8 @@ export default function DashboardPage() {
                       disabled={isUpdating}
                     >
                       {isUpdating 
-                        ? (language === 'bg' ? 'Запазване...' : 'Saving...')
-                        : (language === 'bg' ? 'Запази промените' : 'Save changes')}
+                        ? ('Saving...')
+                        : ('Save changes')}
                     </button>
                   </div>
                 </form>
@@ -1127,12 +1128,12 @@ export default function DashboardPage() {
             <section className={styles.settingsSection}>
               <div className={styles.sectionHeader}>
                 <Lock className={styles.sectionIcon} size={24} />
-                <h2>{language === 'bg' ? 'Промяна на парола' : 'Change Password'}</h2>
+                <h2>{'Change Password'}</h2>
               </div>
               <form onSubmit={handlePasswordChange} className={styles.form}>
                 <div className={styles.formGroup}>
                   <label htmlFor="currentPassword">
-                    {language === 'bg' ? 'Текуща парола' : 'Current Password'}
+                    {'Current Password'}
                   </label>
                   <input
                     type="password"
@@ -1144,7 +1145,7 @@ export default function DashboardPage() {
                 </div>
                 <div className={styles.formGroup}>
                   <label htmlFor="newPassword">
-                    {language === 'bg' ? 'Нова парола' : 'New Password'}
+                    {'New Password'}
                   </label>
                   <input
                     type="password"
@@ -1156,7 +1157,7 @@ export default function DashboardPage() {
                 </div>
                 <div className={styles.formGroup}>
                   <label htmlFor="confirmPassword">
-                    {language === 'bg' ? 'Потвърди нова парола' : 'Confirm New Password'}
+                    {'Confirm New Password'}
                   </label>
                   <input
                     type="password"
@@ -1172,8 +1173,8 @@ export default function DashboardPage() {
                   disabled={isUpdating}
                 >
                   {isUpdating 
-                    ? (language === 'bg' ? 'Обновяване...' : 'Updating...')
-                    : (language === 'bg' ? 'Промени парола' : 'Change Password')}
+                    ? ('Updating...')
+                    : ('Change Password')}
                 </button>
               </form>
             </section>
@@ -1186,7 +1187,7 @@ export default function DashboardPage() {
             <section className={styles.ordersSection}>
               <div className={styles.sectionHeader}>
                 <Heart className={styles.sectionIcon} size={24} />
-                <h2>{t.myFavorites || (language === 'bg' ? 'Моите любими' : 'My Favorites')}</h2>
+                <h2>{t.myFavorites || ('My Favorites')}</h2>
               </div>
               <FavoritesList userId={user.id} language={language} />
             </section>
@@ -1203,12 +1204,12 @@ export default function DashboardPage() {
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h2>
-                {language === 'bg' ? 'Детайли на поръчка #' : 'Order Details #'}{selectedOrder.orderId}
+                {'Order Details #'}{selectedOrder.orderId}
               </h2>
               <button 
                 className={styles.modalCloseBtn}
                 onClick={handleCloseModal}
-                aria-label={language === 'bg' ? 'Затвори' : 'Close'}
+                aria-label={'Close'}
               >
                 <X size={24} />
               </button>
@@ -1218,10 +1219,10 @@ export default function DashboardPage() {
               {/* Order Info */}
               <div className={styles.modalSection}>
                 <div className={styles.modalInfoRow}>
-                  <span className={styles.modalLabel}>{language === 'bg' ? 'Дата:' : 'Date:'}</span>
+                  <span className={styles.modalLabel}>{'Date:'}</span>
                   <span className={styles.modalValue}>
                     {new Date(selectedOrder.orderDate).toLocaleDateString(
-                      language === 'bg' ? 'bg-BG' : 'en-US',
+                      'en-US',
                       { 
                         year: 'numeric', 
                         month: 'long', 
@@ -1233,22 +1234,22 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <div className={styles.modalInfoRow}>
-                  <span className={styles.modalLabel}>{language === 'bg' ? 'Статус:' : 'Status:'}</span>
+                  <span className={styles.modalLabel}>{'Status:'}</span>
                   <span className={styles.statusBadge}>{translateStatus(selectedOrder.status)}</span>
                 </div>
                 <div className={styles.modalInfoRow}>
-                  <span className={styles.modalLabel}>{language === 'bg' ? 'Тип доставка:' : 'Delivery Type:'}</span>
+                  <span className={styles.modalLabel}>{'Delivery Type:'}</span>
                   <span className={styles.modalValue}>
                     {selectedOrder.deliveryType === 'office' 
-                      ? (language === 'bg' ? 'Офис' : 'Office')
+                      ? ('Office')
                       : selectedOrder.deliveryType === 'address'
-                      ? (language === 'bg' ? 'Адрес' : 'Address')
-                      : (language === 'bg' ? 'Еконтомат' : 'Econtomat')}
+                      ? ('Address')
+                      : ('Econtomat')}
                   </span>
                 </div>
                 {selectedOrder.deliveryNotes && (
                   <div className={styles.modalInfoRow}>
-                    <span className={styles.modalLabel}>{language === 'bg' ? 'Бележки:' : 'Notes:'}</span>
+                    <span className={styles.modalLabel}>{'Notes:'}</span>
                     <span className={styles.modalValue}>{selectedOrder.deliveryNotes}</span>
                   </div>
                 )}
@@ -1257,7 +1258,7 @@ export default function DashboardPage() {
               {/* Order Items */}
               <div className={styles.modalSection}>
                 <h3 className={styles.modalSectionTitle}>
-                  {language === 'bg' ? 'Артикули' : 'Items'}
+                  {'Items'}
                 </h3>
                 <div className={styles.modalItemsList}>
                   {selectedOrder.items.map((item, index) => (
@@ -1277,13 +1278,13 @@ export default function DashboardPage() {
                       </div>
                       <div className={styles.modalItemDetails}>
                         <span className={styles.modalItemQuantity}>
-                          {language === 'bg' ? 'Количество:' : 'Quantity:'} {item.quantity}
+                          {'Quantity:'} {item.quantity}
                         </span>
                         <span className={styles.modalItemPrice}>
-                          {item.price.toFixed(2)} {language === 'bg' ? 'лв.' : 'BGN'} {language === 'bg' ? 'x' : 'each'}
+                          £{item.price.toFixed(2)} each
                         </span>
                         <span className={styles.modalItemTotal}>
-                          {item.totalPrice.toFixed(2)} {language === 'bg' ? 'лв.' : 'BGN'}
+                          £{item.totalPrice.toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -1295,26 +1296,26 @@ export default function DashboardPage() {
               <div className={styles.modalSection}>
                 <div className={styles.modalSummary}>
                   <div className={styles.modalSummaryRow}>
-                    <span>{language === 'bg' ? 'Междинна сума:' : 'Subtotal:'}</span>
+                    <span>{'Subtotal:'}</span>
                     <span>
-                      {(selectedOrder.totalAmount - selectedOrder.deliveryCost - (selectedOrder.discountAmount || 0)).toFixed(2)} {language === 'bg' ? 'лв.' : 'BGN'}
+                      £{(selectedOrder.totalAmount - selectedOrder.deliveryCost - (selectedOrder.discountAmount || 0)).toFixed(2)}
                     </span>
                   </div>
                   {selectedOrder.discountAmount > 0 && (
                     <div className={styles.modalSummaryRow}>
-                      <span>{language === 'bg' ? 'Отстъпка:' : 'Discount:'}</span>
+                      <span>{'Discount:'}</span>
                       <span style={{ color: 'hsl(var(--success))' }}>
-                        -{selectedOrder.discountAmount.toFixed(2)} {language === 'bg' ? 'лв.' : 'BGN'}
+                        -£{selectedOrder.discountAmount.toFixed(2)}
                       </span>
                     </div>
                   )}
                   <div className={styles.modalSummaryRow}>
-                    <span>{language === 'bg' ? 'Доставка:' : 'Delivery:'}</span>
-                    <span>{selectedOrder.deliveryCost.toFixed(2)} {language === 'bg' ? 'лв.' : 'BGN'}</span>
+                    <span>{'Delivery:'}</span>
+                    <span>£{selectedOrder.deliveryCost.toFixed(2)}</span>
                   </div>
                   <div className={styles.modalSummaryRowTotal}>
-                    <span>{language === 'bg' ? 'Общо:' : 'Total:'}</span>
-                    <span>{selectedOrder.totalAmount.toFixed(2)} {language === 'bg' ? 'лв.' : 'BGN'}</span>
+                    <span>{'Total:'}</span>
+                    <span>£{selectedOrder.totalAmount.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -1325,7 +1326,7 @@ export default function DashboardPage() {
                 className={styles.primaryBtn}
                 onClick={handleCloseModal}
               >
-                {language === 'bg' ? 'Затвори' : 'Close'}
+                {'Close'}
               </button>
             </div>
           </div>

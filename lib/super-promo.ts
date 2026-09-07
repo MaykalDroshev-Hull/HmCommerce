@@ -49,7 +49,7 @@ function parseVariantProps(variant: Record<string, unknown>) {
   let size = '';
 
   props.forEach(({ nameKey, value }) => {
-    if (nameKey.includes('color') || nameKey.includes('colour') || nameKey.includes('цвят')) {
+    if (nameKey.includes('color') || nameKey.includes('colour')) {
       color = value;
     } else if (isSizePropertyKey(nameKey, nameKey)) {
       size = value;

@@ -133,21 +133,7 @@ function PromoPriceInput({
   );
 }
 
-function statusLabel(status: ReturnType<typeof getVariantStockStatus>, language: 'bg' | 'en') {
-  if (language === 'bg') {
-    switch (status) {
-      case 'in_stock':
-        return 'В наличност';
-      case 'low_stock':
-        return 'Ниска наличност';
-      case 'out_of_stock':
-        return 'Изчерпана наличност';
-      case 'negative':
-        return 'Отрицателна';
-      default:
-        return 'Без проследяване';
-    }
-  }
+function statusLabel(status: ReturnType<typeof getVariantStockStatus>, _language?: 'bg' | 'en') {
   switch (status) {
     case 'in_stock':
       return 'In stock';
@@ -183,7 +169,7 @@ function SizeBadge({
   variant: StockVariant;
   language: 'bg' | 'en';
 }) {
-  const size = getVariantSize(variant) || (language === 'bg' ? '—' : '—');
+  const size = getVariantSize(variant) || ('—');
   const status = getVariantStockStatus(variant);
   const colorClass =
     status === 'out_of_stock' || status === 'negative'
@@ -254,7 +240,7 @@ function VariantRowControls({
           type="button"
           onClick={() => onToggleSelection(variant.productvariantid)}
           className="mt-0.5 shrink-0"
-          aria-label={language === 'bg' ? 'Избор на вариант' : 'Select variant'}
+          aria-label={'Select variant'}
         >
           {isSelected ? <CheckSquare size={18} /> : <Square size={18} />}
         </button>
@@ -273,7 +259,7 @@ function VariantRowControls({
         <div className="text-right shrink-0 space-y-2">
           <div>
             <p className="text-xs" style={{ color: theme.colors.textSecondary }}>
-              {language === 'bg' ? 'Цена' : 'Price'}
+              {'Price'}
             </p>
             <PriceInput
               value={currentPrice}
@@ -285,7 +271,7 @@ function VariantRowControls({
           </div>
           <div>
             <p className="text-xs" style={{ color: theme.colors.textSecondary }}>
-              {language === 'bg' ? 'Промо' : 'Promo'}
+              {'Promo'}
             </p>
             <PromoPriceInput
               value={currentPromoPrice}
@@ -302,7 +288,7 @@ function VariantRowControls({
       <div className="grid grid-cols-2 gap-2">
         <div>
           <p className="text-xs mb-1" style={{ color: theme.colors.textSecondary }}>
-            {language === 'bg' ? 'Наличност' : 'Stock'}
+            {'Stock'}
           </p>
           <div className="flex items-center gap-2">
         <button
@@ -395,7 +381,7 @@ export default function ProductStockCard({
             type="button"
             onClick={() => onToggleProductSelection(product.productid)}
             className="mt-1 shrink-0 self-start touch-manipulation"
-            aria-label={language === 'bg' ? 'Избор на продукт' : 'Select product'}
+            aria-label={'Select product'}
           >
             {isProductSelected ? <CheckSquare size={20} /> : <Square size={20} />}
           </button>
@@ -414,7 +400,7 @@ export default function ProductStockCard({
               className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg border shrink-0 flex items-center justify-center text-xs opacity-50"
               style={{ borderColor: theme.colors.border, color: theme.colors.textSecondary }}
             >
-              {language === 'bg' ? 'Няма' : 'None'}
+              {'None'}
             </div>
           )}
 
@@ -436,12 +422,12 @@ export default function ProductStockCard({
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {product.isdisabled && (
                     <Badge variant="neutral">
-                      {language === 'bg' ? 'Скрит от магазина' : 'Hidden from shop'}
+                      {'Hidden from shop'}
                     </Badge>
                   )}
                   {product.awaitingrestock && (
                     <Badge variant="warning">
-                      {language === 'bg' ? 'Изчерпана наличност' : 'Out of stock display'}
+                      {'Out of stock display'}
                     </Badge>
                   )}
                 </div>
@@ -460,11 +446,11 @@ export default function ProductStockCard({
 
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs sm:text-sm">
               <span style={{ color: theme.colors.textSecondary }}>
-                {language === 'bg' ? 'Обща наличност' : 'Total stock'}:{' '}
+                {'Total stock'}:{' '}
                 <strong style={{ color: theme.colors.text }}>{product.total_stock}</strong>
               </span>
               <span style={{ color: theme.colors.textSecondary }}>
-                {language === 'bg' ? 'Варианти' : 'Variants'}:{' '}
+                {'Variants'}:{' '}
                 <strong style={{ color: theme.colors.text }}>{product.variant_count}</strong>
               </span>
             </div>
@@ -490,12 +476,8 @@ export default function ProductStockCard({
           >
             {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             {isExpanded
-              ? language === 'bg'
-                ? 'Скрий размерите'
-                : 'Hide sizes'
-              : language === 'bg'
-                ? 'Покажи размерите'
-                : 'Show sizes'}
+              ? 'Hide sizes'
+              : 'Show sizes'}
           </button>
           <button
             type="button"
@@ -506,7 +488,7 @@ export default function ProductStockCard({
               color: '#ffffff',
             }}
           >
-            {language === 'bg' ? 'Управление на размерите' : 'Manage sizes'}
+            {'Manage sizes'}
           </button>
         </div>
       </div>
@@ -529,12 +511,8 @@ export default function ProductStockCard({
               style={{ color: theme.colors.primary }}
             >
               {allSelected
-                ? language === 'bg'
-                  ? 'Изчисти избора'
-                  : 'Clear selection'
-                : language === 'bg'
-                  ? 'Избери всички'
-                  : 'Select all'}
+                ? 'Clear selection'
+                : 'Select all'}
             </button>
           </div>
 
@@ -543,14 +521,14 @@ export default function ProductStockCard({
               <thead>
                 <tr style={{ color: theme.colors.textSecondary }}>
                   <th className="text-left py-2 pr-2 w-8" />
-                  <th className="text-left py-2 pr-3">{language === 'bg' ? 'Размер' : 'Size'}</th>
-                  <th className="text-left py-2 pr-3">{language === 'bg' ? 'Цвят' : 'Color'}</th>
+                  <th className="text-left py-2 pr-3">{'Size'}</th>
+                  <th className="text-left py-2 pr-3">{'Color'}</th>
                   <th className="text-left py-2 pr-3">SKU</th>
-                  <th className="text-left py-2 pr-3">{language === 'bg' ? 'Наличност' : 'Stock'}</th>
-                  <th className="text-left py-2 pr-3">{language === 'bg' ? 'Корекция' : 'Adjustment'}</th>
-                  <th className="text-left py-2 pr-3">{language === 'bg' ? 'Цена' : 'Price'}</th>
-                  <th className="text-left py-2 pr-3">{language === 'bg' ? 'Промо цена' : 'Promo'}</th>
-                  <th className="text-left py-2">{language === 'bg' ? 'Статус' : 'Status'}</th>
+                  <th className="text-left py-2 pr-3">{'Stock'}</th>
+                  <th className="text-left py-2 pr-3">{'Adjustment'}</th>
+                  <th className="text-left py-2 pr-3">{'Price'}</th>
+                  <th className="text-left py-2 pr-3">{'Promo'}</th>
+                  <th className="text-left py-2">{'Status'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -585,7 +563,7 @@ export default function ProductStockCard({
                         <button
                           type="button"
                           onClick={() => onToggleVariantSelection(variant.productvariantid)}
-                          aria-label={language === 'bg' ? 'Избор' : 'Select'}
+                          aria-label={'Select'}
                         >
                           {isSelected ? <CheckSquare size={16} /> : <Square size={16} />}
                         </button>

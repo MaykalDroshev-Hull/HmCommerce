@@ -18,10 +18,10 @@ export default function AboutPage() {
   const t = translations[language];
 
   useEffect(() => {
-    const pageTitle = t.aboutUs || (language === 'bg' ? 'За нас' : 'About Us');
+    const pageTitle = t.aboutUs || 'About Us';
     const storeName = settings?.storename || '';
     document.title = storeName ? `${pageTitle} - ${storeName}` : pageTitle;
-  }, [language, t, settings?.storename]);
+  }, [t, settings?.storename]);
 
   useEffect(() => {
     const adminState = localStorage.getItem('isAdmin');

@@ -146,11 +146,11 @@ export default function AdminSearchBar({ sidebarCollapsed, sidebarWidth }: Admin
   // Translate type to Bulgarian
   const getTypeLabel = (type: SearchableItem['type']): string => {
     const typeMap: Record<SearchableItem['type'], string> = {
-      page: 'Страница',
-      section: 'Секция',
-      header: 'Заглавие',
-      field: 'Поле',
-      action: 'Действие',
+      page: 'Page',
+      section: 'Section',
+      header: 'Header',
+      field: 'Field',
+      action: 'Action',
     };
     return typeMap[type] || type;
   };
@@ -159,7 +159,7 @@ export default function AdminSearchBar({ sidebarCollapsed, sidebarWidth }: Admin
   const renderResultItem = (item: SearchableItem, index: number) => {
     const Icon = getIcon(item);
     const isSelected = index === selectedIndex;
-    const displayTitle = language === 'bg' ? item.titleBg : item.title;
+    const displayTitle = item.title;
 
     // Light greyish background for hover/selected
     const getBackgroundColor = () => {
@@ -228,7 +228,7 @@ export default function AdminSearchBar({ sidebarCollapsed, sidebarWidth }: Admin
           style={{ color: theme.colors.textSecondary }}
         >
           <p className="text-sm">
-            {language === 'bg' ? 'Няма намерени резултати' : 'No results found'}
+            {'No results found'}
           </p>
         </div>
       );
@@ -245,7 +245,7 @@ export default function AdminSearchBar({ sidebarCollapsed, sidebarWidth }: Admin
                 color: theme.colors.textSecondary,
               }}
             >
-              Страници
+              Pages
             </div>
             {groupedResults.pages.map((item, idx) => {
               const globalIndex = results.indexOf(item);
@@ -263,7 +263,7 @@ export default function AdminSearchBar({ sidebarCollapsed, sidebarWidth }: Admin
                 color: theme.colors.textSecondary,
               }}
             >
-              Секции
+              Sections
             </div>
             {groupedResults.sections.map((item, idx) => {
               const globalIndex = results.indexOf(item);
@@ -281,7 +281,7 @@ export default function AdminSearchBar({ sidebarCollapsed, sidebarWidth }: Admin
                 color: theme.colors.textSecondary,
               }}
             >
-              Полета
+              Fields
             </div>
             {groupedResults.fields.map((item, idx) => {
               const globalIndex = results.indexOf(item);
@@ -299,7 +299,7 @@ export default function AdminSearchBar({ sidebarCollapsed, sidebarWidth }: Admin
                 color: theme.colors.textSecondary,
               }}
             >
-              Действия
+              Actions
             </div>
             {groupedResults.actions.map((item, idx) => {
               const globalIndex = results.indexOf(item);
@@ -320,7 +320,7 @@ export default function AdminSearchBar({ sidebarCollapsed, sidebarWidth }: Admin
           style={{ color: theme.colors.textSecondary }}
         >
           <p className="text-sm">
-            {language === 'bg' ? 'Няма скорошни търсения' : 'No recent searches'}
+            {'No recent searches'}
           </p>
         </div>
       );
@@ -334,19 +334,19 @@ export default function AdminSearchBar({ sidebarCollapsed, sidebarWidth }: Admin
             style={{ color: theme.colors.textSecondary }}
           >
             <Clock size={14} className="inline mr-2" />
-            {language === 'bg' ? 'Скорошни търсения' : 'Recent Searches'}
+            {'Recent Searches'}
           </div>
           <button
             onClick={clearRecentSearches}
             className="text-xs hover:underline"
             style={{ color: theme.colors.primary }}
           >
-            {language === 'bg' ? 'Изчисти' : 'Clear'}
+            {'Clear'}
           </button>
         </div>
         {recentSearchItems.map((item) => {
           const Icon = getIcon(item);
-          const displayTitle = language === 'bg' ? item.titleBg : item.title;
+          const displayTitle = item.title;
 
           return (
             <button
@@ -426,9 +426,7 @@ export default function AdminSearchBar({ sidebarCollapsed, sidebarWidth }: Admin
             onFocus={handleFocus}
             onBlur={handleBlur}
             placeholder={
-              language === 'bg'
-                ? 'Търсене или отиди до...'
-                : 'Search or go to...'
+              'Search or go to...'
             }
             className="w-full pl-10 pr-10 py-2 rounded-md text-sm focus:outline-none transition-all"
             style={{

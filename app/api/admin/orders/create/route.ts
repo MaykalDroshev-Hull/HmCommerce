@@ -32,7 +32,7 @@ interface CreateAdminOrderBody {
 
 function splitName(fullName: string): { first: string; last: string } {
   const t = fullName.trim();
-  if (!t) return { first: 'Клиент', last: '' };
+  if (!t) return { first: 'Customer', last: '' };
   const parts = t.split(/\s+/);
   if (parts.length === 1) return { first: parts[0], last: '' };
   return { first: parts[0], last: parts.slice(1).join(' ') };
@@ -132,12 +132,12 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as CreateAdminOrderBody;
     if (!body.customer?.fullName || !body.customer?.phone || !body.customer?.city) {
       return NextResponse.json(
-        { success: false, error: 'Липсват задължителни полета за клиент (име, телефон, град).' },
+        { success: false, error: 'Missing required customer fields (name, phone, city).' },
         { status: 400 }
       );
     }
     if (!body.items?.length) {
-      return NextResponse.json({ success: false, error: 'Добави поне един артикул.' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Please add at least one item.' }, { status: 400 });
     }
 
     const customerId = await getOrCreateCustomerForAdmin(body.customer);
@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
     if (orderErr) {
       logger.error('admin create order insert error:', orderErr);
       return NextResponse.json(
-        { success: false, error: orderErr.message || 'Неуспешно създаване на поръчка' },
+        { success: false, error: orderErr.message || 'Failed to create order' },
         { status: 500 }
       );
     }
@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
     if (itemsErr) {
       await supabaseAdmin.from('orders').delete().eq('orderid', orderId);
       return NextResponse.json(
-        { success: false, error: itemsErr.message || 'Неуспешни редове на поръчка' },
+        { success: false, error: itemsErr.message || 'Failed to save order items' },
         { status: 500 }
       );
     }
@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
       await supabaseAdmin.from('order_items').delete().eq('orderid', orderId);
       await supabaseAdmin.from('orders').delete().eq('orderid', orderId);
       return NextResponse.json(
-        { success: false, error: stockRes.error || 'Грешка при намаляване на наличност' },
+        { success: false, error: stockRes.error || 'Error reducing stock' },
         { status: 500 }
       );
     }
@@ -217,7 +217,7 @@ export async function POST(request: NextRequest) {
       orderId,
       oldStatus: null,
       newStatus: normalizeOrderStatus('new'),
-      note: 'Създадена от админ (Нова поръчка)',
+      note: 'Created by admin (New order)',
     });
 
     return NextResponse.json({ success: true, orderId });

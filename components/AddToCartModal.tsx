@@ -173,9 +173,7 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ isOpen, onClose, produc
         } else {
           const propertyLabel = propertyName === 'colour' || propertyName === 'color' ? t.color :
                                propertyName.charAt(0).toUpperCase() + propertyName.slice(1);
-          newErrors[propertyName] = language === 'bg' 
-            ? `Моля, изберете ${propertyLabel.toLowerCase()}`
-            : `Please select ${propertyLabel.toLowerCase()}`;
+          newErrors[propertyName] = `Please select ${propertyLabel.toLowerCase()}`;
         }
       }
     });
@@ -233,7 +231,7 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ isOpen, onClose, produc
     });
 
     // Get size from selected options (for backward compatibility)
-    const selectedSize = selectedOptions['size'] || selectedOptions['размер'] || '';
+    const selectedSize = selectedOptions['size'] || selectedOptions['Size'] || '';
 
     // Add item to cart
     addItem({

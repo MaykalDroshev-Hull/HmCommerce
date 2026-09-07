@@ -25,7 +25,7 @@ export default function CustomersPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    document.title = t.customers || (language === 'bg' ? 'Клиенти' : 'Customers');
+    document.title = t.customers || ('Customers');
   }, [language, t]);
   const [isLoading, setIsLoading] = useState(true);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -252,7 +252,7 @@ export default function CustomersPage() {
               <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between w-full">
                 <div>
                   <p className="text-xs sm:text-sm text-gray-700">
-                    {t.showingTransactions || 'Showing'} <span className="font-medium">{startIndex + 1}</span> {language === 'bg' ? 'до' : 'to'} <span className="font-medium">{Math.min(endIndex, customers.length)}</span> {language === 'bg' ? 'от' : 'of'} <span className="font-medium">{customers.length}</span> {language === 'bg' ? 'клиенти' : 'customers'}
+                    {t.showingTransactions || 'Showing'} <span className="font-medium">{startIndex + 1}</span> {'to'} <span className="font-medium">{Math.min(endIndex, customers.length)}</span> {'of'} <span className="font-medium">{customers.length}</span> {'customers'}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">

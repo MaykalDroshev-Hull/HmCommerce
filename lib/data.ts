@@ -20,7 +20,7 @@ export interface Product {
   isdisabled?: boolean;
   /** When true, product is shown greyed out as out of stock / awaiting restock. */
   awaitingrestock?: boolean;
-  /** Percentage discount for ПРОМОЦИЯ (e.g. 20 = 20% off). Null/0 = none. */
+  /** Percentage discount for PROMOTION (e.g. 20 = 20% off). Null/0 = none. */
   promodiscountpercent?: number | null;
   // New fields for product type system
   productTypeID?: string;
@@ -72,7 +72,7 @@ export const initialProducts: Product[] = [
   {
     id: 4,
     category: 'clothes',
-    brand: 'M-B Something',
+    brand: 'MB-Paws',
     model: 'Cotton T-Shirt',
     type: 'T-Shirt',
     color: 'Black',

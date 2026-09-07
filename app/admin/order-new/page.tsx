@@ -35,7 +35,7 @@ function uid() {
 
 function isSizeProperty(name: string): boolean {
   const n = name.toLowerCase();
-  return n.includes('size') || n.includes('размер');
+  return n.includes('size');
 }
 
 function getVariantOptionLabel(v: StockVariant): string {
@@ -74,20 +74,14 @@ function sortVariantsForPicker(list: StockVariant[]): StockVariant[] {
 
 function stockWarningBg(language: string, available: number, lineQty: number): string | null {
   if (available < 0) {
-    return language === 'bg'
-      ? 'Внимание: този артикул в момента няма наличност. Можеш да продължиш, ако очакваш доставка.'
-      : 'Warning: no stock. You can continue if delivery is expected.';
+    return 'Warning: no stock. You can continue if delivery is expected.';
   }
   if (available < lineQty) {
-    return language === 'bg'
-      ? 'Внимание: няма достатъчна наличност за този артикул/размер. Можеш да продължиш, ако очакваш доставка.'
-      : 'Warning: insufficient stock. You can continue if delivery is expected.';
+    return 'Warning: insufficient stock. You can continue if delivery is expected.';
   }
   const after = available - lineQty;
   if (after === 1) {
-    return language === 'bg'
-      ? 'Внимание: след тази поръчка ще остане само 1 бройка от този артикул.'
-      : 'Warning: only 1 piece will remain after this order.';
+    return 'Warning: only 1 piece will remain after this order.';
   }
   return null;
 }
@@ -204,11 +198,11 @@ export default function AdminNewOrderPage() {
     e.preventDefault();
     setMsg(null);
     if (!fullName.trim() || !phone.trim() || !city.trim()) {
-      setMsg(language === 'bg' ? 'Попълни име, телефон и град.' : 'Fill name, phone and city.');
+      setMsg('Fill name, phone and city.');
       return;
     }
     if (!lines.length) {
-      setMsg(language === 'bg' ? 'Добави поне един ред.' : 'Add at least one line.');
+      setMsg('Add at least one line.');
       return;
     }
     setSaving(true);
@@ -240,7 +234,7 @@ export default function AdminNewOrderPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setMsg(language === 'bg' ? `Поръчката е създадена: ${data.orderId}` : `Order created: ${data.orderId}`);
+        setMsg(`Order created: ${data.orderId}`);
         setLines([]);
         setFullName('');
         setPhone('');
@@ -257,7 +251,7 @@ export default function AdminNewOrderPage() {
         setMsg(data.error || 'Error');
       }
     } catch {
-      setMsg(language === 'bg' ? 'Мрежова грешка' : 'Network error');
+      setMsg('Network error');
     } finally {
       setSaving(false);
     }
@@ -277,23 +271,23 @@ export default function AdminNewOrderPage() {
       <div className="p-3 sm:p-4 lg:p-6 max-w-3xl mx-auto space-y-6 pb-24">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: theme.colors.text }}>
-            {language === 'bg' ? 'Нова поръчка' : 'New order'}
+            {'New order'}
           </h1>
           <p className="mt-2 text-sm" style={{ color: theme.colors.textSecondary }}>
-            {language === 'bg' ? 'Стоката се намалява автоматично при запис (сървърно).' : 'Stock is decreased on save (server-side).'}
+            {'Stock is decreased on save (server-side).'}
           </p>
         </div>
 
         <form onSubmit={submit} className="space-y-8">
           <section className="rounded-xl border p-4 space-y-3" style={{ borderColor: theme.colors.border, backgroundColor: theme.colors.surface }}>
             <h2 className="font-semibold" style={{ color: theme.colors.text }}>
-              {language === 'bg' ? 'Клиент' : 'Customer'}
+              {'Customer'}
             </h2>
             <input
               required
               className="w-full py-3 px-3 rounded-lg border min-h-[44px]"
               style={{ borderColor: theme.colors.border, backgroundColor: theme.colors.cardBg, color: theme.colors.text }}
-              placeholder={language === 'bg' ? 'Пълно име' : 'Full name'}
+              placeholder={'Full name'}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
             />
@@ -301,14 +295,14 @@ export default function AdminNewOrderPage() {
               required
               className="w-full py-3 px-3 rounded-lg border min-h-[44px]"
               style={{ borderColor: theme.colors.border, backgroundColor: theme.colors.cardBg, color: theme.colors.text }}
-              placeholder={language === 'bg' ? 'Телефон' : 'Phone'}
+              placeholder={'Phone'}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
             <input
               className="w-full py-3 px-3 rounded-lg border min-h-[44px]"
               style={{ borderColor: theme.colors.border, backgroundColor: theme.colors.cardBg, color: theme.colors.text }}
-              placeholder="Email (по избор)"
+              placeholder="Email (optional)"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -316,35 +310,35 @@ export default function AdminNewOrderPage() {
               required
               className="w-full py-3 px-3 rounded-lg border min-h-[44px]"
               style={{ borderColor: theme.colors.border, backgroundColor: theme.colors.cardBg, color: theme.colors.text }}
-              placeholder={language === 'bg' ? 'Град' : 'City'}
+              placeholder={'City'}
               value={city}
               onChange={(e) => setCity(e.target.value)}
             />
             <input
               className="w-full py-3 px-3 rounded-lg border min-h-[44px]"
               style={{ borderColor: theme.colors.border, backgroundColor: theme.colors.cardBg, color: theme.colors.text }}
-              placeholder={language === 'bg' ? 'Област (по избор)' : 'Region (optional)'}
+              placeholder={'Region (optional)'}
               value={region}
               onChange={(e) => setRegion(e.target.value)}
             />
             <input
               className="w-full py-3 px-3 rounded-lg border min-h-[44px]"
               style={{ borderColor: theme.colors.border, backgroundColor: theme.colors.cardBg, color: theme.colors.text }}
-              placeholder={language === 'bg' ? 'Еконт офис ID' : 'Econt office ID'}
+              placeholder={'Econt office ID'}
               value={econtOffice}
               onChange={(e) => setEcontOffice(e.target.value)}
             />
             <textarea
               className="w-full py-3 px-3 rounded-lg border min-h-[72px]"
               style={{ borderColor: theme.colors.border, backgroundColor: theme.colors.cardBg, color: theme.colors.text }}
-              placeholder={language === 'bg' ? 'Бележка към клиента' : 'Customer note'}
+              placeholder={'Customer note'}
               value={customerNote}
               onChange={(e) => setCustomerNote(e.target.value)}
             />
             <textarea
               className="w-full py-3 px-3 rounded-lg border min-h-[72px]"
               style={{ borderColor: theme.colors.border, backgroundColor: theme.colors.cardBg, color: theme.colors.text }}
-              placeholder={language === 'bg' ? 'Вътрешна бележка' : 'Internal note'}
+              placeholder={'Internal note'}
               value={internalNote}
               onChange={(e) => setInternalNote(e.target.value)}
             />
@@ -352,7 +346,7 @@ export default function AdminNewOrderPage() {
 
           <section className="rounded-xl border p-4 space-y-4" style={{ borderColor: theme.colors.border, backgroundColor: theme.colors.surface }}>
             <h2 className="font-semibold" style={{ color: theme.colors.text }}>
-              {language === 'bg' ? 'Артикули' : 'Items'}
+              {'Items'}
             </h2>
             <div className="flex flex-col sm:flex-row gap-2 flex-wrap">
               <select
@@ -364,7 +358,7 @@ export default function AdminNewOrderPage() {
                   setPickVariant('');
                 }}
               >
-                <option value="">{language === 'bg' ? '— Избери артикул —' : '— Pick product —'}</option>
+                <option value="">{'— Pick product —'}</option>
                 {productsGrouped.map((p) => (
                   <option key={p.productid} value={p.productid}>
                     {p.product_name}
@@ -378,7 +372,7 @@ export default function AdminNewOrderPage() {
                 disabled={!pickProductId}
                 onChange={(e) => setPickVariant(e.target.value)}
               >
-                <option value="">{language === 'bg' ? '— Избери размер —' : '— Pick size —'}</option>
+                <option value="">{'— Pick size —'}</option>
                 {variantsForProduct.map((v) => (
                   <option key={v.productvariantid} value={v.productvariantid}>
                     {getVariantOptionLabel(v)}
@@ -393,7 +387,7 @@ export default function AdminNewOrderPage() {
                 style={{ backgroundColor: theme.colors.primary }}
               >
                 <Plus className="w-4 h-4" />
-                {language === 'bg' ? 'Добави' : 'Add'}
+                {'Add'}
               </button>
             </div>
 
@@ -425,7 +419,7 @@ export default function AdminNewOrderPage() {
                         </p>
                         <div className="flex flex-wrap gap-2 items-center">
                           <label className="text-xs" style={{ color: theme.colors.textSecondary }}>
-                            {language === 'bg' ? 'Бройка' : 'Qty'}
+                            {'Qty'}
                             <input
                               type="number"
                               min={1}
@@ -439,7 +433,7 @@ export default function AdminNewOrderPage() {
                             />
                           </label>
                           <label className="text-xs" style={{ color: theme.colors.textSecondary }}>
-                            {language === 'bg' ? 'Цена' : 'Price'}
+                            {'Price'}
                             <input
                               type="number"
                               min={0}
@@ -474,7 +468,7 @@ export default function AdminNewOrderPage() {
 
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
               <label className="text-sm flex items-center gap-2" style={{ color: theme.colors.text }}>
-                {language === 'bg' ? 'Доставка (€)' : 'Delivery (€)'}
+                {'Delivery (€)'}
                 <input
                   type="number"
                   min={0}
@@ -487,10 +481,10 @@ export default function AdminNewOrderPage() {
               </label>
               <div className="sm:ml-auto text-right space-y-1">
                 <p className="text-sm" style={{ color: theme.colors.textSecondary }}>
-                  {language === 'bg' ? 'Междинна сума' : 'Subtotal'}: {subtotal.toFixed(2)} €
+                  {'Subtotal'}: {subtotal.toFixed(2)} €
                 </p>
                 <p className="text-lg font-bold" style={{ color: theme.colors.text }}>
-                  {language === 'bg' ? 'Обща сума' : 'Total'}: {total.toFixed(2)} €
+                  {'Total'}: {total.toFixed(2)} €
                 </p>
               </div>
             </div>
@@ -504,7 +498,7 @@ export default function AdminNewOrderPage() {
             className="fixed bottom-4 left-4 right-4 sm:static sm:w-full py-4 rounded-xl font-semibold text-white shadow-lg min-h-[52px] z-30 max-w-3xl mx-auto sm:mx-0"
             style={{ backgroundColor: theme.colors.primary }}
           >
-            {saving ? '…' : language === 'bg' ? 'Запази поръчката' : 'Save order'}
+            {saving ? '…' : 'Save order'}
           </button>
         </form>
       </div>

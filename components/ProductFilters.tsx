@@ -21,7 +21,7 @@ export default function ProductFilters({
   const { theme } = useTheme();
 
   const filterCount = Object.keys(selectedFilters).length;
-  const label = language === 'bg' ? 'Филтри' : 'Filters';
+  const label = 'Filters';
 
   const buttonStyle = {
     backgroundColor: theme.colors.secondary,

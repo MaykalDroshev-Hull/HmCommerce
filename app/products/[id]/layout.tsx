@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { createServerClient } from '@/lib/supabase';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://mb-something.co.uk';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://mb-paws.co.uk';
 
 const OG_IMAGE = 'https://static-b2c.loropiana.com/cms/resource/image/440282/portrait_ratio3x4/768/1024/fb215413f1cad8636d48b2f0c1eaa1ce/62B14DD519AB6DBA760C9CE121E9F924/lp-assouline-book-1080x1350-14-.jpg';
 
@@ -57,10 +57,10 @@ export async function generateMetadata(
   }
 
   const name: string = product.name || 'Product';
-  const brand: string = product.brand || 'M-B Something';
+  const brand: string = product.brand || 'MB-Paws';
   const description: string =
     product.description ||
-    `${brand ? `${brand} – ` : ''}${name} | Premium Lifestyle from M-B Something`;
+    `${brand ? `${brand} – ` : ''}${name} | Premium Lifestyle from MB-Paws`;
 
   const rawImages: unknown = product.images;
   const firstImage: string | null =
@@ -85,7 +85,7 @@ export async function generateMetadata(
       priceCurrency: 'GBP',
       availability: 'https://schema.org/InStock',
       url: canonical,
-      seller: { '@type': 'Organization', name: 'M-B Something' },
+      seller: { '@type': 'Organization', name: 'MB-Paws' },
     },
   };
 
@@ -99,7 +99,7 @@ export async function generateMetadata(
       url: canonical,
       title,
       description,
-      siteName: 'M-B Something',
+      siteName: 'MB-Paws',
       images: [{ url: ogImage, alt: title }],
     },
 

@@ -12,7 +12,8 @@ Allow: /products/
 Allow: /for-her/
 Allow: /for-him/
 Allow: /accessories/
+Allow: /size-guide/
 Allow: /about/
 
-Sitemap: https://mb-something.co.uk/sitemap.xml
+Sitemap: https://mb-paws.co.uk/sitemap.xml
 

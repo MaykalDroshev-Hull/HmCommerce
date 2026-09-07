@@ -24,11 +24,11 @@ export class EmailService {
 
     const htmlContent = `
       <!DOCTYPE html>
-      <html lang="bg">
+      <html lang="en">
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Добре дошли в ${storeName}!</title>
+        <title>Welcome to ${storeName}!</title>
         <style>
           body {
             font-family: Inter, system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -86,23 +86,23 @@ export class EmailService {
       </head>
       <body>
         <div class="email-container">
-          <h1 class="welcome-title">Добре дошли в ${storeName}!</h1>
+          <h1 class="welcome-title">Welcome to ${storeName}!</h1>
           <p class="welcome-text">
-            Здравейте, <span class="highlight">${name}</span>!<br><br>
-            Радваме се, че се присъединихте към нас!<br>
-            Сега можете да пазарувате от нашия онлайн магазин.
+            Hello, <span class="highlight">${name}</span>!<br><br>
+            We are delighted to welcome you to our community!<br>
+            You can now shop the complete collection on our online store.
           </p>
           <div style="text-align: center;">
             <a href="${siteUrl}" class="shop-button">
-              ПАЗАРУВАЙ СЕГА
+              SHOP NOW
             </a>
           </div>
           <p class="welcome-text">
-            Благодарим ви за доверието!
+            Thank you for choosing us!
           </p>
           <div class="footer">
-            <p>Този имейл е изпратен автоматично. Моля, не отговаряйте на него.</p>
-            <p>© ${new Date().getFullYear()} ${storeName}. Всички права запазени.</p>
+            <p>This email was sent automatically. Please do not reply directly to this address.</p>
+            <p>© ${new Date().getFullYear()} ${storeName}. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -112,7 +112,7 @@ export class EmailService {
     try {
       await sendEmail({
         to,
-        subject: `Добре дошли в ${storeName}!`,
+        subject: `Welcome to ${storeName}!`,
         html: htmlContent,
         replyTo: getContactEmail(),
       })
@@ -130,11 +130,11 @@ export class EmailService {
 
     const htmlContent = `
       <!DOCTYPE html>
-      <html lang="bg">
+      <html lang="en">
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Възстановяване на парола - ${storeName}</title>
+        <title>Password Reset - ${storeName}</title>
         <style>
           body {
             font-family: Inter, system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -201,28 +201,28 @@ export class EmailService {
       </head>
       <body>
         <div class="email-container">
-          <h1 class="reset-title">Възстановяване на парола 🔐</h1>
+          <h1 class="reset-title">Password Reset 🔐</h1>
           <p class="reset-text">
-            Здравейте, <span class="highlight">${name}</span>!<br><br>
-            Получихме заявка за възстановяване на паролата на вашия акаунт.
+            Hello, <span class="highlight">${name}</span>!<br><br>
+            We received a request to reset the password for your account.
           </p>
           <div style="text-align: center;">
             <a href="${resetUrl}" class="reset-button">
-              ВЪЗСТАНОВИ ПАРОЛАТА
+              RESET PASSWORD
             </a>
           </div>
           <div class="warning">
-            <strong>⚠️ Важно:</strong><br>
-            Този линк е валиден само 1 час.<br>
-            Ако не сте вие заявили възстановяването, моля игнорирайте този имейл.
+            <strong>⚠️ Important:</strong><br>
+            This link is valid for 1 hour only.<br>
+            If you did not request this password reset, please ignore this email.
           </div>
           <p class="reset-text">
-            Ако имате проблеми с бутона, копирайте този линк в браузъра:<br>
+            If you are having trouble clicking the button, copy and paste this link into your browser:<br>
             <a href="${resetUrl}" style="color: #2563eb; word-break: break-all; font-weight: 700;">${resetUrl}</a>
           </p>
           <div class="footer">
-            <p>Този имейл е изпратен автоматично. Моля, не отговаряйте на него.</p>
-            <p>© ${new Date().getFullYear()} ${storeName}. Всички права запазени.</p>
+            <p>This email was sent automatically. Please do not reply directly to this address.</p>
+            <p>© ${new Date().getFullYear()} ${storeName}. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -232,7 +232,7 @@ export class EmailService {
     try {
       await sendEmail({
         to,
-        subject: `Възстановяване на парола - ${storeName} 🔐`,
+        subject: `Password Reset - ${storeName} 🔐`,
         html: htmlContent,
         replyTo: getContactEmail(),
       })

@@ -41,8 +41,6 @@ export default function ProductCard({ product, isFavorited: initialIsFavorited }
   const promoActive = cardPricing.promoActive;
   const promoPercent = cardPricing.promoPercent;
   const displayPrice = cardPricing.sale;
-  const bgnPrice = displayPrice * 1.95;
-  const originalBgnPrice = cardPricing.original * 1.95;
 
   const uniqueImages = normalizeProductImages(product.images);
 
@@ -285,10 +283,13 @@ export default function ProductCard({ product, isFavorited: initialIsFavorited }
               </div>
             )}
             <div
-              className="text-[10px] sm:text-xs mt-0.5 transition-colors duration-300"
+              className="text-[10px] sm:text-xs mt-1 transition-colors duration-300 flex items-center justify-between gap-1 flex-wrap"
               style={{ color: theme.colors.textSecondary }}
             >
-              Inclusive of all taxes
+              <span>Inclusive of all taxes</span>
+              <span className="font-medium text-neutral-800 bg-neutral-100 px-1.5 py-0.5 rounded text-[10px]">
+                3x £{((promoActive ? displayPrice : (product.price || 36)) / 3).toFixed(2)} with Klarna
+              </span>
             </div>
           </div>
 

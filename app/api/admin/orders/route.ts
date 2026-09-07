@@ -194,13 +194,13 @@ export async function GET(request: NextRequest) {
                     
                     // Also set legacy fields for backward compatibility
                     const propNameLower = propName.toLowerCase();
-                    if (propNameLower?.includes('color') || propNameLower?.includes('цвят') || propNameLower === 'цвят') {
+                    if (propNameLower?.includes('color')) {
                       productInfo.color = value;
-                    } else if (propNameLower?.includes('size') || propNameLower?.includes('размер') || propNameLower === 'размер') {
+                    } else if (propNameLower?.includes('size')) {
                       productInfo.size = value;
-                    } else if (propNameLower?.includes('brand') || propNameLower?.includes('марка') || propNameLower === 'марка') {
+                    } else if (propNameLower?.includes('brand')) {
                       productInfo.brand = value;
-                    } else if (propNameLower?.includes('model') || propNameLower?.includes('модел') || propNameLower === 'модел') {
+                    } else if (propNameLower?.includes('model')) {
                       productInfo.model = value;
                     }
                   }
