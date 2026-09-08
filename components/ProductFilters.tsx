@@ -1,8 +1,6 @@
 'use client';
 
 import { SlidersHorizontal } from 'lucide-react';
-import { useLanguage } from '@/context/LanguageContext';
-import { useTheme } from '@/context/ThemeContext';
 
 interface ProductFiltersProps {
   selectedFilters: Record<string, any>;
@@ -17,17 +15,8 @@ export default function ProductFilters({
   layout = 'bar',
   placement = 'both',
 }: ProductFiltersProps) {
-  const { language } = useLanguage();
-  const { theme } = useTheme();
-
   const filterCount = Object.keys(selectedFilters).length;
   const label = 'Filters';
-
-  const buttonStyle = {
-    backgroundColor: theme.colors.secondary,
-    color: theme.colors.text,
-    border: `1px solid ${theme.colors.border}`,
-  };
 
   if (layout === 'bar') {
     return (
@@ -36,16 +25,12 @@ export default function ProductFilters({
           <button
             type="button"
             onClick={onToggleVisibility}
-            className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium shrink-0 transition-colors duration-200"
-            style={buttonStyle}
+            className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-[13px] font-semibold text-neutral-800 bg-white border border-neutral-300 hover:border-neutral-900 hover:bg-neutral-50 transition-all duration-200 shrink-0 shadow-2xs"
           >
-            <SlidersHorizontal size={16} />
-            {label}
+            <SlidersHorizontal size={14} />
+            <span>{label}</span>
             {filterCount > 0 && (
-              <span
-                className="px-2 py-0.5 text-xs rounded-full text-white"
-                style={{ backgroundColor: theme.colors.primary }}
-              >
+              <span className="w-5 h-5 rounded-full bg-neutral-900 text-white text-[10px] font-bold flex items-center justify-center">
                 {filterCount}
               </span>
             )}
@@ -56,16 +41,12 @@ export default function ProductFilters({
           <button
             type="button"
             onClick={onToggleVisibility}
-            className="md:hidden flex items-center justify-center gap-2 w-full mt-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors duration-200"
-            style={buttonStyle}
+            className="md:hidden flex items-center justify-center gap-2 w-full mt-2.5 px-4 py-2.5 rounded-full text-xs font-semibold text-neutral-900 bg-white border border-neutral-200 shadow-2xs active:bg-neutral-100 transition-colors"
           >
-            <SlidersHorizontal size={16} />
-            {label}
+            <SlidersHorizontal size={14} />
+            <span>{label}</span>
             {filterCount > 0 && (
-              <span
-                className="px-2 py-0.5 text-xs rounded-full text-white"
-                style={{ backgroundColor: theme.colors.primary }}
-              >
+              <span className="w-4 h-4 rounded-full bg-neutral-900 text-white text-[10px] font-bold flex items-center justify-center">
                 {filterCount}
               </span>
             )}
@@ -80,16 +61,12 @@ export default function ProductFilters({
       <button
         type="button"
         onClick={onToggleVisibility}
-        className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full transition-all duration-300"
-        style={buttonStyle}
+        className="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-full bg-white border border-neutral-300 hover:border-neutral-900 text-neutral-800 transition-all duration-200 shadow-2xs"
       >
-        <SlidersHorizontal size={16} />
-        {label}
+        <SlidersHorizontal size={14} />
+        <span>{label}</span>
         {filterCount > 0 && (
-          <span
-            className="px-2 py-1 text-xs rounded-full text-white"
-            style={{ backgroundColor: theme.colors.primary }}
-          >
+          <span className="w-5 h-5 rounded-full bg-neutral-900 text-white text-[10px] font-bold flex items-center justify-center">
             {filterCount}
           </span>
         )}
@@ -97,3 +74,4 @@ export default function ProductFilters({
     </div>
   );
 }
+

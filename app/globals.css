@@ -41,6 +41,10 @@
     --modabox-border: #e8e4dc;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
     -webkit-font-smoothing: antialiased;

@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import PublicPageLayout from '@/components/PublicPageLayout';
 import ProductView from '@/components/ProductView';
-import LoadingScreen from '@/components/LoadingScreen';
+import ProductSkeleton from '@/components/ProductSkeleton';
 import { Product } from '@/lib/data';
 import { useLanguage } from '@/context/LanguageContext';
 import { useStoreSettings } from '@/context/StoreSettingsContext';
@@ -106,20 +106,11 @@ function ProductDetailContent() {
     localStorage.setItem('isAdmin', value.toString());
   };
 
-  // Show loading screen while StoreSettings is loading (prevents showing backup content)
-  if (settingsLoading) {
-    return <LoadingScreen />;
-  }
-
-  if (isLoading) {
+  // Show skeleton loading while product or store settings are fetching
+  if (isLoading || settingsLoading) {
     return (
       <PublicPageLayout isAdmin={isAdmin} setIsAdmin={handleSetIsAdmin}>
-        <div className="flex-1 flex items-center justify-center py-24">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7d8461] mx-auto mb-4" />
-            <p style={{ color: '#6b6b6b' }}>{t.loadingProduct}</p>
-          </div>
-        </div>
+        <ProductSkeleton />
       </PublicPageLayout>
     );
   }
@@ -137,7 +128,13 @@ function ProductDetailContent() {
 
 export default function ProductDetailPage() {
   return (
-    <Suspense fallback={<LoadingScreen />}>
+    <Suspense
+      fallback={
+        <PublicPageLayout isAdmin={false} setIsAdmin={() => {}}>
+          <ProductSkeleton />
+        </PublicPageLayout>
+      }
+    >
       <ProductDetailContent />
     </Suspense>
   );

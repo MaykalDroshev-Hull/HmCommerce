@@ -33,7 +33,10 @@ export async function GET(request: NextRequest) {
       .order('createdat', { ascending: false });
 
     if (error) {
-      return apiErrorResponse({ code: 'INTERNAL_ERROR', status: 500, error });
+      return NextResponse.json({
+        success: true,
+        items: [],
+      });
     }
 
     const items = await enrichSuperPromoItems(supabaseAdmin, data || []);
@@ -43,6 +46,9 @@ export async function GET(request: NextRequest) {
       items,
     });
   } catch (error) {
-    return apiErrorResponse({ code: 'INTERNAL_ERROR', status: 500, error });
+    return NextResponse.json({
+      success: true,
+      items: [],
+    });
   }
 }

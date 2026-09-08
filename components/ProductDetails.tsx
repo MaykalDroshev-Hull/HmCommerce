@@ -268,11 +268,15 @@ export default function ProductDetails({
     <div className="product-purchase-panel flex flex-col space-y-6">
       {/* Breadcrumbs */}
       <nav aria-label="Breadcrumb" className="text-[11px] text-neutral-500 tracking-wide uppercase flex items-center gap-1.5">
-        <span>Shop</span>
+        <Link href="/products" className="hover:text-neutral-900 transition-colors">
+          Shop
+        </Link>
         <span>/</span>
-        <span>Collars</span>
+        <Link href="/for-him" className="hover:text-neutral-900 transition-colors">
+          Collars
+        </Link>
         <span>/</span>
-        <span className="text-neutral-900 font-semibold truncate">Adventure Collar</span>
+        <span className="text-neutral-900 font-semibold truncate">{productName}</span>
       </nav>
 
       {/* Header: Title, Subtitle, Rating */}

@@ -36,14 +36,14 @@ export class ValidationService {
       };
     }
 
-    // UK and international phone numbers (e.g. +44 7123 456789, 07123456789, etc.)
+    // UK and international phone numbers (e.g. 07123 456789 or +44 7123 456789)
     const cleanPhone = phone.replace(/[\s\-()]/g, '');
     const phoneRegex = /^(\+?[0-9]{8,15})$/;
     if (!phoneRegex.test(cleanPhone)) {
       return {
         isValid: false,
         errors: ['Invalid phone number format'],
-        details: { phone: 'Please enter a valid phone number (e.g. +44 7123 456789 or 07123456789)' }
+        details: { phone: 'Please enter a valid UK phone number (e.g. 07123 456789 or +44 7123 456789)' }
       };
     }
 

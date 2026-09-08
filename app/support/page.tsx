@@ -351,7 +351,7 @@ export default function SupportPage() {
         </div>
 
         {/* Frequently Asked Questions */}
-        <div className="pt-8 border-t border-neutral-200">
+        <div id="faq" className="scroll-mt-20 pt-8 border-t border-neutral-200">
           <div className="text-center max-w-2xl mx-auto mb-10">
             <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-neutral-500 block mb-1">
               Common Questions

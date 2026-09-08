@@ -11,7 +11,7 @@ import { useStoreSettings } from '@/context/StoreSettingsContext';
 import { useAuth } from '@/context/AuthContext';
 import { useCheckoutStore, type DeliveryType, type CityOption } from '@/store/checkoutStore';
 import { translations } from '@/lib/translations';
-import { ShoppingBag, Truck, MapPin, Package, ShieldCheck } from 'lucide-react';
+import { ShoppingBag, Truck, MapPin, Package, ShieldCheck, Tag, CheckCircle2, Loader2 } from 'lucide-react';
 import FomoBadge, { type FomoMessage } from '@/components/FomoBadge';
 import { trackStoreEvent } from '@/lib/vercel-analytics';
 import { ApplePayIcon, PayPalIcon, KlarnaBadgeIcon, PaymentBadgesRow } from '@/components/PaymentIcons';
@@ -110,6 +110,12 @@ function CheckoutContent() {
   const hasAutoPopulated = useRef(false);
   const placeOrderButtonRef = useRef<HTMLButtonElement>(null);
   const beginCheckoutTracked = useRef(false);
+
+  const [checkoutNewsletterEmail, setCheckoutNewsletterEmail] = useState('');
+  const [checkoutNewsletterLoading, setCheckoutNewsletterLoading] = useState(false);
+  const [checkoutNewsletterMsg, setCheckoutNewsletterMsg] = useState<string | null>(null);
+  const [showManualCodeInput, setShowManualCodeInput] = useState(false);
+  const [manualCodeInput, setManualCodeInput] = useState('');
 
   const scrollToCheckoutIssue = () => {
     const firstInvalid = document.querySelector('[data-checkout-field-error], .border-red-500');
@@ -323,6 +329,47 @@ function CheckoutContent() {
     } else {
       removeDiscount();
     }
+  };
+
+  const handleCheckoutNewsletterSubscribe = async () => {
+    const emailToUse = checkoutNewsletterEmail.trim() || formData.email.trim();
+    if (!emailToUse || !validateEmail(emailToUse)) {
+      setCheckoutNewsletterMsg('Please enter a valid email address.');
+      return;
+    }
+
+    setCheckoutNewsletterLoading(true);
+    setCheckoutNewsletterMsg(null);
+
+    try {
+      const response = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: emailToUse,
+          source: 'checkout',
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        updateFormData({ discountCode: data.code || 'WELCOME10' });
+        await validateDiscount(totalPrice);
+        setCheckoutNewsletterMsg('10% welcome discount applied!');
+      } else {
+        setCheckoutNewsletterMsg(data.error || 'Could not apply discount.');
+      }
+    } catch {
+      setCheckoutNewsletterMsg('Failed to subscribe. Please try again.');
+    } finally {
+      setCheckoutNewsletterLoading(false);
+    }
+  };
+
+  const handleManualDiscountApply = async () => {
+    if (!manualCodeInput.trim()) return;
+    updateFormData({ discountCode: manualCodeInput.trim().toUpperCase() });
+    await validateDiscount(totalPrice);
   };
 
   const handleDeliveryTypeChange = (deliveryType: DeliveryType) => {
@@ -801,6 +848,7 @@ function CheckoutContent() {
                         value={formData.telephone || ''}
                         onChange={(e) => handleInputChange('telephone', e.target.value)}
                         onBlur={(e) => handleBlur('telephone', e.target.value)}
+                        placeholder="07123 456789 or +44 7123 456789"
                         className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7d8461]/25 focus:border-[#7d8461] ${
                           validationErrors.telephone ? 'border-red-500' : 'border-[#e8e4dc]'
                         }`}
@@ -1117,6 +1165,113 @@ function CheckoutContent() {
                       </div>
                     </div>
                   ))}
+                </div>
+
+                {/* Newsletter Welcome Discount Prompt */}
+                <div className="mb-6 p-4 rounded-2xl bg-neutral-50/90 border border-neutral-200 space-y-3">
+                  {appliedDiscount ? (
+                    <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold truncate">
+                            {appliedDiscount.code} applied ({appliedDiscount.type === 'percentage' ? `${appliedDiscount.value}% off` : `£${appliedDiscount.value} off`})
+                          </p>
+                          <p className="text-[11px] text-emerald-700 truncate font-light">
+                            You saved £{appliedDiscount.discountAmount.toFixed(2)} on this order
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeDiscount()}
+                        className="text-xs text-neutral-500 hover:text-neutral-950 underline shrink-0 px-1 font-medium"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {/* Newsletter Discount Prompt Header */}
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-neutral-950 text-white flex items-center justify-center shrink-0 mt-0.5">
+                          <Tag size={13} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-neutral-950">
+                            Did you claim your 10% welcome discount?
+                          </p>
+                          <p className="text-[11px] text-neutral-600 leading-relaxed font-light mt-0.5">
+                            Join our newsletter for 10% off your order. Code <strong className="font-semibold text-neutral-900">WELCOME10</strong> will be applied automatically.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="email"
+                          value={checkoutNewsletterEmail !== '' ? checkoutNewsletterEmail : formData.email}
+                          onChange={(e) => setCheckoutNewsletterEmail(e.target.value)}
+                          placeholder="Enter your email"
+                          className="flex-1 min-w-0 px-3 py-2 text-xs bg-white rounded-xl border border-neutral-300 focus:outline-none focus:border-neutral-950 transition-colors placeholder:text-neutral-400"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleCheckoutNewsletterSubscribe}
+                          disabled={checkoutNewsletterLoading}
+                          className="px-3.5 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider bg-neutral-950 text-white hover:bg-neutral-800 disabled:opacity-50 transition-colors shrink-0 flex items-center gap-1.5"
+                        >
+                          {checkoutNewsletterLoading ? (
+                            <Loader2 size={13} className="animate-spin" />
+                          ) : (
+                            <span>Claim 10%</span>
+                          )}
+                        </button>
+                      </div>
+
+                      {checkoutNewsletterMsg && (
+                        <p className={`text-[11px] px-1 ${checkoutNewsletterMsg.includes('applied') ? 'text-emerald-700 font-semibold' : 'text-neutral-600'}`}>
+                          {checkoutNewsletterMsg}
+                        </p>
+                      )}
+
+                      {/* Manual promo code toggle */}
+                      <div className="pt-2 border-t border-neutral-200/70">
+                        {!showManualCodeInput ? (
+                          <button
+                            type="button"
+                            onClick={() => setShowManualCodeInput(true)}
+                            className="text-[11px] text-neutral-500 hover:text-neutral-900 underline"
+                          >
+                            Have a different promo code? Enter it here
+                          </button>
+                        ) : (
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={manualCodeInput}
+                                onChange={(e) => setManualCodeInput(e.target.value)}
+                                placeholder="Discount code"
+                                className="flex-1 min-w-0 px-3 py-2 text-xs bg-white rounded-xl border border-neutral-300 focus:outline-none focus:border-neutral-950 uppercase placeholder:normal-case transition-colors"
+                              />
+                              <button
+                                type="button"
+                                onClick={handleManualDiscountApply}
+                                disabled={discountValidating || !manualCodeInput.trim()}
+                                className="px-3 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider bg-neutral-200 text-neutral-900 hover:bg-neutral-300 disabled:opacity-50 transition-colors shrink-0"
+                              >
+                                {discountValidating ? 'Checking...' : 'Apply'}
+                              </button>
+                            </div>
+                            {discountError && (
+                              <p className="text-[11px] text-red-600 px-1">{discountError}</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Order Totals */}

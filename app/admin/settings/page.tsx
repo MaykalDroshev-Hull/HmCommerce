@@ -714,7 +714,7 @@ export default function AdminSettingsPage() {
                     borderColor: theme.colors.border,
                     color: theme.colors.text
                   }}
-                  placeholder={'+1 234 567 8900'}
+                  placeholder={'07123 456789 or +44 7123 456789'}
                 />
               </div>
 

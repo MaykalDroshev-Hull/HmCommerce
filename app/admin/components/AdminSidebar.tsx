@@ -22,7 +22,8 @@ import {
   TrendingUp,
   Boxes,
   ClipboardList,
-  ShoppingCart
+  ShoppingCart,
+  Mail
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -156,6 +157,12 @@ export default function AdminSidebar({ currentPath, collapsed: externalCollapsed
       label: t.customers || 'Customers',
       path: '/admin/customers',
       icon: Users
+    },
+    {
+      id: 'newsletter',
+      label: 'Newsletter',
+      path: '/admin/newsletter',
+      icon: Mail
     },
     {
       id: 'analytics',

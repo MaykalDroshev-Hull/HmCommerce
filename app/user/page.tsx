@@ -1,159 +1,153 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { User, Mail, Lock, Phone, Eye, EyeOff, AlertCircle } from 'lucide-react'
-import styles from './user.module.css'
-import { useAuth } from '@/context/AuthContext'
-import { useLanguage } from '@/context/LanguageContext'
-import { translations } from '@/lib/translations'
-import Header from '@/components/Header'
-import Footer from '@/components/Footer'
-import CartDrawer from '@/components/CartDrawer'
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { User, Mail, Lock, Phone, Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
+import { translations } from '@/lib/translations';
+import PublicPageLayout from '@/components/PublicPageLayout';
 
 export default function UserPage() {
-  const router = useRouter()
-  const { login, user, isAuthenticated } = useAuth()
-  const { language } = useLanguage()
-  const t = translations[language]
-  const [isAdmin, setIsAdmin] = useState(false)
-  
-  const [isLogin, setIsLogin] = useState(true)
-  const [isLoading, setIsLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [loginError, setLoginError] = useState('')
-  const [registerError, setRegisterError] = useState('')
-  const [success, setSuccess] = useState('')
-  const [returnUrl, setReturnUrl] = useState<string | null>(null)
+  const router = useRouter();
+  const { login, user, isAuthenticated } = useAuth();
+  const { language } = useLanguage();
+  const t = translations[language];
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  const [isLogin, setIsLogin] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const [registerError, setRegisterError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [returnUrl, setReturnUrl] = useState<string | null>(null);
 
   // Get return URL from query parameters
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search)
-      const returnUrlParam = urlParams.get('returnUrl')
+      const urlParams = new URLSearchParams(window.location.search);
+      const returnUrlParam = urlParams.get('returnUrl');
       if (returnUrlParam) {
-        setReturnUrl(decodeURIComponent(returnUrlParam))
+        setReturnUrl(decodeURIComponent(returnUrlParam));
       }
     }
-  }, [])
+  }, []);
+
+  // Check admin state
+  useEffect(() => {
+    const adminState = localStorage.getItem('isAdmin');
+    if (adminState === 'true') {
+      setIsAdmin(true);
+    }
+  }, []);
 
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated && user) {
       if (returnUrl) {
-        router.push(returnUrl)
+        router.push(returnUrl);
       } else {
-        router.push('/user/dashboard')
+        router.push('/user/dashboard');
       }
     }
-  }, [isAuthenticated, user, returnUrl, router])
+  }, [isAuthenticated, user, returnUrl, router]);
 
   // Form state
-  const [loginData, setLoginData] = useState({ email: '', password: '' })
-  const [registerData, setRegisterData] = useState({ 
-    name: '', 
-    email: '', 
-    phone: '', 
-    password: '' 
-  })
+  const [loginData, setLoginData] = useState({ email: '', password: '' });
+  const [registerData, setRegisterData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+  });
 
-  // Email validation states
+  // Email validation state
   const [emailValidation, setEmailValidation] = useState({
     isValid: true,
     errors: [] as string[],
-    showTooltip: false
-  })
+    showTooltip: false,
+  });
 
-  // Email validation function
   const validateEmail = (email: string) => {
-    const errors: string[] = []
-    
+    const errors: string[] = [];
     if (!email) {
-      return { isValid: true, errors: [] }
+      return { isValid: true, errors: [] };
     }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      errors.push('Invalid email format')
+      errors.push('Invalid email format');
     }
-
     return {
       isValid: errors.length === 0,
-      errors
-    }
-  }
+      errors,
+    };
+  };
 
   const toggleForm = () => {
-    setIsLogin(!isLogin)
-    setLoginError('')
-    setRegisterError('')
-    setSuccess('')
-    setEmailValidation({ isValid: true, errors: [], showTooltip: false })
-  }
+    setIsLogin(!isLogin);
+    setLoginError('');
+    setRegisterError('');
+    setSuccess('');
+    setEmailValidation({ isValid: true, errors: [], showTooltip: false });
+  };
 
   const handleLoginChange = (field: string, value: string) => {
-    if (field === 'password' && value.includes(' ')) {
-      return
-    }
-    
-    setLoginData(prev => ({ ...prev, [field]: value }))
-    
+    if (field === 'password' && value.includes(' ')) return;
+    setLoginData((prev) => ({ ...prev, [field]: value }));
     if (field === 'email') {
-      const validation = validateEmail(value)
-      setEmailValidation({ ...validation, showTooltip: false })
+      const validation = validateEmail(value);
+      setEmailValidation({ ...validation, showTooltip: false });
     }
-  }
+  };
 
   const handleRegisterChange = (field: string, value: string) => {
-    if (field === 'password' && value.includes(' ')) {
-      return
-    }
-    
-    setRegisterData(prev => ({ ...prev, [field]: value }))
-    
+    if (field === 'password' && value.includes(' ')) return;
+    setRegisterData((prev) => ({ ...prev, [field]: value }));
     if (field === 'email') {
-      const validation = validateEmail(value)
-      setEmailValidation({ ...validation, showTooltip: false })
+      const validation = validateEmail(value);
+      setEmailValidation({ ...validation, showTooltip: false });
     }
-  }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    setIsLoading(true)
-    setLoginError('')
-    setSuccess('')
+    e.preventDefault();
+    setIsLoading(true);
+    setLoginError('');
+    setSuccess('');
 
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(loginData)
-      })
+        body: JSON.stringify(loginData),
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (response.status === 429) {
-        const retryAfter = response.headers.get('Retry-After')
-        const retryMinutes = retryAfter ? Math.ceil(parseInt(retryAfter) / 60) : 15
-        setLoginError(`Too many attempts. Please wait ${retryMinutes} minutes.`)
-        return
+        const retryAfter = response.headers.get('Retry-After');
+        const retryMinutes = retryAfter ? Math.ceil(parseInt(retryAfter) / 60) : 15;
+        setLoginError(`Too many attempts. Please wait ${retryMinutes} minutes.`);
+        return;
       }
 
       if (!response.ok) {
-        // Translate common error messages
-        let errorMessage = data.error || t.invalidCredentials
-        if (errorMessage === 'Invalid email or password' || errorMessage === 'Invalid email or password format') {
-          errorMessage = t.invalidCredentials
+        let errorMessage = data.error || t.invalidCredentials;
+        if (
+          errorMessage === 'Invalid email or password' ||
+          errorMessage === 'Invalid email or password format'
+        ) {
+          errorMessage = t.invalidCredentials;
         } else if (errorMessage === 'Internal server error') {
-          errorMessage = 'Internal server error. Please try again.'
+          errorMessage = 'Internal server error. Please try again.';
         }
-        setLoginError(errorMessage)
-        return
+        setLoginError(errorMessage);
+        return;
       }
 
-      // Login user with context
       login({
         id: data.user.id,
         name: data.user.name,
@@ -170,383 +164,393 @@ export default function UserPage() {
         preferredStreetNumber: data.user.preferredStreetNumber || undefined,
         preferredEntrance: data.user.preferredEntrance || undefined,
         preferredFloor: data.user.preferredFloor || undefined,
-        preferredApartment: data.user.preferredApartment || undefined
-      })
+        preferredApartment: data.user.preferredApartment || undefined,
+      });
 
-      // Redirect
       if (returnUrl) {
-        router.push(returnUrl)
+        router.push(returnUrl);
       } else {
-        router.push('/user/dashboard')
+        router.push('/user/dashboard');
       }
-      
     } catch (err: any) {
-      // Translate error messages
-      let errorMessage = err.message || t.invalidCredentials
-      if (errorMessage === 'Invalid email or password' || errorMessage === 'Invalid email or password format') {
-        errorMessage = t.invalidCredentials
+      let errorMessage = err.message || t.invalidCredentials;
+      if (
+        errorMessage === 'Invalid email or password' ||
+        errorMessage === 'Invalid email or password format'
+      ) {
+        errorMessage = t.invalidCredentials;
       } else if (errorMessage === 'Internal server error' || errorMessage.includes('fetch')) {
-        errorMessage = 'An error occurred. Please try again.'
+        errorMessage = 'An error occurred. Please try again.';
       }
-      setLoginError(errorMessage)
+      setLoginError(errorMessage);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    // Validate email
+    e.preventDefault();
+
     if (registerData.email) {
-      const emailValidation = validateEmail(registerData.email)
-      if (!emailValidation.isValid) {
-        setRegisterError('Please enter a valid email address')
-        return
+      const emailVal = validateEmail(registerData.email);
+      if (!emailVal.isValid) {
+        setRegisterError('Please enter a valid email address');
+        return;
       }
     }
-    
-    // Validate phone
+
     if (!registerData.phone) {
-      setRegisterError('Phone number is required')
-      return
+      setRegisterError('Phone number is required');
+      return;
     }
-    
-    const cleanedPhone = registerData.phone.replace(/\s/g, '')
-    const phoneRegex = /^(\+359|0)[0-9]{9}$/
+
+    const cleanedPhone = registerData.phone.replace(/[\s\-()]/g, '').replace(/^\+440/, '+44');
+    const phoneRegex = /^(\+44\d{9,11}|07\d{9}|0[1-9]\d{8,10})$/;
     if (!phoneRegex.test(cleanedPhone)) {
-      setRegisterError('Invalid phone format. Use: +359XXXXXXXXX or 089XXXXXXX')
-      return
+      setRegisterError('Please enter a valid UK phone number starting with 07 or +44 (e.g. 07123 456789 or +44 7123 456789)');
+      return;
     }
-    
-    // Validate password
+
     if (!registerData.password) {
-      setRegisterError('Password is required')
-      return
+      setRegisterError('Password is required');
+      return;
     }
-    
+
     if (registerData.password.length < 8) {
-      setRegisterError(t.passwordTooShort)
-      return
+      setRegisterError(t.passwordTooShort || 'Password must be at least 8 characters');
+      return;
     }
-    
+
     if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(registerData.password)) {
-      setRegisterError(t.passwordMustContain)
-      return
+      setRegisterError(t.passwordMustContain || 'Password must contain both letters and numbers');
+      return;
     }
-    
-    setIsLoading(true)
-    setRegisterError('')
-    setSuccess('')
+
+    setIsLoading(true);
+    setRegisterError('');
+    setSuccess('');
 
     try {
-      const cleanedPhone = registerData.phone.replace(/\s/g, '')
       const dataToSend = {
         ...registerData,
-        phone: cleanedPhone
-      }
-      
+        phone: cleanedPhone,
+      };
+
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dataToSend)
-      })
+        body: JSON.stringify(dataToSend),
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (!response.ok) {
-        // Translate error messages
-        let errorMessage = ''
-        
+        let errorMessage = '';
         if (data && typeof data === 'object' && data.details) {
-          // Get first error message from details
-          const errorKeys = Object.keys(data.details)
-            .filter(key => key.startsWith('error_') || ['name', 'email', 'phone', 'password'].includes(key))
-          
+          const errorKeys = Object.keys(data.details).filter(
+            (key) => key.startsWith('error_') || ['name', 'email', 'phone', 'password'].includes(key)
+          );
           if (errorKeys.length > 0) {
-            errorMessage = data.details[errorKeys[0]]
+            errorMessage = data.details[errorKeys[0]];
           }
         }
-        
         if (!errorMessage && data.error) {
-          errorMessage = data.error
+          errorMessage = data.error;
         }
-        
         if (!errorMessage) {
-          errorMessage = 'Registration failed'
+          errorMessage = 'Registration failed';
         }
-        
-        // Translate common error messages
         if (errorMessage === 'Email is already taken' || errorMessage === 'Email already exists') {
-          errorMessage = 'This email address is already registered'
+          errorMessage = 'This email address is already registered';
         } else if (errorMessage === 'Invalid email or password format' || errorMessage.includes('Invalid')) {
-          errorMessage = 'Invalid data format'
+          errorMessage = 'Invalid data format';
         } else if (errorMessage === 'Internal server error') {
-          errorMessage = 'Internal server error. Please try again.'
+          errorMessage = 'Internal server error. Please try again.';
         }
-        
-        setRegisterError(errorMessage)
-        return
+        setRegisterError(errorMessage);
+        return;
       }
 
-      setSuccess('Registration successful!')
-      
-      // Auto-fill login form
+      setSuccess('Account created successfully! Switching to sign in...');
       setLoginData({
         email: registerData.email,
-        password: registerData.password
-      })
-      
-      // Clear registration form
-      setRegisterData({ name: '', email: '', phone: '', password: '' })
-      
-      setTimeout(() => setIsLogin(true), 2000)
-      
+        password: registerData.password,
+      });
+      setRegisterData({ name: '', email: '', phone: '', password: '' });
+      setTimeout(() => setIsLogin(true), 1500);
     } catch (err: any) {
-      // Translate error messages
-      let errorMessage = err.message || ('Registration failed')
+      let errorMessage = err.message || 'Registration failed';
       if (errorMessage === 'Internal server error' || errorMessage.includes('fetch')) {
-        errorMessage = 'An error occurred. Please try again.'
+        errorMessage = 'An error occurred. Please try again.';
       }
-      setRegisterError(errorMessage)
+      setRegisterError(errorMessage);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
+
+  const handleSetIsAdmin = (value: boolean) => {
+    setIsAdmin(value);
+    localStorage.setItem('isAdmin', value.toString());
+  };
 
   return (
-    <>
-      <Header isAdmin={isAdmin} setIsAdmin={setIsAdmin} />
-      <main className={styles.userPage}>
-        <div className={`${styles.wrapper} ${!isLogin ? styles.active : ''} ${(loginError || registerError || success) ? styles.hasMessage : ''}`}>
-        <span className={styles.rotateBg}></span>
-        <span className={styles.rotateBg2}></span>
-
-        {/* Login Form */}
-        <div className={`${styles.formBox} ${styles.login}`}>
-          <h2 className={`${styles.title} ${styles.animation}`} style={{ '--i': 0, '--j': 21, paddingTop: '20px' } as React.CSSProperties}>
-            {t.login}
-          </h2>
-
-          {loginError && isLogin && <div className={styles.errorMessage}>{loginError}</div>}
-          
-          <form onSubmit={handleLogin}>
-            <div className={`${styles.inputBox} ${styles.animation}`} style={{ '--i': 1, '--j': 22 } as React.CSSProperties}>
-              <input 
-                type="email" 
-                required 
-                placeholder=" " 
-                autoComplete="off"
-                value={loginData.email}
-                onChange={(e) => handleLoginChange('email', e.target.value)}
-                onFocus={() => {
-                  if (!emailValidation.isValid && loginData.email) {
-                    setEmailValidation(prev => ({ ...prev, showTooltip: true }))
-                  }
-                }}
-                onBlur={() => {
-                  setTimeout(() => {
-                    setEmailValidation(prev => ({ ...prev, showTooltip: false }))
-                  }, 100)
-                }}
-                className={!emailValidation.isValid && loginData.email ? styles.invalidInput : ''}
-              />
-              <label>{t.email}</label>
-              <Mail className={styles.inputIcon} size={18} />
-              {!emailValidation.isValid && loginData.email && (
-                <AlertCircle 
-                  className={styles.validationIcon} 
-                  size={18} 
-                  onMouseEnter={() => setEmailValidation(prev => ({ ...prev, showTooltip: true }))}
-                  onMouseLeave={() => setEmailValidation(prev => ({ ...prev, showTooltip: false }))}
-                />
-              )}
-              {emailValidation.showTooltip && !emailValidation.isValid && emailValidation.errors.length > 0 && (
-                <div className={styles.validationTooltip}>
-                  <div className={styles.tooltipContent}>
-                    {emailValidation.errors.map((error, index) => (
-                      <div key={index} className={styles.tooltipError}>
-                        {error}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className={`${styles.inputBox} ${styles.animation}`} style={{ '--i': 2, '--j': 23 } as React.CSSProperties}>
-              <input 
-                type={showPassword ? "text" : "password"} 
-                required 
-                placeholder=" " 
-                autoComplete="new-password"
-                value={loginData.password}
-                onChange={(e) => handleLoginChange('password', e.target.value)}
-              />
-              <label>{t.password}</label>
-              <Lock className={styles.inputIcon} size={18} />
-              <button
-                type="button"
-                className={styles.passwordToggle}
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-
-            <button 
-              type="submit" 
-              className={`${styles.btn} ${styles.animation}`} 
-              style={{ '--i': 3, '--j': 24 } as React.CSSProperties}
-              disabled={isLoading}
+    <PublicPageLayout isAdmin={isAdmin} setIsAdmin={handleSetIsAdmin}>
+      <div className="flex-1 w-full py-12 sm:py-16 px-4 flex items-center justify-center">
+        <div className="w-full max-w-md mx-auto">
+          {/* Switcher: Sign In / Create Account */}
+          <div className="flex items-center justify-center gap-8 mb-8 border-b border-neutral-200/60 pb-3">
+            <button
+              type="button"
+              onClick={() => {
+                setIsLogin(true);
+                setLoginError('');
+                setRegisterError('');
+                setSuccess('');
+              }}
+              className={`text-sm sm:text-base font-semibold tracking-wide transition-colors relative pb-3 -mb-3 ${
+                isLogin
+                  ? 'text-neutral-950 font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-neutral-950'
+                  : 'text-neutral-400 hover:text-neutral-700'
+              }`}
             >
-              {isLoading ? ('Logging in...') : t.loginButton}
+              {t.login || 'Sign In'}
             </button>
-
-            <div className={`${styles.linkTxt} ${styles.animation}`} style={{ '--i': 5, '--j': 25 } as React.CSSProperties}>
-              <p>{t.dontHaveAccount} <button type="button" className={styles.linkBtn} onClick={toggleForm}>{t.register}</button></p>
-              <p className={styles.forgotPassword}>
-                <a 
-                  href="/user/forgot-password"
-                  className={styles.forgotLink}
-                >
-                  {t.forgotPassword}
-                </a>
-              </p>
-            </div>
-          </form>
-        </div>
-
-        {/* Login Info Text */}
-        <div className={`${styles.infoText} ${styles.login}`}>
-          <h2 className={styles.animation} style={{ '--i': 0, '--j': 20 } as React.CSSProperties}>
-            {t.welcomeBack}
-          </h2>
-          <p className={styles.animation} style={{ '--i': 1, '--j': 21 } as React.CSSProperties}>
-            {'Login to your account to shop'}
-          </p>
-        </div>
-
-        {/* Registration Form */}
-        <div className={`${styles.formBox} ${styles.register} ${!isLogin ? styles.active : ''}`}>
-          <h2 className={`${styles.title} ${styles.animation}`} style={{ '--i': 17, '--j': 0 } as React.CSSProperties}>
-            {t.register}
-          </h2>
-          
-          <form onSubmit={handleRegister}>
-            <div className={`${styles.inputBox} ${styles.animation}`} style={{ '--i': 18, '--j': 1 } as React.CSSProperties}>
-              <input 
-                type="text" 
-                required 
-                placeholder=" " 
-                autoComplete="off"
-                value={registerData.name}
-                onChange={(e) => handleRegisterChange('name', e.target.value)}
-              />
-              <label>{t.name}</label>
-              <User className={styles.inputIcon} size={18} />
-            </div>
-
-            <div className={`${styles.inputBox} ${styles.animation}`} style={{ '--i': 19, '--j': 2 } as React.CSSProperties}>
-              <input 
-                type="email" 
-                required 
-                placeholder=" " 
-                autoComplete="off"
-                value={registerData.email}
-                onChange={(e) => handleRegisterChange('email', e.target.value)}
-                onFocus={() => setEmailValidation(prev => ({ ...prev, showTooltip: true }))}
-                onBlur={() => setEmailValidation(prev => ({ ...prev, showTooltip: false }))}
-                className={!emailValidation.isValid && registerData.email ? styles.invalidInput : ''}
-              />
-              <label>{t.email}</label>
-              <Mail className={styles.inputIcon} size={18} />
-              {!emailValidation.isValid && registerData.email && (
-                <AlertCircle 
-                  className={styles.validationIcon} 
-                  size={18} 
-                  onMouseEnter={() => setEmailValidation(prev => ({ ...prev, showTooltip: true }))}
-                  onMouseLeave={() => setEmailValidation(prev => ({ ...prev, showTooltip: false }))}
-                />
-              )}
-              {emailValidation.showTooltip && !emailValidation.isValid && emailValidation.errors.length > 0 && (
-                <div className={styles.validationTooltip}>
-                  <div className={styles.tooltipContent}>
-                    {emailValidation.errors.map((error, index) => (
-                      <div key={index} className={styles.tooltipError}>
-                        {error}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className={`${styles.inputBox} ${styles.animation}`} style={{ '--i': 20, '--j': 3 } as React.CSSProperties}>
-              <input 
-                type="tel" 
-                required 
-                placeholder=" " 
-                autoComplete="off"
-                value={registerData.phone}
-                onChange={(e) => handleRegisterChange('phone', e.target.value)}
-              />
-              <label>{t.phone}</label>
-              <Phone className={styles.inputIcon} size={18} />
-            </div>
-
-            <div className={`${styles.inputBox} ${styles.animation}`} style={{ '--i': 21, '--j': 4 } as React.CSSProperties}>
-              <input 
-                type={showConfirmPassword ? "text" : "password"} 
-                required 
-                placeholder=" " 
-                autoComplete="new-password"
-                value={registerData.password}
-                onChange={(e) => handleRegisterChange('password', e.target.value)}
-              />
-              <label>{t.password}</label>
-              <Lock className={styles.inputIcon} size={18} />
-              <button
-                type="button"
-                className={styles.passwordToggle}
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              >
-                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-
-            <button 
-              type="submit" 
-              className={`${styles.btn} ${styles.animation}`} 
-              style={{ '--i': 22, '--j': 5 } as React.CSSProperties}
-              disabled={isLoading}
+            <button
+              type="button"
+              onClick={() => {
+                setIsLogin(false);
+                setLoginError('');
+                setRegisterError('');
+                setSuccess('');
+              }}
+              className={`text-sm sm:text-base font-semibold tracking-wide transition-colors relative pb-3 -mb-3 ${
+                !isLogin
+                  ? 'text-neutral-950 font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-neutral-950'
+                  : 'text-neutral-400 hover:text-neutral-700'
+              }`}
             >
-              {isLoading ? ('Registering...') : t.registerButton}
+              {t.register || 'Create Account'}
             </button>
+          </div>
 
-            {registerError && !isLogin && <div className={styles.errorMessage}>{registerError}</div>}
-            {success && !isLogin && <div className={styles.successMessage}>{success}</div>}
+          {/* Header Message */}
+          <div className="mb-6 text-center">
+            <h1 className="text-2xl sm:text-3xl font-bold text-neutral-950 tracking-tight">
+              {isLogin ? (t.login || 'Sign In') : (t.createAccount || 'Create an Account')}
+            </h1>
+            <p className="text-xs sm:text-sm text-neutral-500 mt-2 font-light leading-relaxed max-w-xs mx-auto">
+              {isLogin
+                ? 'Sign in to access your orders, track dispatch, and manage favourites.'
+                : 'Enjoy faster checkout, saved delivery preferences, and order tracking.'}
+            </p>
+          </div>
 
-            <div className={`${styles.linkTxt} ${styles.animation}`} style={{ '--i': 23, '--j': 6 } as React.CSSProperties}>
-              <p>{t.alreadyHaveAccount} <button type="button" className={styles.linkBtn} onClick={toggleForm}>{t.login}</button></p>
+          {/* Feedback Alerts */}
+          {loginError && isLogin && (
+            <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2 animate-in fade-in">
+              <AlertCircle size={15} className="shrink-0 mt-0.5 text-red-600" />
+              <span>{loginError}</span>
             </div>
-          </form>
-        </div>
+          )}
 
-        {/* Registration Info Text */}
-        <div className={`${styles.infoText} ${styles.register}`}>
-          <h2 className={styles.animation} style={{ '--i': 17, '--j': 0 } as React.CSSProperties}>
-            {t.createAccount}
-          </h2>
-          <p className={styles.animation} style={{ '--i': 18, '--j': 1 } as React.CSSProperties}>
-            {'Create an account for fast shopping'}
-          </p>
-        </div>
+          {registerError && !isLogin && (
+            <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2 animate-in fade-in">
+              <AlertCircle size={15} className="shrink-0 mt-0.5 text-red-600" />
+              <span>{registerError}</span>
+            </div>
+          )}
 
+          {success && (
+            <div className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-start gap-2 animate-in fade-in">
+              <CheckCircle2 size={15} className="shrink-0 mt-0.5 text-emerald-600" />
+              <span>{success}</span>
+            </div>
+          )}
+
+          {/* Login Form */}
+          {isLogin ? (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-700 mb-1.5">
+                  {t.email || 'Email Address'}
+                </label>
+                <div className="relative flex items-center">
+                  <Mail size={16} className="absolute left-3.5 text-neutral-400 pointer-events-none" />
+                  <input
+                    type="email"
+                    required
+                    value={loginData.email}
+                    onChange={(e) => handleLoginChange('email', e.target.value)}
+                    placeholder="yourname@domain.co.uk"
+                    autoComplete="email"
+                    className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-neutral-50/70 hover:bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-950 rounded-lg text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-950 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-700">
+                    {t.password || 'Password'}
+                  </label>
+                  <Link
+                    href="/user/forgot-password"
+                    className="text-xs text-neutral-600 hover:text-neutral-950 transition-colors"
+                  >
+                    {t.forgotPassword || 'Forgot password?'}
+                  </Link>
+                </div>
+                <div className="relative flex items-center">
+                  <Lock size={16} className="absolute left-3.5 text-neutral-400 pointer-events-none" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={loginData.password}
+                    onChange={(e) => handleLoginChange('password', e.target.value)}
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                    className="w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm bg-neutral-50/70 hover:bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-950 rounded-lg text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-950 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 text-neutral-400 hover:text-neutral-700 p-1"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full mt-2 py-3 px-4 rounded-lg bg-neutral-950 hover:bg-neutral-800 active:bg-neutral-900 text-white text-xs sm:text-sm font-semibold tracking-wide transition-all shadow-xs disabled:opacity-60 flex items-center justify-center gap-2"
+              >
+                {isLoading ? 'Signing In...' : (t.loginButton || 'Sign In')}
+              </button>
+
+              <div className="pt-3 text-center">
+                <p className="text-xs text-neutral-600">
+                  {t.dontHaveAccount || "Don't have an account?"}{' '}
+                  <button
+                    type="button"
+                    onClick={toggleForm}
+                    className="font-semibold text-neutral-950 hover:underline ml-1"
+                  >
+                    {t.register || 'Create one now'}
+                  </button>
+                </p>
+              </div>
+            </form>
+          ) : (
+            /* Registration Form */
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-700 mb-1.5">
+                  {t.name || 'Full Name'}
+                </label>
+                <div className="relative flex items-center">
+                  <User size={16} className="absolute left-3.5 text-neutral-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    required
+                    value={registerData.name}
+                    onChange={(e) => handleRegisterChange('name', e.target.value)}
+                    placeholder="e.g. Alex Smith"
+                    autoComplete="name"
+                    className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-neutral-50/70 hover:bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-950 rounded-lg text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-950 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-700 mb-1.5">
+                  {t.email || 'Email Address'}
+                </label>
+                <div className="relative flex items-center">
+                  <Mail size={16} className="absolute left-3.5 text-neutral-400 pointer-events-none" />
+                  <input
+                    type="email"
+                    required
+                    value={registerData.email}
+                    onChange={(e) => handleRegisterChange('email', e.target.value)}
+                    placeholder="yourname@domain.co.uk"
+                    autoComplete="email"
+                    className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-neutral-50/70 hover:bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-950 rounded-lg text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-950 focus:ring-1 focus:ring-neutral-950 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-700 mb-1.5">
+                  {t.phone || 'Phone Number'}
+                </label>
+                <div className="relative flex items-center">
+                  <Phone size={16} className="absolute left-3.5 text-neutral-400 pointer-events-none" />
+                  <input
+                    type="tel"
+                    required
+                    value={registerData.phone}
+                    onChange={(e) => handleRegisterChange('phone', e.target.value)}
+                    placeholder="07123 456789 or +44 7123 456789"
+                    autoComplete="tel"
+                    className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-neutral-50/70 hover:bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-950 rounded-lg text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-950 focus:ring-1 focus:ring-neutral-950 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-700 mb-1.5">
+                  {t.password || 'Password (8+ chars, letters & numbers)'}
+                </label>
+                <div className="relative flex items-center">
+                  <Lock size={16} className="absolute left-3.5 text-neutral-400 pointer-events-none" />
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    required
+                    value={registerData.password}
+                    onChange={(e) => handleRegisterChange('password', e.target.value)}
+                    placeholder="••••••••"
+                    autoComplete="new-password"
+                    className="w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm bg-neutral-50/70 hover:bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-950 rounded-lg text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-950 focus:ring-1 focus:ring-neutral-950 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 text-neutral-400 hover:text-neutral-700 p-1"
+                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full mt-2 py-3 px-4 rounded-lg bg-neutral-950 hover:bg-neutral-800 active:bg-neutral-900 text-white text-xs sm:text-sm font-semibold tracking-wide transition-all shadow-xs disabled:opacity-60 flex items-center justify-center gap-2"
+              >
+                {isLoading ? 'Creating Account...' : (t.registerButton || 'Create Account')}
+              </button>
+
+              <div className="pt-3 text-center">
+                <p className="text-xs text-neutral-600">
+                  {t.alreadyHaveAccount || 'Already have an account?'}{' '}
+                  <button
+                    type="button"
+                    onClick={toggleForm}
+                    className="font-semibold text-neutral-950 hover:underline ml-1"
+                  >
+                    {t.login || 'Sign In'}
+                  </button>
+                </p>
+              </div>
+            </form>
+          )}
+        </div>
       </div>
-      </main>
-      <Footer />
-      <CartDrawer />
-    </>
-  )
+    </PublicPageLayout>
+  );
 }

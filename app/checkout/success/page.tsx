@@ -405,7 +405,7 @@ function CheckoutSuccessContent() {
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             type="button"
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/products')}
             className="flex-1 py-3 px-6 rounded-lg bg-neutral-950 text-white font-bold text-xs uppercase tracking-wider hover:bg-neutral-800 transition-colors text-center"
           >
             Continue Shopping

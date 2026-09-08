@@ -23,7 +23,7 @@ export default function PublicPageLayout({
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: theme.colors.background }}>
       <Banner />
       <Header isAdmin={isAdmin} setIsAdmin={setIsAdmin} />
-      <div className="flex-1">{children}</div>
+      <div className="flex-1 flex flex-col">{children}</div>
       <Footer />
       <CartDrawer />
     </div>

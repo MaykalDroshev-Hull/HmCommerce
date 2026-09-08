@@ -958,7 +958,7 @@ const enTranslations: Translations = {
     placeOrder: 'Place Order',
     placingOrder: 'Placing Order...',
     invalidEmail: 'Please enter a valid email address',
-    invalidPhone: 'Please enter a valid Bulgarian phone number (e.g., 0888123456 or +359888123456)',
+    invalidPhone: 'Please enter a valid UK phone number starting with 07 or +44 (e.g. 07123 456789 or +44 7123 456789)',
     phoneRequired: 'Phone number is required',
     emailRequired: 'Email is required',
 

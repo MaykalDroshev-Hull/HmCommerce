@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import Link from 'next/link';
 import ProductMediaGallery from './ProductMediaGallery';
 import ProductDetails from './ProductDetails';
 import ProductStickyBanner from './ProductStickyBanner';
 import { Product } from '@/lib/data';
-import { Shield, Sparkles, Droplets, Compass, CheckCircle2, ChevronDown, ChevronUp, Star } from 'lucide-react';
+import { Shield, Sparkles, Droplets, Compass, CheckCircle2, ChevronDown, ChevronUp, ChevronRight, Star } from 'lucide-react';
+
 
 interface ProductViewProps {
   product: Product;
@@ -56,7 +58,19 @@ const REVIEWS = [
 ];
 
 export default function ProductView({ product }: ProductViewProps) {
-  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [galleryImages, setGalleryImages] = useState<string[]>(() => {
+    const rawImages = product?.images || (product as any)?.Images || [];
+    if (Array.isArray(rawImages) && rawImages.length > 0) {
+      const valid = rawImages.filter((img: any) => typeof img === 'string' && img.trim().length > 0);
+      if (valid.length > 0) return valid;
+    }
+    return [
+      'https://rrpmpvffewatuldyytqf.supabase.co/storage/v1/object/public/products/collar-graphite-grey.jpg',
+      'https://rrpmpvffewatuldyytqf.supabase.co/storage/v1/object/public/products/collar-sand-khaki.jpg',
+      'https://rrpmpvffewatuldyytqf.supabase.co/storage/v1/object/public/products/collar-hardware-detail.jpg',
+      'https://rrpmpvffewatuldyytqf.supabase.co/storage/v1/object/public/products/collar-lifestyle.jpg',
+    ];
+  });
   const [focusImage, setFocusImage] = useState<string | null>(null);
 
   // Sticky banner state
@@ -68,20 +82,24 @@ export default function ProductView({ product }: ProductViewProps) {
 
   const buyButtonRef = useRef<HTMLButtonElement | null>(null);
 
-  // Initialize Gallery Images
+  // Sync Gallery Images if product changes
   useEffect(() => {
-    const rawImages = product.images || (product as any).Images || [];
+    const rawImages = product?.images || (product as any)?.Images || [];
     if (Array.isArray(rawImages) && rawImages.length > 0) {
-      setGalleryImages(rawImages);
-    } else {
-      setGalleryImages([
-        'https://rrpmpvffewatuldyytqf.supabase.co/storage/v1/object/public/products/collar-graphite-grey.jpg',
-        'https://rrpmpvffewatuldyytqf.supabase.co/storage/v1/object/public/products/collar-sand-khaki.jpg',
-        'https://rrpmpvffewatuldyytqf.supabase.co/storage/v1/object/public/products/collar-hardware-detail.jpg',
-        'https://rrpmpvffewatuldyytqf.supabase.co/storage/v1/object/public/products/collar-lifestyle.jpg',
-      ]);
+      const valid = rawImages.filter((img: any) => typeof img === 'string' && img.trim().length > 0);
+      if (valid.length > 0) {
+        setGalleryImages(valid);
+        return;
+      }
     }
+    setGalleryImages([
+      'https://rrpmpvffewatuldyytqf.supabase.co/storage/v1/object/public/products/collar-graphite-grey.jpg',
+      'https://rrpmpvffewatuldyytqf.supabase.co/storage/v1/object/public/products/collar-sand-khaki.jpg',
+      'https://rrpmpvffewatuldyytqf.supabase.co/storage/v1/object/public/products/collar-hardware-detail.jpg',
+      'https://rrpmpvffewatuldyytqf.supabase.co/storage/v1/object/public/products/collar-lifestyle.jpg',
+    ]);
   }, [product.images, (product as any).Images]);
+
 
   // Variant change callback
   const handleVariantImageChange = useCallback((images: string[] | string | undefined) => {
@@ -132,6 +150,15 @@ export default function ProductView({ product }: ProductViewProps) {
 
   const productName = product.name || 'Daydrift Adventure Dog Collar';
   const price = Number(product.price || 36.00);
+  const categoryLabel =
+    product.type ||
+    (product.category === 'clothes'
+      ? 'Collars'
+      : product.category === 'shoes'
+      ? 'Harnesses'
+      : product.category === 'accessories'
+      ? 'Accessories'
+      : product.category || 'Gear');
 
   const handleStickyAddToCart = () => {
     if (buyButtonRef.current) {
@@ -154,8 +181,51 @@ export default function ProductView({ product }: ProductViewProps) {
       />
 
       {/* Main Product Section: 2-Column Grid */}
-      <main id="product" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+      <main id="product" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        {/* Editorial Breadcrumbs */}
+        <nav aria-label="Breadcrumb" className="mb-4 sm:mb-6 text-xs font-medium text-neutral-500">
+          <ol className="flex items-center gap-1.5 flex-wrap">
+            <li>
+              <Link href="/" className="hover:text-neutral-900 transition-colors">
+                Home
+              </Link>
+            </li>
+            <li className="text-neutral-400">
+              <ChevronRight size={13} />
+            </li>
+            <li>
+              <Link href="/products" className="hover:text-neutral-900 transition-colors">
+                Products
+              </Link>
+            </li>
+            {categoryLabel && (
+              <>
+                <li className="text-neutral-400">
+                  <ChevronRight size={13} />
+                </li>
+                <li>
+                  <Link
+                    href="/products"
+                    className="hover:text-neutral-900 transition-colors"
+                  >
+                    {categoryLabel}
+                  </Link>
+                </li>
+              </>
+            )}
+            <li className="text-neutral-400">
+              <ChevronRight size={13} />
+            </li>
+            <li>
+              <span className="text-neutral-900 font-semibold truncate max-w-[200px] sm:max-w-none inline-block align-bottom">
+                {productName}
+              </span>
+            </li>
+          </ol>
+        </nav>
+
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-14 items-start">
+
           {/* Left Column: 2x2 Image Grid (7 cols on desktop) */}
           <div className="md:col-span-7 space-y-4">
             <ProductMediaGallery

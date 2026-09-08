@@ -18,8 +18,7 @@ import {
   LayoutGrid,
   Table as TableIcon,
   Check,
-  Eye,
-  Sparkles
+  Eye
 } from 'lucide-react';
 
 interface SizeRow {
@@ -68,7 +67,6 @@ const SIZE_DATA: SizeRow[] = [
   {
     size: 'M',
     category: 'Medium Breeds',
-    popular: true,
     neckInches: '15.7" – 18.8"',
     neckCm: '40 – 48 cm',
     chestInches: '18.8" – 21.6"',
@@ -349,9 +347,6 @@ export default function SizeGuidePage() {
                           }`}
                         >
                           <span>{row.size}</span>
-                          {row.popular && (
-                            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-amber-400' : 'bg-neutral-900'}`} />
-                          )}
                         </button>
                       );
                     })}
@@ -399,12 +394,6 @@ export default function SizeGuidePage() {
                                   <span className="inline-block px-2.5 py-1 rounded-md bg-neutral-950 text-white font-extrabold text-sm tracking-wide">
                                     {row.size}
                                   </span>
-                                  {row.popular && (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
-                                      <Sparkles size={10} />
-                                      Most Popular
-                                    </span>
-                                  )}
                                 </div>
                                 <p className="text-[11px] font-medium text-neutral-500 mt-1">
                                   {row.category}
@@ -560,58 +549,6 @@ export default function SizeGuidePage() {
                       </table>
                     </div>
                   </div>
-                </div>
-              )}
-
-              {/* Selected Size Highlight Drawer/Box */}
-              {selectedSize && (
-                <div className="p-4 rounded-xl bg-neutral-900 text-white text-xs space-y-2.5 animate-in fade-in duration-200 shadow-md">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded bg-white text-neutral-950 font-extrabold text-xs">
-                        Size {selectedSize}
-                      </span>
-                      <span className="text-[11px] text-neutral-300 font-medium">
-                        Selected Recommendation
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedSize(null)}
-                      className="text-neutral-400 hover:text-white underline text-[11px]"
-                    >
-                      Clear
-                    </button>
-                  </div>
-
-                  {(() => {
-                    const row = SIZE_DATA.find((r) => r.size === selectedSize);
-                    if (!row) return null;
-                    return (
-                      <div className="space-y-2 pt-1 text-neutral-200">
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div className="p-2 rounded bg-neutral-800/80 border border-neutral-700">
-                            <span className="block text-[10px] text-neutral-400">Neck Circumference:</span>
-                            <span className="font-bold text-white text-sm">
-                              {unit === 'in' ? row.neckInches : row.neckCm}
-                            </span>
-                          </div>
-                          <div className="p-2 rounded bg-neutral-800/80 border border-neutral-700">
-                            <span className="block text-[10px] text-neutral-400">Chest Girth:</span>
-                            <span className="font-bold text-white text-sm">
-                              {unit === 'in' ? row.chestInches : row.chestCm}
-                            </span>
-                          </div>
-                        </div>
-                        <p className="text-[11px] text-neutral-300">
-                          <strong className="text-white">Matching Leash:</strong> {row.leashSpec}
-                        </p>
-                        <p className="text-[11px] text-neutral-300">
-                          <strong className="text-white">Fits:</strong> {row.breeds.join(', ')}
-                        </p>
-                      </div>
-                    );
-                  })()}
                 </div>
               )}
 
@@ -808,10 +745,10 @@ export default function SizeGuidePage() {
             </p>
             <div className="pt-2">
               <Link
-                href="/#product"
+                href="/products"
                 className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 bg-white text-neutral-950 font-bold uppercase text-xs tracking-widest rounded hover:bg-neutral-100 transition-colors"
               >
-                Shop Daydrift Collar
+                Shop All Products
                 <ArrowRight size={14} />
               </Link>
             </div>

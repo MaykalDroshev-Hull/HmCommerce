@@ -24,9 +24,17 @@ export default function ProductMediaGallery({
   const [modalImage, setModalImage] = useState<string | null>(null);
 
   const safeImages = useMemo(() => {
-    const norm = normalizeProductImages(images, '');
-    return norm.length > 0 ? norm : ['/products/collar-graphite-grey.jpg'];
+    const valid = Array.isArray(images)
+      ? images.filter((img) => typeof img === 'string' && img.trim().length > 0)
+      : [];
+    const norm = normalizeProductImages(
+      valid.length > 0 ? valid : ['/products/collar-graphite-grey.jpg'],
+      '/products/collar-graphite-grey.jpg'
+    );
+    const cleaned = norm.filter((img) => typeof img === 'string' && img.trim().length > 0);
+    return cleaned.length > 0 ? cleaned : ['/products/collar-graphite-grey.jpg'];
   }, [images]);
+
 
   // If focusImage changes (e.g. colour swatch click), select that image
   useEffect(() => {

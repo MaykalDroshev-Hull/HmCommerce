@@ -6,7 +6,8 @@ export function normalizeProductImages(
   images: string[] | undefined | null,
   fallback = '/image.png'
 ): string[] {
-  if (!images || images.length === 0) return [fallback];
+  const safeFallback = fallback && fallback.trim() ? fallback.trim() : '/image.png';
+  if (!images || images.length === 0) return [safeFallback];
 
   const seen = new Set<string>();
   const unique: string[] = [];
@@ -20,5 +21,6 @@ export function normalizeProductImages(
     if (unique.length >= MAX_PRODUCT_IMAGES) break;
   }
 
-  return unique.length > 0 ? unique : [fallback];
+  return unique.length > 0 ? unique : [safeFallback];
 }
+

@@ -1,7 +1,7 @@
 // components/CartDrawer.tsx
 'use client';
 
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { X, Plus, Minus, ShoppingCart, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -10,7 +10,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useCart } from '@/context/CartContext';
 import { translations } from '@/lib/translations';
 import Link from 'next/link';
-import { ExpressCheckoutButtons, PaymentBadgesRow } from './PaymentIcons';
+import { ExpressCheckoutButtons } from './PaymentIcons';
 
 function unlockBodyScroll(savedScrollY: number) {
   document.body.style.position = '';
@@ -32,11 +32,15 @@ const CartDrawer: React.FC = () => {
     removeItem,
     updateQuantity,
     clearCart,
-    closeCart
+    closeCart,
   } = useCart();
 
   const t = translations[language || 'en'];
   const scrollYRef = useRef(0);
+
+  // Smooth entry & exit transition states
+  const [shouldRender, setShouldRender] = useState(isCartOpen);
+  const [isOpenAnim, setIsOpenAnim] = useState(false);
 
   const formatPrice = (price: number | undefined | null) => {
     const n = Number(price);
@@ -61,32 +65,72 @@ const CartDrawer: React.FC = () => {
     router.push('/checkout?paymentMethod=paypal');
   }, [closeCart, router]);
 
+  // Handle smooth open and close transitions with body scroll lock
   useEffect(() => {
     if (isCartOpen) {
+      setShouldRender(true);
       scrollYRef.current = window.scrollY;
       document.body.style.position = 'fixed';
       document.body.style.top = `-${scrollYRef.current}px`;
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
 
-      return () => {
+      const frameId = requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setIsOpenAnim(true);
+        });
+      });
+      return () => cancelAnimationFrame(frameId);
+    } else {
+      setIsOpenAnim(false);
+      const timer = setTimeout(() => {
+        setShouldRender(false);
         unlockBodyScroll(scrollYRef.current);
-      };
+      }, 250);
+      return () => clearTimeout(timer);
     }
   }, [isCartOpen]);
 
-  if (!isCartOpen) return null;
+  // Clean up body scroll lock if unmounted while open
+  useEffect(() => {
+    return () => {
+      unlockBodyScroll(scrollYRef.current);
+    };
+  }, []);
+
+  // Keyboard Escape key handler
+  useEffect(() => {
+    if (!isCartOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closeCart();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isCartOpen, closeCart]);
+
+  if (!shouldRender) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
+      {/* Backdrop overlay */}
       <div
-        className="absolute inset-0 bg-black/50 transition-opacity"
+        className={`fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity duration-250 ease-out ${
+          isOpenAnim ? 'opacity-100' : 'opacity-0'
+        }`}
         onClick={closeCart}
       />
 
+      {/* Sliding Drawer Container */}
       <div
-        className="absolute right-0 top-0 h-full w-full max-w-md shadow-xl transform transition-transform flex flex-col"
-        style={{ backgroundColor: theme.colors.surface }}
+        className={`fixed right-0 top-0 h-full w-full max-w-md shadow-2xl flex flex-col will-change-transform transition-transform duration-250 ${
+          isOpenAnim ? 'translate-x-0' : 'translate-x-full'
+        }`}
+        style={{
+          backgroundColor: theme.colors.surface,
+          transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
       >
         <div
           className="flex items-center justify-between p-5 sm:p-6 border-b"
@@ -111,6 +155,7 @@ const CartDrawer: React.FC = () => {
             onClick={closeCart}
             className="p-2 rounded-full transition-opacity hover:opacity-70"
             style={{ color: theme.colors.text }}
+            aria-label="Close cart"
           >
             <X size={20} />
           </button>
@@ -124,7 +169,7 @@ const CartDrawer: React.FC = () => {
                 {t.yourCartIsEmpty}
               </p>
               <Link
-                href="/"
+                href="/products"
                 onClick={closeCart}
                 className="mt-4 px-5 py-2.5 rounded-xl font-medium transition-opacity hover:opacity-90"
                 style={{
@@ -140,7 +185,7 @@ const CartDrawer: React.FC = () => {
               {items.map((item, index) => (
                 <div
                   key={`${item.id}-${item.size}-${index}`}
-                  className="rounded-2xl p-4"
+                  className="rounded-2xl p-4 transition-all duration-200"
                   style={{
                     backgroundColor: theme.colors.secondary,
                     border: `1px solid ${theme.colors.border}`,
@@ -164,13 +209,16 @@ const CartDrawer: React.FC = () => {
                       >
                         {item.brand} {item.model}
                       </h3>
-                      <div className="text-xs sm:text-sm space-y-1 mt-1" style={{ color: theme.colors.textSecondary }}>
+                      <div
+                        className="text-xs sm:text-sm space-y-1 mt-1"
+                        style={{ color: theme.colors.textSecondary }}
+                      >
                         {item.propertyValues && Object.keys(item.propertyValues).length > 0 ? (
                           <div className="space-y-0.5">
                             {Object.entries(item.propertyValues).map(([propertyName, propertyValue]) => {
                               const formattedName = propertyName
                                 .replace(/_/g, ' ')
-                                .replace(/\b\w/g, l => l.toUpperCase());
+                                .replace(/\b\w/g, (l) => l.toUpperCase());
                               return (
                                 <div key={propertyName}>
                                   <span className="font-medium">{formattedName}:</span> {propertyValue}
@@ -201,18 +249,23 @@ const CartDrawer: React.FC = () => {
                       type="button"
                       onClick={() => removeItem(item.id, item.size)}
                       className="p-1.5 rounded-lg transition-opacity hover:opacity-70 shrink-0"
+                      aria-label="Remove item"
                     >
                       <Trash2 size={16} className="text-red-500" />
                     </button>
                   </div>
 
-                  <div className="flex items-center justify-between mt-4 pt-3 border-t" style={{ borderColor: theme.colors.border }}>
+                  <div
+                    className="flex items-center justify-between mt-4 pt-3 border-t"
+                    style={{ borderColor: theme.colors.border }}
+                  >
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, item.quantity - 1, item.size)}
-                        className="p-1.5 rounded-lg transition-opacity hover:opacity-70"
+                        className="p-1.5 rounded-lg transition-opacity hover:opacity-70 active:scale-95"
                         style={{ backgroundColor: theme.colors.surface, color: theme.colors.text }}
+                        aria-label="Decrease quantity"
                       >
                         <Minus size={16} />
                       </button>
@@ -225,8 +278,9 @@ const CartDrawer: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, item.quantity + 1, item.size)}
-                        className="p-1.5 rounded-lg transition-opacity hover:opacity-70"
+                        className="p-1.5 rounded-lg transition-opacity hover:opacity-70 active:scale-95"
                         style={{ backgroundColor: theme.colors.surface, color: theme.colors.text }}
+                        aria-label="Increase quantity"
                       >
                         <Plus size={16} />
                       </button>
@@ -270,7 +324,7 @@ const CartDrawer: React.FC = () => {
               <button
                 type="button"
                 onClick={clearCart}
-                className="flex-1 px-4 py-3 rounded-xl font-medium transition-opacity hover:opacity-80"
+                className="flex-1 px-4 py-3 rounded-xl font-medium transition-opacity hover:opacity-80 active:scale-98"
                 style={{
                   border: `1px solid ${theme.colors.border}`,
                   color: theme.colors.text,
@@ -282,7 +336,7 @@ const CartDrawer: React.FC = () => {
               <button
                 type="button"
                 onClick={handleCheckout}
-                className="flex-1 px-4 py-3 rounded-xl font-medium transition-opacity hover:opacity-90"
+                className="flex-1 px-4 py-3 rounded-xl font-medium transition-opacity hover:opacity-90 active:scale-98"
                 style={{
                   backgroundColor: theme.colors.primary,
                   color: '#ffffff',
@@ -292,14 +346,10 @@ const CartDrawer: React.FC = () => {
               </button>
             </div>
 
-            <div className="pt-1 flex justify-center">
-              <PaymentBadgesRow />
-            </div>
-
             <button
               type="button"
               onClick={closeCart}
-              className="w-full px-4 py-3 rounded-xl font-medium transition-opacity hover:opacity-80"
+              className="w-full px-4 py-3 rounded-xl font-medium transition-opacity hover:opacity-80 active:scale-98"
               style={{
                 border: `1px solid ${theme.colors.text}`,
                 color: theme.colors.text,

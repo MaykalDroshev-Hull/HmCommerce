@@ -136,187 +136,117 @@ export default function ProductCard({ product, isFavorited: initialIsFavorited }
   return (
     <>
       <div
-        className="rounded-2xl transition-all duration-300 overflow-hidden cursor-pointer border flex flex-col h-full"
-        style={{
-          backgroundColor: theme.colors.cardBg,
-          borderColor: theme.colors.border,
-          boxShadow: theme.effects.shadow,
-        }}
+        className="group relative flex flex-col h-full bg-white border border-neutral-200/80 rounded-xl overflow-hidden hover:border-neutral-900 transition-all duration-300 shadow-2xs hover:shadow-sm cursor-pointer"
         onClick={handleClick}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.boxShadow = theme.effects.shadowHover;
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.boxShadow = theme.effects.shadow;
-        }}
       >
-        <div className="relative">
-          <div className={showOutOfStockOverlay ? 'opacity-55 grayscale-[35%]' : undefined}>
+        <div className="relative aspect-[4/5] sm:aspect-square bg-neutral-100 overflow-hidden">
+          <div className={`w-full h-full ${showOutOfStockOverlay ? 'opacity-55 grayscale-[35%]' : ''}`}>
             <ImageSlider images={uniqueImages} />
           </div>
+
+          {/* Out of Stock Overlay */}
           {showOutOfStockOverlay && (
-            <div className="absolute inset-0 z-[5] flex items-center justify-center p-3 pointer-events-none">
-              <div
-                className="w-[85%] max-w-[200px] rounded-xl px-3 py-3.5 sm:px-4 sm:py-4 text-center shadow-lg"
-                style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.96)',
-                  border: `1px solid ${theme.colors.border}`,
-                }}
-              >
-                <div className="relative mx-auto mb-2 flex h-8 w-8 items-center justify-center">
-                  <ShoppingBag size={26} strokeWidth={1.5} style={{ color: theme.colors.text }} />
-                  <span
-                    className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full text-[9px] font-bold leading-none"
-                    style={{
-                      backgroundColor: theme.colors.text,
-                      color: '#ffffff',
-                    }}
-                  >
-                    ×
-                  </span>
-                </div>
-                <p
-                  className="text-xs sm:text-sm font-semibold leading-snug"
-                  style={{ color: theme.colors.text }}
-                >
-                  {t.outOfStockTitle}
+            <div className="absolute inset-0 z-10 flex items-center justify-center p-3 bg-white/80 backdrop-blur-xs pointer-events-none">
+              <div className="text-center px-3 py-2 bg-white/95 rounded-lg border border-neutral-200 shadow-xs">
+                <ShoppingBag size={18} className="mx-auto mb-1 text-neutral-800" strokeWidth={1.5} />
+                <p className="text-xs font-semibold text-neutral-900 leading-tight">
+                  {t.outOfStockTitle || 'Sold Out'}
                 </p>
-                <div
-                  className="my-2 h-px w-full"
-                  style={{ backgroundColor: theme.colors.border }}
-                />
-                <p
-                  className="text-[10px] sm:text-xs leading-snug"
-                  style={{ color: theme.colors.textSecondary }}
-                >
-                  {t.restockComingSoon}
+                <p className="text-[10px] text-neutral-500 mt-0.5">
+                  {t.restockComingSoon || 'Restock soon'}
                 </p>
               </div>
             </div>
           )}
+
+          {/* Clean Editorial Status Badges */}
           {promoActive && !showOutOfStockOverlay && (
-            <span
-              className="absolute top-3 left-3 z-10 px-2.5 py-1 text-[10px] sm:text-xs font-semibold rounded-md text-white tracking-wide"
-              style={{ backgroundColor: '#b91c1c' }}
-            >
+            <span className="absolute top-2.5 left-2.5 z-10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-neutral-900 text-white rounded-sm">
               SALE{promoPercent > 0 ? ` −${promoPercent}%` : ''}
             </span>
           )}
-          {showNewBadge && !showOutOfStockOverlay && (
-            <span
-              className="absolute bottom-3 left-3 z-10 px-2.5 py-1 text-[10px] sm:text-xs font-semibold rounded-md text-white"
-              style={{ backgroundColor: theme.colors.primary }}
-            >
+
+          {showNewBadge && !showOutOfStockOverlay && !promoActive && (
+            <span className="absolute top-2.5 left-2.5 z-10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-white border border-neutral-300 text-neutral-900 rounded-sm">
               NEW
             </span>
           )}
+
+          {/* Wishlist Heart Button */}
           <button
+            type="button"
             onClick={handleFavoriteClick}
             disabled={isTogglingFavorite}
-            className="absolute top-3 right-3 z-10 p-2 rounded-full backdrop-blur-sm transition-all duration-200 hover:scale-110 disabled:opacity-50 shadow-sm"
-            style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.92)',
-              color: isFavorited ? '#ef4444' : theme.colors.text
-            }}
+            className="absolute top-2.5 right-2.5 z-10 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm border border-neutral-200/70 flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-2xs text-neutral-700 hover:text-neutral-950 disabled:opacity-50"
             title={isFavorited ? 'Remove from favourites' : 'Add to favourites'}
+            aria-label={isFavorited ? 'Remove from favourites' : 'Add to favourites'}
           >
-            <Heart size={18} fill={isFavorited ? '#ef4444' : 'none'} />
+            <Heart
+              size={15}
+              className={isFavorited ? 'fill-[#D31336] text-[#D31336]' : 'text-neutral-700'}
+            />
           </button>
         </div>
 
+        {/* Product Meta & Pricing */}
         <div className="p-3 sm:p-4 flex flex-col flex-1">
-          <h3
-            className="text-sm sm:text-[15px] font-semibold mb-1 line-clamp-2 leading-snug transition-colors duration-300"
-            style={{ color: theme.colors.text }}
-          >
-            {productTitle}
-            {product.color ? ` ${product.color}` : ''}
-          </h3>
-
           {categoryLabel && (
-            <p
-              className="text-xs mb-2 transition-colors duration-300"
-              style={{ color: theme.colors.textSecondary }}
-            >
-              {product.brand}
-              {categoryLabel ? ` • ${categoryLabel}` : ''}
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-neutral-600 mb-1 line-clamp-1">
+              {product.brand} {categoryLabel ? `• ${categoryLabel}` : ''}
             </p>
           )}
 
-          <p
-            className="text-xs mb-3 transition-colors duration-300 hidden sm:block"
-            style={{ color: theme.colors.textSecondary }}
-          >
-            In Stock:{' '}
-            <span style={{ color: theme.colors.text }}>{stockDisplay}</span>
+          <h3 className="text-xs sm:text-sm font-semibold text-neutral-950 leading-snug line-clamp-2 mb-1 group-hover:text-neutral-700 transition-colors">
+            {productTitle}
+            {product.color ? ` - ${product.color}` : ''}
+          </h3>
+
+          <p className="text-[11px] text-neutral-600 mb-2">
+            In Stock: <span className="font-medium text-neutral-900">{stockDisplay}</span>
           </p>
 
-          <p
-            className="text-xs mb-3 transition-colors duration-300 sm:hidden"
-            style={{ color: theme.colors.textSecondary }}
-          >
-            {stockDisplay} in stock
-          </p>
+          <div className="mt-auto pt-2 border-t border-neutral-100">
+            <div className="flex items-baseline gap-2">
+              {promoActive ? (
+                <>
+                  <span className="text-sm sm:text-base font-bold text-neutral-950">
+                    £{displayPrice.toFixed(2)}
+                  </span>
+                  <span className="text-xs text-neutral-600 line-through">
+                    £{cardPricing.original.toFixed(2)}
+                  </span>
+                </>
+              ) : (
+                <span className="text-sm sm:text-base font-bold text-neutral-950">
+                  £{product.price.toFixed(2)}
+                </span>
+              )}
+            </div>
 
-          <div className="mt-auto">
-            {promoActive ? (
-              <>
-                <div
-                  className="text-xs sm:text-sm line-through transition-colors duration-300"
-                  style={{ color: theme.colors.textSecondary }}
+            <p className="text-[10px] sm:text-[11px] text-neutral-600 mt-1">
+              or 3 payments of <span className="font-semibold text-neutral-900">£{((promoActive ? displayPrice : (product.price || 36)) / 3).toFixed(2)}</span> with Klarna
+            </p>
+
+            {canPurchase && (
+              <div data-express-checkout className="mt-3">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowAddToCartModal(true);
+                  }}
+                  className="w-full py-2 px-3 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-2xs active:scale-[0.99]"
                 >
-                  £{cardPricing.original.toFixed(2)}
-                </div>
-                <div
-                  className="text-base sm:text-lg font-bold transition-colors duration-300"
-                  style={{ color: '#b91c1c' }}
-                >
-                  £{displayPrice.toFixed(2)}
-                </div>
-              </>
-            ) : (
-              <div
-                className="text-base sm:text-lg font-bold transition-colors duration-300"
-                style={{ color: theme.colors.text }}
-              >
-                £{product.price.toFixed(2)}
+                  <ShoppingCart size={13} />
+                  <span>{t.expressAdd || 'Quick Add'}</span>
+                </button>
               </div>
             )}
-            <div
-              className="text-[10px] sm:text-xs mt-1 transition-colors duration-300 flex items-center justify-between gap-1 flex-wrap"
-              style={{ color: theme.colors.textSecondary }}
-            >
-              <span>Inclusive of all taxes</span>
-              <span className="font-medium text-neutral-800 bg-neutral-100 px-1.5 py-0.5 rounded text-[10px]">
-                3x £{((promoActive ? displayPrice : (product.price || 36)) / 3).toFixed(2)} with Klarna
-              </span>
-            </div>
           </div>
-
-          {canPurchase && (
-            <div data-express-checkout className="relative z-10 mt-3">
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowAddToCartModal(true);
-                }}
-                className="w-full px-4 py-2.5 sm:py-3 text-white rounded-xl transition-colors duration-300 flex items-center justify-center gap-2 text-sm font-medium"
-                style={{ backgroundColor: theme.colors.primary }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.opacity = '0.92';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.opacity = '1';
-                }}
-              >
-                <ShoppingCart size={16} />
-                <span className="hidden sm:inline">{t.expressAdd}</span>
-              </button>
-            </div>
-          )}
         </div>
       </div>
+
 
       <AddToCartModal
         isOpen={showAddToCartModal}
