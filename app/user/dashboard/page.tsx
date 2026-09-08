@@ -19,14 +19,14 @@ import {
   Calendar,
   ChevronRight,
   ShieldCheck,
+  Plus,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { translations } from '@/lib/translations';
 import PublicPageLayout from '@/components/PublicPageLayout';
 import ProductCard from '@/components/ProductCard';
-import type { CityOption } from '@/store/checkoutStore';
-import type { EcontOfficesData, EcontOffice } from '@/types/econt';
+import GoogleAddressAutocomplete from '@/components/GoogleAddressAutocomplete';
 import { Product } from '@/lib/data';
 
 // Helper for status badge styling
@@ -180,23 +180,14 @@ export default function DashboardPage() {
   });
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Delivery preferences states
+  // Delivery address states
   const [isEditingDelivery, setIsEditingDelivery] = useState(false);
   const [deliveryData, setDeliveryData] = useState({
-    preferredDeliveryType: 'office' as 'office' | 'address' | 'econtomat',
-    preferredEcontOfficeId: '',
-    preferredCity: '',
     preferredStreet: '',
-    preferredStreetNumber: '',
     preferredEntrance: '',
-    preferredFloor: '',
-    preferredApartment: '',
+    preferredCity: '',
+    preferredStreetNumber: '',
   });
-  const [cities, setCities] = useState<CityOption[]>([]);
-  const [econtOffices, setEcontOffices] = useState<EcontOfficesData | null>(null);
-  const [selectedOffice, setSelectedOffice] = useState<EcontOffice | null>(null);
-  const [showCityDropdown, setShowCityDropdown] = useState<boolean>(false);
-  const cityDropdownRef = useRef<HTMLDivElement>(null);
 
   // Check admin state
   useEffect(() => {
@@ -238,14 +229,10 @@ export default function DashboardPage() {
         phone: user.phone || '',
       });
       setDeliveryData({
-        preferredDeliveryType: (user.preferredDeliveryType as 'office' | 'address' | 'econtomat') || 'office',
-        preferredEcontOfficeId: user.preferredEcontOfficeId || '',
-        preferredCity: user.preferredCity || '',
         preferredStreet: user.preferredStreet || '',
-        preferredStreetNumber: user.preferredStreetNumber || '',
         preferredEntrance: user.preferredEntrance || '',
-        preferredFloor: user.preferredFloor || '',
-        preferredApartment: user.preferredApartment || '',
+        preferredCity: user.preferredCity || '',
+        preferredStreetNumber: user.preferredStreetNumber || '',
       });
     }
   }, [user]);
@@ -254,118 +241,8 @@ export default function DashboardPage() {
   useEffect(() => {
     if (user && isAuthenticated) {
       fetchUserData();
-      loadCities();
-      loadEcontOffices();
     }
   }, [user, isAuthenticated]);
-
-  // Load cities data
-  const loadCities = async () => {
-    const ukCities: CityOption[] = [
-      { name: 'London', postcode: 'EC1A', displayName: 'London [EC1A]' },
-      { name: 'Manchester', postcode: 'M1', displayName: 'Manchester [M1]' },
-      { name: 'Birmingham', postcode: 'B1', displayName: 'Birmingham [B1]' },
-      { name: 'Leeds', postcode: 'LS1', displayName: 'Leeds [LS1]' },
-      { name: 'Glasgow', postcode: 'G1', displayName: 'Glasgow [G1]' },
-      { name: 'Liverpool', postcode: 'L1', displayName: 'Liverpool [L1]' },
-      { name: 'Newcastle', postcode: 'NE1', displayName: 'Newcastle [NE1]' },
-      { name: 'Sheffield', postcode: 'S1', displayName: 'Sheffield [S1]' },
-      { name: 'Bristol', postcode: 'BS1', displayName: 'Bristol [BS1]' },
-      { name: 'Belfast', postcode: 'BT1', displayName: 'Belfast [BT1]' },
-      { name: 'Edinburgh', postcode: 'EH1', displayName: 'Edinburgh [EH1]' },
-      { name: 'Cardiff', postcode: 'CF10', displayName: 'Cardiff [CF10]' },
-      { name: 'Leicester', postcode: 'LE1', displayName: 'Leicester [LE1]' },
-      { name: 'Coventry', postcode: 'CV1', displayName: 'Coventry [CV1]' },
-      { name: 'Bradford', postcode: 'BD1', displayName: 'Bradford [BD1]' },
-      { name: 'Nottingham', postcode: 'NG1', displayName: 'Nottingham [NG1]' },
-      { name: 'Hull', postcode: 'HU1', displayName: 'Hull [HU1]' },
-      { name: 'Stoke-on-Trent', postcode: 'ST1', displayName: 'Stoke-on-Trent [ST1]' },
-      { name: 'Wolverhampton', postcode: 'WV1', displayName: 'Wolverhampton [WV1]' },
-      { name: 'Plymouth', postcode: 'PL1', displayName: 'Plymouth [PL1]' },
-      { name: 'Southampton', postcode: 'SO14', displayName: 'Southampton [SO14]' },
-      { name: 'Reading', postcode: 'RG1', displayName: 'Reading [RG1]' },
-      { name: 'Derby', postcode: 'DE1', displayName: 'Derby [DE1]' },
-      { name: 'Dudley', postcode: 'DY1', displayName: 'Dudley [DY1]' },
-      { name: 'Northampton', postcode: 'NN1', displayName: 'Northampton [NN1]' },
-      { name: 'Portsmouth', postcode: 'PO1', displayName: 'Portsmouth [PO1]' },
-      { name: 'Luton', postcode: 'LU1', displayName: 'Luton [LU1]' },
-      { name: 'Preston', postcode: 'PR1', displayName: 'Preston [PR1]' },
-      { name: 'Aberdeen', postcode: 'AB10', displayName: 'Aberdeen [AB10]' },
-      { name: 'Milton Keynes', postcode: 'MK9', displayName: 'Milton Keynes [MK9]' },
-      { name: 'Norwich', postcode: 'NR1', displayName: 'Norwich [NR1]' },
-      { name: 'Bournemouth', postcode: 'BH1', displayName: 'Bournemouth [BH1]' },
-    ];
-    setCities(ukCities);
-  };
-
-  // Load Econt offices data
-  const loadEcontOffices = async () => {
-    try {
-      const response = await fetch('/data/econt-offices.json');
-      const data: EcontOfficesData = await response.json();
-      setEcontOffices(data);
-    } catch {
-      // Econt offices are optional; delivery UI falls back gracefully
-    }
-  };
-
-  // Update selected office when city or office ID changes
-  useEffect(() => {
-    if (econtOffices && deliveryData.preferredCity && deliveryData.preferredEcontOfficeId) {
-      let cityName = deliveryData.preferredCity;
-      const displayNameMatch = cityName.match(/^(.+?)\s*\[/);
-      if (displayNameMatch) {
-        cityName = displayNameMatch[1].trim();
-      }
-
-      let cityOffices = econtOffices.officesByCity[cityName] || [];
-
-      if (cityOffices.length === 0) {
-        const matchingCity = econtOffices.cities.find(
-          (c) =>
-            c.toLowerCase() === cityName.toLowerCase() ||
-            c.toLowerCase().includes(cityName.toLowerCase()) ||
-            cityName.toLowerCase().includes(c.toLowerCase())
-        );
-        if (matchingCity) {
-          cityOffices = econtOffices.officesByCity[matchingCity] || [];
-        }
-      }
-
-      const office = cityOffices.find((o) => o.id === deliveryData.preferredEcontOfficeId);
-      setSelectedOffice(office || null);
-    } else {
-      setSelectedOffice(null);
-    }
-  }, [econtOffices, deliveryData.preferredCity, deliveryData.preferredEcontOfficeId]);
-
-  const handleCityChange = (city: string) => {
-    setDeliveryData((prev) => ({ ...prev, preferredCity: city, preferredEcontOfficeId: '' }));
-    setSelectedOffice(null);
-    setShowCityDropdown(false);
-  };
-
-  const handleOfficeSelect = (officeId: string) => {
-    setDeliveryData((prev) => ({ ...prev, preferredEcontOfficeId: officeId }));
-    if (econtOffices && deliveryData.preferredCity) {
-      const cityOffices = econtOffices.officesByCity[deliveryData.preferredCity] || [];
-      const office = cityOffices.find((o) => o.id === officeId);
-      setSelectedOffice(office || null);
-    }
-  };
-
-  // Close city dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (cityDropdownRef.current && !cityDropdownRef.current.contains(event.target as Node)) {
-        setShowCityDropdown(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
 
   const fetchUserData = async () => {
     if (!user) return;
@@ -514,38 +391,38 @@ export default function DashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user?.id,
-          preferredDeliveryType: deliveryData.preferredDeliveryType,
-          preferredEcontOfficeId: deliveryData.preferredEcontOfficeId || null,
-          preferredCity: deliveryData.preferredCity || null,
-          preferredStreet: deliveryData.preferredStreet || null,
-          preferredStreetNumber: deliveryData.preferredStreetNumber || null,
-          preferredEntrance: deliveryData.preferredEntrance || null,
-          preferredFloor: deliveryData.preferredFloor || null,
-          preferredApartment: deliveryData.preferredApartment || null,
+          preferredDeliveryType: 'address',
+          preferredStreet: deliveryData.preferredStreet.trim() || null,
+          preferredEntrance: deliveryData.preferredEntrance.trim() || null,
+          preferredCity: deliveryData.preferredCity.trim() || null,
+          preferredStreetNumber: deliveryData.preferredStreetNumber.trim() || null,
+          preferredEcontOfficeId: null,
+          preferredFloor: null,
+          preferredApartment: null,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Error updating preferences');
+        throw new Error(data.error || 'Error updating address');
       }
 
-      setSuccess('Delivery preferences updated successfully!');
+      setSuccess('Delivery address updated successfully!');
       setIsEditingDelivery(false);
 
       updateUser({
-        preferredDeliveryType: deliveryData.preferredDeliveryType,
-        preferredEcontOfficeId: deliveryData.preferredEcontOfficeId || undefined,
-        preferredCity: deliveryData.preferredCity || undefined,
-        preferredStreet: deliveryData.preferredStreet || undefined,
-        preferredStreetNumber: deliveryData.preferredStreetNumber || undefined,
-        preferredEntrance: deliveryData.preferredEntrance || undefined,
-        preferredFloor: deliveryData.preferredFloor || undefined,
-        preferredApartment: deliveryData.preferredApartment || undefined,
+        preferredDeliveryType: 'address',
+        preferredStreet: deliveryData.preferredStreet.trim() || undefined,
+        preferredEntrance: deliveryData.preferredEntrance.trim() || undefined,
+        preferredCity: deliveryData.preferredCity.trim() || undefined,
+        preferredStreetNumber: deliveryData.preferredStreetNumber.trim() || undefined,
+        preferredEcontOfficeId: undefined,
+        preferredFloor: undefined,
+        preferredApartment: undefined,
       });
     } catch (err: any) {
-      setError(err.message || 'Error updating preferences');
+      setError(err.message || 'Error updating address');
     } finally {
       setIsUpdating(false);
     }
@@ -928,16 +805,19 @@ export default function DashboardPage() {
                 )}
               </div>
 
-              {/* Delivery Preferences */}
+              {/* Saved Delivery Address */}
               <div className="bg-white border border-neutral-200/80 rounded-2xl p-6 sm:p-8 shadow-xs">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-800">
-                      <Truck size={16} />
+                      <MapPin size={16} />
                     </div>
-                    <h2 className="text-base font-bold text-neutral-950">Delivery Preferences</h2>
+                    <div>
+                      <h2 className="text-base font-bold text-neutral-950">Delivery Address</h2>
+                      <p className="text-[11px] text-neutral-500 font-light mt-0.5">Your primary shipping address for fast checkout</p>
+                    </div>
                   </div>
-                  {!isEditingDelivery && (
+                  {!isEditingDelivery && (deliveryData.preferredStreet || deliveryData.preferredCity) && (
                     <button
                       onClick={() => setIsEditingDelivery(true)}
                       className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-700 hover:text-neutral-950 border border-neutral-200/80 px-3 py-1.5 rounded-lg transition-colors shadow-2xs"
@@ -949,227 +829,161 @@ export default function DashboardPage() {
                 </div>
 
                 {!isEditingDelivery ? (
-                  <div className="space-y-3.5 text-xs">
-                    <div>
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400 block mb-0.5">
-                        Delivery Method
-                      </span>
-                      <p className="text-neutral-900 font-medium capitalize">
-                        {deliveryData.preferredDeliveryType === 'address'
-                          ? 'Courier to Door / Address'
-                          : deliveryData.preferredDeliveryType === 'office'
-                          ? 'Collection Office'
-                          : 'Parcel Locker'}
-                      </p>
-                    </div>
-                    {deliveryData.preferredCity && (
-                      <div>
-                        <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400 block mb-0.5">
-                          Town / City
-                        </span>
-                        <p className="text-neutral-900 font-medium">{deliveryData.preferredCity}</p>
-                      </div>
-                    )}
-                    {deliveryData.preferredDeliveryType === 'office' && selectedOffice && (
-                      <>
-                        <div>
-                          <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400 block mb-0.5">
-                            Office Location
+                  deliveryData.preferredStreet || deliveryData.preferredCity ? (
+                    <div className="space-y-3.5 text-xs">
+                      <div className="p-4 rounded-xl bg-neutral-50/80 border border-neutral-200/80 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-neutral-950 text-white">
+                            Default UK Address
                           </span>
-                          <p className="text-neutral-900 font-medium">{selectedOffice.name}</p>
-                          <p className="text-neutral-500 text-[11px] mt-0.5">{selectedOffice.address}</p>
-                        </div>
-                        <div>
-                          <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400 block mb-0.5">
-                            Working Hours
+                          <span className="text-[11px] font-semibold text-neutral-500">
+                            United Kingdom
                           </span>
-                          <p className="text-neutral-700">{selectedOffice.workingHours}</p>
                         </div>
-                      </>
-                    )}
-                    {deliveryData.preferredDeliveryType === 'address' && (
-                      <div>
-                        <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400 block mb-0.5">
-                          Address Line
-                        </span>
-                        <p className="text-neutral-900 font-medium">
-                          {[
-                            deliveryData.preferredStreet,
-                            deliveryData.preferredStreetNumber,
-                            deliveryData.preferredEntrance ? `Ent ${deliveryData.preferredEntrance}` : '',
-                            deliveryData.preferredFloor ? `Fl ${deliveryData.preferredFloor}` : '',
-                            deliveryData.preferredApartment ? `Apt ${deliveryData.preferredApartment}` : '',
-                          ]
-                            .filter(Boolean)
-                            .join(', ') || 'No address specified'}
+                        <p className="text-neutral-900 font-semibold text-sm pt-1">
+                          {deliveryData.preferredStreet}
+                        </p>
+                        {deliveryData.preferredEntrance && (
+                          <p className="text-neutral-700 text-xs">
+                            {deliveryData.preferredEntrance}
+                          </p>
+                        )}
+                        <p className="text-neutral-600 text-xs font-medium">
+                          {deliveryData.preferredCity}
+                          {deliveryData.preferredStreetNumber && `, ${deliveryData.preferredStreetNumber}`}
                         </p>
                       </div>
-                    )}
-                    {!deliveryData.preferredCity && !deliveryData.preferredStreet && (
-                      <p className="text-neutral-400 italic">No delivery preferences saved yet.</p>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="py-6 text-center space-y-3">
+                      <div className="w-10 h-10 rounded-full bg-neutral-100 text-neutral-400 flex items-center justify-center mx-auto">
+                        <MapPin size={18} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-neutral-900">No delivery address saved yet</p>
+                        <p className="text-xs text-neutral-500 mt-0.5 max-w-xs mx-auto">
+                          Save your address with Google search to enjoy fast 1-click checkout.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingDelivery(true)}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-neutral-950 text-white hover:bg-neutral-800 transition-colors shadow-sm"
+                      >
+                        <Plus size={14} />
+                        <span>Add Delivery Address</span>
+                      </button>
+                    </div>
+                  )
                 ) : (
                   <form onSubmit={handleDeliveryUpdate} className="space-y-4">
+                    {/* Google Address Autocomplete for Address Line 1 */}
                     <div>
                       <label className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-700 mb-1.5">
-                        Delivery Method
+                        Address Line 1 (Street &amp; House Number) *
                       </label>
-                      <select
-                        value={deliveryData.preferredDeliveryType}
-                        onChange={(e) => {
-                          const newType = e.target.value as 'office' | 'address' | 'econtomat';
+                      <GoogleAddressAutocomplete
+                        value={deliveryData.preferredStreet}
+                        onChange={(val) =>
+                          setDeliveryData((prev) => ({ ...prev, preferredStreet: val }))
+                        }
+                        onAddressSelect={(fields) => {
                           setDeliveryData((prev) => ({
                             ...prev,
-                            preferredDeliveryType: newType,
-                            preferredEcontOfficeId: newType !== 'office' ? '' : prev.preferredEcontOfficeId,
+                            preferredStreet: fields.street,
+                            preferredEntrance: fields.addressLine2 || prev.preferredEntrance,
+                            preferredCity: fields.city || prev.preferredCity,
+                            preferredStreetNumber: fields.postcode || prev.preferredStreetNumber,
                           }));
                         }}
-                        className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white border border-neutral-300 rounded-lg text-neutral-900 focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900"
-                      >
-                        <option value="office">Collection Office</option>
-                        <option value="address">Courier to Address</option>
-                      </select>
+                        placeholder="e.g. 10 High Street or start typing to search..."
+                        required
+                        className="bg-white"
+                      />
+                      <p className="text-[11px] text-neutral-400 mt-1">
+                        Start typing to search addresses powered by Google Places, or enter manually.
+                      </p>
                     </div>
 
+                    {/* Address Line 2 */}
                     <div>
                       <label className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-700 mb-1.5">
-                        City / Town
+                        Address Line 2 (Flat, suite, unit, floor - optional)
                       </label>
-                      <div className="relative" ref={cityDropdownRef}>
+                      <input
+                        type="text"
+                        value={deliveryData.preferredEntrance}
+                        onChange={(e) =>
+                          setDeliveryData((prev) => ({ ...prev, preferredEntrance: e.target.value }))
+                        }
+                        placeholder="e.g. Flat 3B or Building C"
+                        className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white border border-neutral-300 rounded-lg text-neutral-900 focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
+                      />
+                    </div>
+
+                    {/* Town/City and Postcode */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-700 mb-1.5">
+                          Town / City *
+                        </label>
                         <input
                           type="text"
                           value={deliveryData.preferredCity}
-                          onChange={(e) => {
-                            const value = e.target.value;
+                          onChange={(e) =>
+                            setDeliveryData((prev) => ({ ...prev, preferredCity: e.target.value }))
+                          }
+                          placeholder="e.g. London"
+                          required
+                          className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white border border-neutral-300 rounded-lg text-neutral-900 focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-700 mb-1.5">
+                          Postcode *
+                        </label>
+                        <input
+                          type="text"
+                          value={deliveryData.preferredStreetNumber}
+                          onChange={(e) =>
                             setDeliveryData((prev) => ({
                               ...prev,
-                              preferredCity: value,
-                              preferredEcontOfficeId: '',
-                            }));
-                            setShowCityDropdown(true);
-                            setSelectedOffice(null);
-                          }}
-                          onFocus={() => setShowCityDropdown(true)}
-                          placeholder="Search UK City (e.g. London, Manchester)"
-                          className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white border border-neutral-300 rounded-lg text-neutral-900 focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900"
+                              preferredStreetNumber: e.target.value.toUpperCase(),
+                            }))
+                          }
+                          placeholder="e.g. SW1A 1AA"
+                          required
+                          className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white border border-neutral-300 rounded-lg text-neutral-900 uppercase focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
                         />
-                        {showCityDropdown && (
-                          <div className="absolute z-50 w-full mt-1 bg-white border border-neutral-200 rounded-lg shadow-lg max-h-52 overflow-y-auto">
-                            {deliveryData.preferredDeliveryType === 'office' && econtOffices
-                              ? econtOffices.cities
-                                  .filter((city) =>
-                                    city.toLowerCase().includes((deliveryData.preferredCity || '').toLowerCase())
-                                  )
-                                  .map((city) => (
-                                    <button
-                                      key={city}
-                                      type="button"
-                                      onClick={() => handleCityChange(city)}
-                                      className="w-full text-left px-3.5 py-2 text-xs hover:bg-neutral-50 focus:bg-neutral-50 transition-colors"
-                                    >
-                                      {city}
-                                    </button>
-                                  ))
-                              : cities
-                                  .filter(
-                                    (city) =>
-                                      city.name
-                                        .toLowerCase()
-                                        .includes((deliveryData.preferredCity || '').toLowerCase()) ||
-                                      city.displayName
-                                        .toLowerCase()
-                                        .includes((deliveryData.preferredCity || '').toLowerCase()) ||
-                                      city.postcode.includes(deliveryData.preferredCity || '')
-                                  )
-                                  .map((city) => (
-                                    <button
-                                      key={city.displayName}
-                                      type="button"
-                                      onClick={() => handleCityChange(city.displayName)}
-                                      className="w-full text-left px-3.5 py-2 text-xs hover:bg-neutral-50 focus:bg-neutral-50 transition-colors"
-                                    >
-                                      {city.displayName}
-                                    </button>
-                                  ))}
-                          </div>
-                        )}
                       </div>
                     </div>
 
-                    {deliveryData.preferredDeliveryType === 'office' &&
-                      deliveryData.preferredCity &&
-                      econtOffices && (
-                        <div>
-                          <label className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-700 mb-1.5">
-                            Select Office
-                          </label>
-                          <select
-                            value={deliveryData.preferredEcontOfficeId || ''}
-                            onChange={(e) => handleOfficeSelect(e.target.value)}
-                            className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white border border-neutral-300 rounded-lg text-neutral-900 focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900"
-                          >
-                            <option value="">Select an office</option>
-                            {(econtOffices.officesByCity[deliveryData.preferredCity] || []).map((office) => (
-                              <option key={office.id} value={office.id}>
-                                {office.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-700 mb-1.5">
+                        Country
+                      </label>
+                      <input
+                        type="text"
+                        value="United Kingdom"
+                        disabled
+                        className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-neutral-100 border border-neutral-200 rounded-lg text-neutral-600 cursor-not-allowed"
+                      />
+                    </div>
 
-                    {deliveryData.preferredDeliveryType === 'address' && (
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="col-span-2">
-                          <label className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-700 mb-1.5">
-                            Street Name
-                          </label>
-                          <input
-                            type="text"
-                            value={deliveryData.preferredStreet}
-                            onChange={(e) =>
-                              setDeliveryData((prev) => ({ ...prev, preferredStreet: e.target.value }))
-                            }
-                            placeholder="e.g. Baker Street"
-                            className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white border border-neutral-300 rounded-lg text-neutral-900 focus:outline-none focus:border-neutral-900"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-700 mb-1.5">
-                            Number / House
-                          </label>
-                          <input
-                            type="text"
-                            value={deliveryData.preferredStreetNumber}
-                            onChange={(e) =>
-                              setDeliveryData((prev) => ({ ...prev, preferredStreetNumber: e.target.value }))
-                            }
-                            placeholder="e.g. 221B"
-                            className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white border border-neutral-300 rounded-lg text-neutral-900 focus:outline-none focus:border-neutral-900"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-700 mb-1.5">
-                            Flat / Apartment
-                          </label>
-                          <input
-                            type="text"
-                            value={deliveryData.preferredApartment}
-                            onChange={(e) =>
-                              setDeliveryData((prev) => ({ ...prev, preferredApartment: e.target.value }))
-                            }
-                            placeholder="e.g. Flat 3"
-                            className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-white border border-neutral-300 rounded-lg text-neutral-900 focus:outline-none focus:border-neutral-900"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-end gap-2.5 pt-2">
+                    <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-neutral-100">
                       <button
                         type="button"
-                        onClick={() => setIsEditingDelivery(false)}
+                        onClick={() => {
+                          setIsEditingDelivery(false);
+                          if (user) {
+                            setDeliveryData({
+                              preferredStreet: user.preferredStreet || '',
+                              preferredEntrance: user.preferredEntrance || '',
+                              preferredCity: user.preferredCity || '',
+                              preferredStreetNumber: user.preferredStreetNumber || '',
+                            });
+                          }
+                        }}
                         disabled={isUpdating}
                         className="px-4 py-2 text-xs font-semibold text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200/90 rounded-lg transition-colors"
                       >
@@ -1178,9 +992,9 @@ export default function DashboardPage() {
                       <button
                         type="submit"
                         disabled={isUpdating}
-                        className="px-4 py-2 text-xs font-semibold text-white bg-neutral-950 hover:bg-neutral-800 rounded-lg transition-colors disabled:opacity-60"
+                        className="px-5 py-2 text-xs font-bold uppercase tracking-wider text-white bg-neutral-950 hover:bg-neutral-800 rounded-lg transition-colors shadow-sm disabled:opacity-60"
                       >
-                        {isUpdating ? 'Saving...' : 'Save Preferences'}
+                        {isUpdating ? 'Saving...' : 'Save Address'}
                       </button>
                     </div>
                   </form>
