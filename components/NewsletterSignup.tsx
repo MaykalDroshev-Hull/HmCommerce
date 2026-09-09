@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, CheckCircle2, ArrowRight, Loader2, Copy, Check } from 'lucide-react';
+import { Mail, CheckCircle2, ArrowRight, Loader2 } from 'lucide-react';
 
 interface NewsletterSignupProps {
   source?: 'footer' | 'checkout' | 'banner';
@@ -15,9 +15,7 @@ export default function NewsletterSignup({
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [discountCode, setDiscountCode] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,8 +37,7 @@ export default function NewsletterSignup({
       const data = await response.json();
 
       if (data.success) {
-        setSuccessMsg(data.message || "You're on the list!");
-        setDiscountCode(data.code || 'WELCOME10');
+        setSuccessMsg(data.message || "We've sent your 10% welcome discount straight to your inbox!");
         setEmail('');
       } else {
         setErrorMsg(data.error || 'Failed to sign up. Please try again.');
@@ -52,17 +49,10 @@ export default function NewsletterSignup({
     }
   };
 
-  const copyCode = () => {
-    if (!discountCode) return;
-    navigator.clipboard.writeText(discountCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   return (
     <div className={`w-full max-w-md mx-auto ${className}`}>
       {successMsg ? (
-        <div className="p-4 rounded-2xl bg-neutral-900 border border-neutral-800 text-white text-left space-y-2.5 animate-in fade-in zoom-in-95 duration-200">
+        <div className="p-4 rounded-2xl bg-neutral-900 border border-neutral-800 text-white text-left space-y-2 animate-in fade-in zoom-in-95 duration-200">
           <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
             <CheckCircle2 size={16} />
             <span>Welcome to the pack!</span>
@@ -70,34 +60,9 @@ export default function NewsletterSignup({
           <p className="text-xs text-neutral-300 leading-relaxed font-light">
             {successMsg}
           </p>
-          {discountCode && (
-            <div className="pt-1 flex items-center justify-between gap-2 p-2 rounded-xl bg-neutral-950 border border-neutral-800">
-              <div className="flex items-center gap-2 pl-1">
-                <span className="text-[10px] text-neutral-400 uppercase tracking-wider">Your Code:</span>
-                <span className="font-mono text-xs font-bold text-white tracking-wider">
-                  {discountCode}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={copyCode}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white text-neutral-950 hover:bg-neutral-200 transition-colors"
-                aria-label="Copy discount code"
-              >
-                {copied ? (
-                  <>
-                    <Check size={12} />
-                    <span>Copied</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy size={12} />
-                    <span>Copy</span>
-                  </>
-                )}
-              </button>
-            </div>
-          )}
+          <p className="text-[11px] text-neutral-400 font-light">
+            Please check your inbox (and spam folder) to claim your code.
+          </p>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-2">

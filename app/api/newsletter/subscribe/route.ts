@@ -3,6 +3,7 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
+import { emailService } from '@/lib/emailService';
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,9 +46,14 @@ export async function POST(request: NextRequest) {
 
     if (existing) {
       if (existing.status === 'active') {
+        // Send email with the welcome code
+        emailService.sendWelcomeEmail({ to: email, discountCode: DISCOUNT_CODE }).catch((err) => {
+          logger.error('Error sending welcome email to existing subscriber', err);
+        });
+
         return NextResponse.json({
           success: true,
-          message: "You're already subscribed! Use code WELCOME10 for 10% off.",
+          message: "You're already subscribed! We've sent your 10% welcome treat to your inbox.",
           code: DISCOUNT_CODE,
           alreadySubscribed: true,
         });
@@ -71,9 +77,14 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Send welcome email upon reactivation
+      emailService.sendWelcomeEmail({ to: email, discountCode: DISCOUNT_CODE }).catch((err) => {
+        logger.error('Error sending welcome email on reactivation', err);
+      });
+
       return NextResponse.json({
         success: true,
-        message: 'Welcome back! Your subscription is now active.',
+        message: 'Welcome back! We have sent your 10% welcome treat to your inbox.',
         code: DISCOUNT_CODE,
       });
     }
@@ -98,9 +109,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Send welcome email with the discount code to the new subscriber
+    emailService.sendWelcomeEmail({ to: email, discountCode: DISCOUNT_CODE }).catch((err) => {
+      logger.error('Error sending welcome email to new subscriber', err);
+    });
+
     return NextResponse.json({
       success: true,
-      message: 'Thank you for joining our community! Enjoy 10% off your order.',
+      message: 'Thank you for joining the pack! Check your inbox for your 10% welcome discount.',
       code: DISCOUNT_CODE,
     });
   } catch (error) {

@@ -9,8 +9,9 @@ export const stripe = stripeSecretKey
     })
   : null;
 
-export interface CreateKlarnaSessionParams {
+export interface CreateStripeSessionParams {
   orderId: string;
+  paymentMethod?: 'klarna' | 'applepay' | 'card';
   customer: {
     firstName: string;
     lastName: string;
@@ -38,10 +39,12 @@ export interface CreateKlarnaSessionParams {
   originUrl?: string;
 }
 
+export type CreateKlarnaSessionParams = CreateStripeSessionParams;
+
 /**
- * Creates a Stripe Checkout Session specifically configured for Klarna Pay in 3 (GBP)
+ * Creates a Stripe Checkout Session configured for Apple Pay, Card, or Klarna (GBP)
  */
-export async function createKlarnaCheckoutSession(params: CreateKlarnaSessionParams) {
+export async function createStripeCheckoutSession(params: CreateStripeSessionParams) {
   if (!stripe) {
     throw new Error(
       'Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables (.env.local).'
@@ -50,6 +53,7 @@ export async function createKlarnaCheckoutSession(params: CreateKlarnaSessionPar
 
   const {
     orderId,
+    paymentMethod = 'card',
     customer,
     delivery,
     items,
@@ -65,7 +69,7 @@ export async function createKlarnaCheckoutSession(params: CreateKlarnaSessionPar
 
   // Build line items for Stripe Checkout
   const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = items.map((item) => {
-    const itemName = item.name || 'Daydrift Adventure Dog Collar';
+    const itemName = item.name || 'MB-Paws Canine Gear';
     const variantName = item.size ? `${itemName} - Size ${item.size}` : itemName;
 
     return {
@@ -74,9 +78,9 @@ export async function createKlarnaCheckoutSession(params: CreateKlarnaSessionPar
         product_data: {
           name: variantName,
           description: item.size ? `Selected size: ${item.size}` : 'Premium Adventure Canine Gear',
-          images: [
-            `${siteUrl}/products/collar-graphite-grey.jpg`,
-          ],
+          ...(siteUrl.startsWith('https://')
+            ? { images: [`${siteUrl}/products/collar-graphite-grey.jpg`] }
+            : {}),
         },
         unit_amount: Math.round(Number(item.price) * 100),
       },
@@ -133,9 +137,14 @@ export async function createKlarnaCheckoutSession(params: CreateKlarnaSessionPar
     .filter(Boolean)
     .join(', ');
 
-  // Create Checkout Session with Klarna as primary payment method
+  // Determine allowed payment method types
+  // Note: 'card' enables Apple Pay, Google Pay, and Debit/Credit Cards in Stripe Checkout
+  const paymentMethodTypes: Stripe.Checkout.SessionCreateParams.PaymentMethodType[] =
+    paymentMethod === 'klarna' ? ['klarna'] : ['card'];
+
+  // Create Checkout Session
   const session = await stripe.checkout.sessions.create({
-    payment_method_types: ['klarna'],
+    payment_method_types: paymentMethodTypes,
     mode: 'payment',
     line_items: lineItems,
     discounts,
@@ -148,7 +157,7 @@ export async function createKlarnaCheckoutSession(params: CreateKlarnaSessionPar
       telephone: customer.telephone,
       shippingAddress: fullAddress,
       paymentGateway: 'stripe',
-      paymentMethod: 'klarna',
+      paymentMethod,
     },
     success_url: `${siteUrl}/checkout/success?orderId=${encodeURIComponent(orderId)}&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${siteUrl}/checkout?cancelled=1&orderId=${encodeURIComponent(orderId)}`,
@@ -156,3 +165,7 @@ export async function createKlarnaCheckoutSession(params: CreateKlarnaSessionPar
 
   return session;
 }
+
+// Backwards-compatible alias
+export const createKlarnaCheckoutSession = createStripeCheckoutSession;
+

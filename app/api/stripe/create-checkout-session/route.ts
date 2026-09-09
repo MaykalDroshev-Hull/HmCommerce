@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createKlarnaCheckoutSession, stripe } from '@/lib/stripe';
+import { createStripeCheckoutSession, stripe } from '@/lib/stripe';
 
 export const runtime = 'nodejs';
 
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { orderId, customer, delivery, items, totals, discount } = body;
+    const { orderId, paymentMethod = 'card', customer, delivery, items, totals, discount } = body;
 
     if (!orderId || !customer || !items || !totals) {
       return NextResponse.json(
@@ -29,8 +29,9 @@ export async function POST(request: NextRequest) {
 
     const originUrl = request.headers.get('origin') || undefined;
 
-    const session = await createKlarnaCheckoutSession({
+    const session = await createStripeCheckoutSession({
       orderId,
+      paymentMethod,
       customer,
       delivery,
       items,
@@ -46,11 +47,11 @@ export async function POST(request: NextRequest) {
       sessionId: session.id,
     });
   } catch (error: any) {
-    console.error('[Stripe] Error creating Klarna checkout session:', error);
+    console.error('[Stripe] Error creating checkout session:', error);
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to initialize Klarna checkout session',
+        error: error.message || 'Failed to initialize checkout session',
       },
       { status: 500 }
     );

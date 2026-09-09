@@ -147,6 +147,16 @@ function CheckoutContent() {
     loadCities();
   }, [hasHydrated, totalItems, router]);
 
+  // Auto-apply discount from URL (e.g. from welcome email link ?discount=WELCOME10)
+  useEffect(() => {
+    const urlDiscount = searchParams.get('discount') || searchParams.get('code');
+    if (urlDiscount && !appliedDiscount && totalPrice > 0) {
+      const code = urlDiscount.trim().toUpperCase();
+      updateFormData({ discountCode: code });
+      validateDiscount(totalPrice);
+    }
+  }, [searchParams, appliedDiscount, totalPrice, updateFormData, validateDiscount]);
+
   useEffect(() => {
     if (!hasHydrated || totalItems === 0 || beginCheckoutTracked.current) return;
     beginCheckoutTracked.current = true;
@@ -355,7 +365,7 @@ function CheckoutContent() {
       if (data.success) {
         updateFormData({ discountCode: data.code || 'WELCOME10' });
         await validateDiscount(totalPrice);
-        setCheckoutNewsletterMsg('10% welcome discount applied!');
+        setCheckoutNewsletterMsg('10% welcome discount applied! We have also emailed your confirmation.');
       } else {
         setCheckoutNewsletterMsg(data.error || 'Could not apply discount.');
       }
@@ -566,13 +576,14 @@ function CheckoutContent() {
         }
       }
 
-      // If Klarna payment method is selected, initialize Stripe Klarna Checkout Session
-      if (paymentMethod === 'klarna') {
+      // If Stripe payment method is selected (applepay, card, klarna), initialize Stripe Checkout Session
+      if (paymentMethod === 'applepay' || paymentMethod === 'card' || paymentMethod === 'klarna') {
         const stripeRes = await fetch('/api/stripe/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             orderId: orderResult.orderId,
+            paymentMethod,
             customer: orderData.customer,
             delivery: orderData.delivery,
             items: items.map(item => ({
@@ -596,12 +607,12 @@ function CheckoutContent() {
           return;
         } else if (stripeData.isConfigError) {
           setError(
-            'Klarna (Stripe) is ready for your API keys. Please add STRIPE_SECRET_KEY to .env.local and enable Klarna in your Stripe Dashboard.'
+            'Payment service configuration issue: Please check your STRIPE_SECRET_KEY in .env.local.'
           );
           setSubmitting(false);
           return;
         } else {
-          throw new Error(stripeData.error || 'Failed to initialize Klarna checkout session');
+          throw new Error(stripeData.error || 'Failed to initialize payment session');
         }
       }
 
@@ -683,7 +694,14 @@ function CheckoutContent() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                   <button
                     type="button"
-                    onClick={() => setPaymentMethod('applepay')}
+                    onClick={() => {
+                      setPaymentMethod('applepay');
+                      if (formData.firstName && formData.street && formData.streetNumber) {
+                        handleSubmitOrder();
+                      } else {
+                        scrollToCheckoutIssue();
+                      }
+                    }}
                     className={`h-12 rounded-xl flex items-center justify-center gap-1.5 transition-all border ${
                       paymentMethod === 'applepay'
                         ? 'border-black bg-black text-white ring-2 ring-neutral-400'
@@ -1072,7 +1090,7 @@ function CheckoutContent() {
                           />
                           <div>
                             <span className="font-semibold text-sm text-neutral-950 block">Credit / Debit Card</span>
-                            <span className="text-xs text-neutral-500">Visa, Mastercard, American Express</span>
+                            <span className="text-xs text-neutral-500">Visa, Mastercard, American Express (Secure via Stripe)</span>
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -1199,10 +1217,10 @@ function CheckoutContent() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-bold text-neutral-950">
-                            Did you claim your 10% welcome discount?
+                            Claim your 10% welcome discount
                           </p>
                           <p className="text-[11px] text-neutral-600 leading-relaxed font-light mt-0.5">
-                            Join our newsletter for 10% off your order. Code <strong className="font-semibold text-neutral-900">WELCOME10</strong> will be applied automatically.
+                            Subscribe to our newsletter for 10% off your order. Your exclusive discount code will be delivered straight to your inbox.
                           </p>
                         </div>
                       </div>
@@ -1379,6 +1397,8 @@ function CheckoutContent() {
                         ? `Pay £${finalTotal.toFixed(2)} with Apple Pay`
                         : paymentMethod === 'klarna'
                         ? `Pay £${finalTotal.toFixed(2)} with Klarna (3x £${(finalTotal / 3).toFixed(2)})`
+                        : paymentMethod === 'card'
+                        ? `Pay £${finalTotal.toFixed(2)} with Card via Stripe`
                         : `Place Order · £${finalTotal.toFixed(2)}`
                     )}
                   </button>
