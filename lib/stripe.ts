@@ -37,6 +37,7 @@ export interface CreateStripeSessionParams {
   discountAmount?: number;
   total: number;
   originUrl?: string;
+  isExpress?: boolean;
 }
 
 export type CreateKlarnaSessionParams = CreateStripeSessionParams;
@@ -142,14 +143,51 @@ export async function createStripeCheckoutSession(params: CreateStripeSessionPar
   const paymentMethodTypes: Stripe.Checkout.SessionCreateParams.PaymentMethodType[] =
     paymentMethod === 'klarna' ? ['klarna'] : ['card'];
 
-  // Create Checkout Session
-  const session = await stripe.checkout.sessions.create({
+  // Create or attach a Stripe Customer with full UK billing/shipping address
+  // This ensures Klarna recognizes the UK residency and offers UK Pay in 3 installments
+  let stripeCustomerId: string | undefined = undefined;
+  if (customer.email) {
+    try {
+      const stripeCustomer = await stripe.customers.create({
+        name: `${customer.firstName} ${customer.lastName}`.trim(),
+        email: customer.email,
+        phone: customer.telephone || undefined,
+        address: {
+          line1: delivery.street || undefined,
+          line2: delivery.entrance || undefined,
+          city: customer.city || undefined,
+          postal_code: delivery.streetNumber || undefined,
+          country: 'GB',
+        },
+        shipping: {
+          name: `${customer.firstName} ${customer.lastName}`.trim(),
+          phone: customer.telephone || undefined,
+          address: {
+            line1: delivery.street || undefined,
+            line2: delivery.entrance || undefined,
+            city: customer.city || undefined,
+            postal_code: delivery.streetNumber || undefined,
+            country: 'GB',
+          },
+        },
+        metadata: {
+          orderId,
+        },
+      });
+      stripeCustomerId = stripeCustomer.id;
+    } catch (custErr) {
+      console.warn('[Stripe] Could not create customer object, continuing with email:', custErr);
+    }
+  }
+
+  const sessionParams: Stripe.Checkout.SessionCreateParams = {
     payment_method_types: paymentMethodTypes,
     mode: 'payment',
     line_items: lineItems,
     discounts,
     shipping_options: shippingOptions,
-    customer_email: customer.email || undefined,
+    customer: stripeCustomerId,
+    customer_email: stripeCustomerId ? undefined : customer.email || undefined,
     client_reference_id: orderId,
     metadata: {
       orderId,
@@ -159,11 +197,42 @@ export async function createStripeCheckoutSession(params: CreateStripeSessionPar
       paymentGateway: 'stripe',
       paymentMethod,
     },
+    ...(params.isExpress || !delivery.street
+      ? {
+          shipping_address_collection: {
+            allowed_countries: ['GB'] as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[],
+          },
+        }
+      : {}),
     success_url: `${siteUrl}/checkout/success?orderId=${encodeURIComponent(orderId)}&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${siteUrl}/checkout?cancelled=1&orderId=${encodeURIComponent(orderId)}`,
-  });
+  };
 
-  return session;
+  try {
+    return await stripe.checkout.sessions.create(sessionParams);
+  } catch (err: any) {
+    // If Klarna is requested but not activated on this Stripe account / country, fall back to Card
+    if (
+      paymentMethod === 'klarna' &&
+      (err.message?.includes('klarna') ||
+        err.message?.includes('payment_method_types') ||
+        err.message?.includes('default currency'))
+    ) {
+      console.warn(
+        '[Stripe] Klarna is not active on this Stripe account/region for GBP. Falling back to Card/Apple Pay session so customer checkout succeeds.'
+      );
+      return await stripe.checkout.sessions.create({
+        ...sessionParams,
+        payment_method_types: ['card'],
+        metadata: {
+          ...sessionParams.metadata,
+          paymentMethod: 'card',
+          klarnaFallback: 'true',
+        },
+      });
+    }
+    throw err;
+  }
 }
 
 // Backwards-compatible alias

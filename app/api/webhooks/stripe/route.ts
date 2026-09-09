@@ -38,19 +38,58 @@ export async function POST(request: NextRequest) {
     if (orderId) {
       try {
         const supabase = supabaseAdmin;
+        const shippingDetails = (session as any).shipping_details;
+        const customerDetails = (session as any).customer_details;
+
+        const orderUpdates: any = {
+          status: 'paid',
+          paymentmethod: session.metadata?.paymentMethod || 'applepay',
+          paymentid: session.payment_intent || session.id,
+          updatedat: new Date().toISOString(),
+        };
+
+        if (shippingDetails?.address) {
+          if (shippingDetails.address.line1) orderUpdates.deliverystreet = shippingDetails.address.line1;
+          if (shippingDetails.address.postal_code) orderUpdates.deliverystreetnumber = shippingDetails.address.postal_code;
+          if (shippingDetails.address.line2) orderUpdates.deliveryentrance = shippingDetails.address.line2;
+          if (shippingDetails.address.city) orderUpdates.deliverycity = shippingDetails.address.city;
+        }
 
         // Mark the order as paid in the database
         await (supabase as any)
           .from('orders')
-          .update({
-            status: 'paid',
-            paymentmethod: session.metadata?.paymentMethod || 'klarna',
-            paymentid: session.payment_intent || session.id,
-            updatedat: new Date().toISOString(),
-          })
+          .update(orderUpdates)
           .eq('orderid', orderId);
 
-        logger.info(`[Stripe Webhook] Order ${orderId} marked as paid via Klarna/Stripe`);
+        // Also update customer info if available from Apple Pay / Stripe
+        if (shippingDetails?.name || customerDetails?.email) {
+          const { data: currentOrd } = await (supabase as any)
+            .from('orders')
+            .select('customerid')
+            .eq('orderid', orderId)
+            .single();
+
+          if (currentOrd?.customerid) {
+            const custUpdates: any = { updatedat: new Date().toISOString() };
+            if (shippingDetails?.name) {
+              const parts = shippingDetails.name.trim().split(/\s+/);
+              custUpdates.firstname = parts[0] || 'Valued';
+              custUpdates.lastname = parts.slice(1).join(' ') || 'Customer';
+            }
+            if (customerDetails?.email) {
+              custUpdates.email = customerDetails.email;
+            }
+            if (customerDetails?.phone) {
+              custUpdates.telephone = customerDetails.phone;
+            }
+            await (supabase as any)
+              .from('customers')
+              .update(custUpdates)
+              .eq('customerid', currentOrd.customerid);
+          }
+        }
+
+        logger.info(`[Stripe Webhook] Order ${orderId} marked as paid via Stripe (payment method: ${orderUpdates.paymentmethod})`);
 
         // Fetch full order to trigger customer and admin email notifications
         const { data: order } = await (supabase as any)

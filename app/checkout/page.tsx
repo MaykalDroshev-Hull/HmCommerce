@@ -311,9 +311,7 @@ function CheckoutContent() {
     let error: string | undefined;
     
     if (field === 'telephone') {
-      if (!value || value.trim() === '') {
-        error = t.phoneRequired;
-      } else if (!validatePhone(value)) {
+      if (value && value.trim() !== '' && !validatePhone(value)) {
         error = t.invalidPhone;
       }
     } else if (field === 'email') {
@@ -403,12 +401,119 @@ function CheckoutContent() {
   const deliveryCost = getDeliveryCost(formData.deliveryType);
   const finalTotal = discountedTotal(totalPrice, deliveryCost);
 
+  const [expressApplePayLoading, setExpressApplePayLoading] = useState(false);
+
+  const handleExpressApplePay = async () => {
+    if (items.length === 0) {
+      setError('Your bag is empty. Please add items to check out.');
+      return;
+    }
+
+    try {
+      setExpressApplePayLoading(true);
+      setError(null);
+
+      // Create express order in database (no phone or manual address required upfront)
+      const orderRes = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer: {
+            firstName: formData.firstName || 'Apple Pay',
+            lastName: formData.lastName || 'Customer',
+            email: formData.email || '',
+            telephone: formData.telephone || '',
+            country: 'United Kingdom',
+            city: formData.city || 'United Kingdom',
+          },
+          delivery: {
+            type: 'address',
+            notes: 'Express Checkout (Apple Pay)',
+            street: formData.street || 'Pending Apple Pay delivery address',
+            streetNumber: formData.streetNumber || '',
+          },
+          items: items.map(item => ({
+            id: item.id,
+            quantity: item.quantity,
+            size: item.size,
+            price: item.price,
+          })),
+          totals: {
+            subtotal: totalPrice,
+            delivery: deliveryCost,
+            discount: appliedDiscount?.discountAmount || 0,
+            total: finalTotal,
+          },
+          discount: appliedDiscount ? {
+            code: appliedDiscount.code,
+            type: appliedDiscount.type,
+            value: appliedDiscount.value,
+            amount: appliedDiscount.discountAmount,
+          } : null,
+          payment: {
+            method: 'applepay',
+          },
+        }),
+      });
+
+      const orderResult = await orderRes.json();
+      if (!orderResult.success || !orderResult.orderId) {
+        throw new Error(orderResult.error || 'Failed to initialize order');
+      }
+
+      // Initialize Stripe Checkout Session with isExpress: true so Apple Pay collects address & contact
+      const stripeRes = await fetch('/api/stripe/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: orderResult.orderId,
+          paymentMethod: 'applepay',
+          isExpress: true,
+          customer: {
+            firstName: formData.firstName || 'Apple Pay',
+            lastName: formData.lastName || 'Customer',
+            email: formData.email || undefined,
+            telephone: formData.telephone || '',
+            city: formData.city || '',
+            country: 'GB',
+          },
+          delivery: {
+            street: formData.street || '',
+            streetNumber: formData.streetNumber || '',
+          },
+          items: items.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            size: item.size,
+          })),
+          totals: {
+            delivery: deliveryCost,
+            total: finalTotal,
+          },
+          discount: appliedDiscount,
+        }),
+      });
+
+      const stripeData = await stripeRes.json();
+      if (stripeData.success && stripeData.url) {
+        clearCart();
+        window.location.href = stripeData.url;
+      } else {
+        throw new Error(stripeData.error || 'Failed to initialize Apple Pay session');
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Failed to launch Apple Pay');
+      setExpressApplePayLoading(false);
+    }
+  };
+
   const handleSubmitOrder = async () => {
-    // Validate phone and email before submission
-    const phoneError = !formData.telephone || formData.telephone.trim() === '' 
-      ? t.phoneRequired 
-      : !validatePhone(formData.telephone) 
-        ? t.invalidPhone 
+    // Validate phone and email before submission (phone is optional for UK checkout)
+    const phoneError =
+      formData.telephone && formData.telephone.trim() !== '' && !validatePhone(formData.telephone)
+        ? t.invalidPhone
         : undefined;
     
     const emailError =
@@ -691,38 +796,54 @@ function CheckoutContent() {
                   <span className="text-xs text-neutral-500 font-medium">1-Click Fast Pay</span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 items-center">
                   <button
                     type="button"
-                    onClick={() => {
-                      setPaymentMethod('applepay');
-                      if (formData.firstName && formData.street && formData.streetNumber) {
-                        handleSubmitOrder();
-                      } else {
-                        scrollToCheckoutIssue();
-                      }
-                    }}
-                    className={`h-12 rounded-xl flex items-center justify-center gap-1.5 transition-all border ${
-                      paymentMethod === 'applepay'
-                        ? 'border-black bg-black text-white ring-2 ring-neutral-400'
-                        : 'border-neutral-300 bg-black text-white hover:bg-neutral-900'
-                    }`}
+                    onClick={handleExpressApplePay}
+                    disabled={expressApplePayLoading}
+                    className="h-12 rounded-xl flex items-center justify-center gap-1.5 transition-all border border-black bg-black text-white hover:bg-neutral-900 active:scale-98 disabled:opacity-50 cursor-pointer shadow-xs"
                   >
-                    <span className="text-xs font-medium mr-1">Pay with</span>
-                    <ApplePayIcon className="h-5 w-auto" variant="light" />
+                    {expressApplePayLoading ? (
+                      <span className="text-xs font-medium">Opening Apple Pay...</span>
+                    ) : (
+                      <>
+                        <span className="text-xs font-medium mr-1">Pay with</span>
+                        <ApplePayIcon className="h-5 w-auto" variant="light" />
+                      </>
+                    )}
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('paypal')}
-                    className={`h-12 rounded-xl flex items-center justify-center transition-all border ${
-                      paymentMethod === 'paypal'
-                        ? 'border-[#003087] bg-[#FFC439] ring-2 ring-[#003087]'
-                        : 'border-neutral-300 bg-[#FFC439] hover:bg-[#f2ba36]'
-                    }`}
-                  >
-                    <PayPalIcon className="h-5 w-auto" />
-                  </button>
+                  <div className="h-12 flex items-center justify-center overflow-hidden rounded-xl">
+                    <PayPalButtons
+                      mode="checkout"
+                      checkoutData={{
+                        items,
+                        totals: {
+                          subtotal: totalPrice,
+                          delivery: deliveryCost,
+                          discount: appliedDiscount?.discountAmount || 0,
+                          total: finalTotal,
+                        },
+                        discount: appliedDiscount,
+                        providedShippingAddress: formData.street ? {
+                          recipientName: `${formData.firstName} ${formData.lastName}`.trim(),
+                          line1: formData.street,
+                          line2: formData.streetNumber || undefined,
+                          city: formData.city || 'United Kingdom',
+                          postalCode: formData.streetNumber || '',
+                          countryCode: 'GB',
+                        } : undefined,
+                      }}
+                      onValidate={() => true}
+                      onSuccess={(orderId) => {
+                        clearCart();
+                        resetForm();
+                        window.location.href = `/checkout/success?orderId=${orderId}`;
+                      }}
+                      onError={(err) => setError(err)}
+                      className="w-full"
+                    />
+                  </div>
                 </div>
 
                 <div className="relative flex py-1 items-center">
@@ -859,7 +980,7 @@ function CheckoutContent() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
-                        {t.telephone} *
+                        {t.telephone} <span className="text-xs text-neutral-400 font-normal">(Optional)</span>
                       </label>
                       <input
                         type="tel"
@@ -870,7 +991,6 @@ function CheckoutContent() {
                         className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7d8461]/25 focus:border-[#7d8461] ${
                           validationErrors.telephone ? 'border-red-500' : 'border-[#e8e4dc]'
                         }`}
-                        required
                       />
                       {validationErrors.telephone && (
                         <p className="text-red-500 text-xs mt-1" data-checkout-field-error>{validationErrors.telephone}</p>
@@ -1335,22 +1455,16 @@ function CheckoutContent() {
                           total: finalTotal,
                         },
                         discount: appliedDiscount,
-                        providedShippingAddress: {
+                        providedShippingAddress: formData.street ? {
                           recipientName: `${formData.firstName} ${formData.lastName}`.trim(),
-                          line1: formData.street || '',
+                          line1: formData.street,
                           line2: formData.streetNumber || undefined,
                           city: formData.city || 'United Kingdom',
                           postalCode: formData.streetNumber || '',
                           countryCode: 'GB',
-                        },
+                        } : undefined,
                       }}
-                      onValidate={() => {
-                        if (!isFormValid()) {
-                          scrollToCheckoutIssue();
-                          return 'Please fill in all required delivery details before proceeding with PayPal.';
-                        }
-                        return true;
-                      }}
+                      onValidate={() => true}
                       onSuccess={(orderId) => {
                         clearCart();
                         resetForm();

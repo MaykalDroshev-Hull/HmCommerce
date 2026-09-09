@@ -7,8 +7,8 @@ import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useStoreSettings } from '@/context/StoreSettingsContext';
-import { CheckCircle, Package, Truck, MapPin, Mail, ArrowRight } from 'lucide-react';
-import { KlarnaBadgeIcon } from '@/components/PaymentIcons';
+import { CheckCircle, Package, Truck, MapPin, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
+import { KlarnaBadgeIcon, ApplePayIcon, PayPalIcon } from '@/components/PaymentIcons';
 
 interface OrderItem {
   id: string;
@@ -92,6 +92,16 @@ function CheckoutSuccessContent() {
   const fetchOrderDetails = async (id: string) => {
     try {
       setIsLoading(true);
+
+      const sessionId = searchParams.get('session_id');
+      if (sessionId) {
+        try {
+          await fetch(`/api/stripe/verify-session?sessionId=${encodeURIComponent(sessionId)}&orderId=${encodeURIComponent(id)}`);
+        } catch {
+          // Continue to fetch order even if verify times out
+        }
+      }
+
       const response = await fetch(`/api/orders/${id}`);
       
       if (!response.ok) {
@@ -242,10 +252,26 @@ function CheckoutSuccessContent() {
             Thank you for your order! We have received your purchase and will dispatch your items promptly. A confirmation email has been sent to you.
           </p>
 
-          {Boolean(searchParams.get('session_id') || order.paymentmethod === 'klarna') && (
+          {/* Payment Method Badge */}
+          {order.paymentmethod === 'applepay' ? (
+            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-black text-white text-xs font-semibold shadow-xs">
+              <ApplePayIcon className="h-4 w-auto" variant="light" />
+              <span>Payment Completed with Apple Pay</span>
+            </div>
+          ) : order.paymentmethod === 'klarna' ? (
             <div className="mt-4 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-neutral-50 border border-neutral-200 text-xs font-semibold text-neutral-800">
               <KlarnaBadgeIcon className="h-3.5 w-auto" />
               <span>Payment Authorized with Klarna Pay in 3</span>
+            </div>
+          ) : order.paymentmethod === 'paypal' ? (
+            <div className="mt-4 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#FFC439] border border-[#f0b52d] text-xs font-bold text-neutral-950">
+              <PayPalIcon className="h-3.5 w-auto" />
+              <span>Payment Completed with PayPal</span>
+            </div>
+          ) : (
+            <div className="mt-4 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-neutral-50 border border-neutral-200 text-xs font-semibold text-neutral-800">
+              <ShieldCheck size={16} className="text-emerald-600" />
+              <span>Payment Completed with Credit / Debit Card</span>
             </div>
           )}
         </div>

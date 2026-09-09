@@ -49,6 +49,9 @@ interface OrderData {
     value: number;
     amount: number;
   } | null;
+  payment?: {
+    method?: string;
+  };
 }
 
 // Validate stock availability
@@ -275,6 +278,7 @@ async function createOrder(orderData: OrderData): Promise<string> {
     discounttype: orderData.discount?.type || null,
     discountvalue: orderData.discount?.value || null,
     discountamount: orderData.discount?.amount || 0,
+    paymentmethod: orderData.payment?.method || 'stripe',
     status: 'pending',
     createdat: new Date().toISOString(),
     updatedat: new Date().toISOString()

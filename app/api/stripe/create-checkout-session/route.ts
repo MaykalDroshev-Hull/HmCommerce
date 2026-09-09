@@ -18,9 +18,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { orderId, paymentMethod = 'card', customer, delivery, items, totals, discount } = body;
+    const { orderId, paymentMethod = 'card', isExpress = false, customer, delivery, items, totals, discount } = body;
 
-    if (!orderId || !customer || !items || !totals) {
+    if (!orderId || !items || !totals) {
       return NextResponse.json(
         { success: false, error: 'Missing required order details' },
         { status: 400 }
@@ -32,8 +32,9 @@ export async function POST(request: NextRequest) {
     const session = await createStripeCheckoutSession({
       orderId,
       paymentMethod,
-      customer,
-      delivery,
+      isExpress,
+      customer: customer || { firstName: '', lastName: '', city: '', country: 'GB', telephone: '' },
+      delivery: delivery || {},
       items,
       deliveryCost: totals.delivery || 0,
       discountAmount: discount?.amount || 0,

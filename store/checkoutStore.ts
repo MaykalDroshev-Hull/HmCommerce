@@ -198,7 +198,6 @@ export const useCheckoutStore = create<CheckoutState>()(
         return !!(
           formData.firstName?.trim() &&
           formData.lastName?.trim() &&
-          formData.telephone?.trim() &&
           formData.street?.trim() &&
           formData.streetNumber?.trim() &&
           formData.city?.trim()
