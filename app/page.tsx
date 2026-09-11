@@ -28,18 +28,16 @@ import {
 // DATA & ASSETS (Pet-Parent Brand Tone: Warm, Knowledgeable, British en-GB)
 // ============================================================================
 
-const HERO_BG =
-  'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=1920&q=85';
+const HERO_BG = '/campaign/hero-index-banner.jpg';
 
 
-// Animal categories cards (Dogs, Cats, Unipet / All Pets + New Arrivals)
+// Animal categories cards (Dogs, Cats, New Season, Unipet)
 const PET_CATEGORIES = [
   {
     id: 'dogs',
     title: 'Dogs',
     subtitle: 'Engineered for big leaps & wet muddy trails',
-    image:
-      'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=900&q=80',
+    image: '/campaign/card-dogs-neutral.jpg',
     link: '/products?search=Dog',
     buttonText: 'Shop Dogs',
   },
@@ -47,28 +45,25 @@ const PET_CATEGORIES = [
     id: 'cats',
     title: 'Cats',
     subtitle: 'Featherlight comfort for curious indoor & outdoor explorers',
-    image:
-      'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=900&q=80',
+    image: '/campaign/card-cats-neutral.jpg',
     link: '/products?search=Cat',
     buttonText: 'Shop Cats',
-  },
-  {
-    id: 'unipet',
-    title: 'Unipet (All Pets)',
-    subtitle: 'Versatile travel & daily wellness gear for every furbaby',
-    image:
-      'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=900&q=80',
-    link: '/products',
-    buttonText: 'Shop Unipet',
   },
   {
     id: 'new-arrivals',
     title: 'New Season',
     subtitle: 'Fresh colourways and trail-ready gear pet parents love',
-    image:
-      'https://images.unsplash.com/photo-1583511655826-05700d52f4d9?w=900&q=80',
+    image: '/campaign/card-puppy-neutral.jpg',
     link: '/products?isfeatured=true',
     buttonText: 'Shop New',
+  },
+  {
+    id: 'unipet',
+    title: 'Unipet (All Pets)',
+    subtitle: 'Versatile travel & daily wellness gear for every furbaby',
+    image: '/campaign/card-unipet-neutral.jpg',
+    link: '/products',
+    buttonText: 'Shop Unipet',
   },
 ];
 
@@ -80,8 +75,7 @@ const ACTIVITIES = [
     headline: 'Misty Bridleways & Morning Walks',
     description:
       'Engineered with hydrophobic ripstop webbing and aircraft-grade alloy buckles so wet British weather never slows your daily strolls.',
-    image:
-      'https://images.unsplash.com/photo-1552053831-71594a27632d?w=1000&q=80',
+    image: '/campaign/activity-walking.jpg',
     exploreLinks: [
       { label: 'All-Weather Collars', href: '/products?search=Collar' },
       { label: 'Padded Leads', href: '/products?search=Lead' },
@@ -94,8 +88,7 @@ const ACTIVITIES = [
     headline: 'Zoomies, Scent Trails & High Bounces',
     description:
       'Keep your furbaby mentally stimulated and joyfully active with gear crafted for interactive play, training, and tail-wagging happiness.',
-    image:
-      'https://images.unsplash.com/photo-1537151625747-768eb6cf92b2?w=1000&q=80',
+    image: '/campaign/activity-fun.jpg',
     exploreLinks: [
       { label: 'Training Leads', href: '/products?search=Lead' },
       { label: 'Enrichment Toys', href: '/products' },
@@ -108,8 +101,7 @@ const ACTIVITIES = [
     headline: 'Deep Slumber & Restorative Naps',
     description:
       'After an energetic afternoon outside, treat your devoted pet to orthopaedic support, soothing fleece blankets, and warm, gentle comfort.',
-    image:
-      'https://images.unsplash.com/photo-1541599540903-216a46ca1dc0?w=1000&q=80',
+    image: '/campaign/activity-cosy.jpg',
     exploreLinks: [
       { label: 'Orthopaedic Beds', href: '/products' },
       { label: 'Travel Snuggle Mats', href: '/products' },
@@ -138,8 +130,7 @@ const STORIES: StoryItem[] = [
     title: 'The 2-Finger Fit Rule: Sizing Your Dog’s Collar for Maximum Canine Comfort',
     teaser:
       'Can you slip two fingers comfortably under their collar? Here’s our pet-parent guide to preventing coat matting and keeping your furbaby secure.',
-    image:
-      'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80',
+    image: '/campaign/story-collar-fit.jpg',
     content: [
       'As pet parents, we want our dogs to feel secure without ever feeling constricted. A collar that’s even slightly too tight can cause friction, hair matting, and discomfort around sensitive neck muscles. Too loose, and a sudden squirrel pursuit might leave you holding an empty lead.',
       'That’s where the classic 2-Finger Test comes in. Wrap a soft measuring tape where the collar naturally rests—roughly midway between the base of their neck and their shoulders. Once fastened, you should be able to slide two flat fingers comfortably between the webbing and your dog’s fur.',
@@ -158,8 +149,7 @@ const STORIES: StoryItem[] = [
     title: 'Muddy Paws & Rainy Days: Our Pet Parent Trail Survival Guide',
     teaser:
       'British downpours won’t stop your daily zoomies! Here’s how hydrophobic ripstop gear and a simple post-walk routine keep your hallway spotless.',
-    image:
-      'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=800&q=80',
+    image: '/campaign/story-muddy-paws.jpg',
     content: [
       'Let’s be honest: in the UK, if you waited for dry weather to walk your dog, you’d never leave the house! Muddy puddles and soaked grass are pure joy for our dogs, but nobody loves soggy, smelly gear that stays damp for days.',
       'Traditional nylon collars act like sponges, absorbing dirty puddle water and trapping unpleasant bacteria against your dog’s skin. That’s why we engineered our gear with hydrophobic ripstop weave that repels water on contact.',
@@ -178,8 +168,7 @@ const STORIES: StoryItem[] = [
     title: 'Playtime That Builds Trust: 3 Fun Enrichment Games for Happy Tails',
     teaser:
       'Tired dogs are happy dogs, but mental workouts beat endless fetching. Discover 3 snappy sniffing games that strengthen your pet-parent bond.',
-    image:
-      'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800&q=80',
+    image: '/campaign/story-playtime-trust.jpg',
     content: [
       'Did you know that 15 minutes of focused sniffing burns as much canine mental energy as an hour-long brisk walk? While physical exercise keeps muscles lean, sensory enrichment is what truly calms active minds and prevents restless chewing at home.',
       'Playing together is also the single fastest way to reinforce positive recall. When your furbaby associates you with thrilling games and wholesome rewards, they naturally check in with you more frequently during off-lead adventures.',
@@ -198,8 +187,7 @@ const STORIES: StoryItem[] = [
     title: 'Why Quality Sleep Matters for Your Furbaby’s Joints & Well-Being',
     teaser:
       'Adult dogs sleep up to 14 hours a day! From orthopaedic foam to quiet sleep sanctuaries, here’s how restorative rest protects their mobility.',
-    image:
-      'https://images.unsplash.com/photo-1535930891776-0c2dfb7fda1a?w=800&q=80',
+    image: '/campaign/story-cosy-sleep.jpg',
     content: [
       'Watch your dog during a deep sleep and you’ll see twitching paws, gentle woofs, and tail flicks. Just like us, pets process their daily experiences during REM cycles and need undisturbed downtime to rebuild muscle tissue and rest growing joints.',
       'Active dogs, working breeds, and seniors in particular benefit tremendously from supportive orthopaedic bedding that cushions hips and elbows against cold, hard timber floors.',
@@ -311,24 +299,31 @@ export default function Home() {
         {/* =====================================================================
             1. HERO SECTION (Patagonia Slogan & Bold Editorial Format)
         ====================================================================== */}
+        {/* =====================================================================
+            1. HERO SECTION (MB-Paws British Technical Outdoor Campaign)
+        ====================================================================== */}
         <section className="relative w-full bg-neutral-950 text-white overflow-hidden">
-          <div className="relative min-h-[580px] sm:min-h-[640px] lg:min-h-[720px] flex items-center justify-center">
+          <div className="relative min-h-[580px] sm:min-h-[660px] lg:min-h-[760px] flex items-center justify-center">
             <Image
               src={settings?.heroimageurl || HERO_BG}
-              alt="MB-Paws – Adventure Ready Pet Gear"
+              alt="MB-Paws – British Technical Outdoor Pet Gear"
               fill
               priority
               sizes="100vw"
-              className="object-cover object-center brightness-[0.78] contrast-[1.05]"
+              className="object-cover object-[center_35%] brightness-[0.80] contrast-[1.05]"
             />
 
             {/* Gradient Overlays for high-contrast editorial typography */}
-            <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/85 via-neutral-950/30 to-neutral-950/40" />
+            <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/90 via-neutral-950/35 to-neutral-950/40" />
             <div className="absolute inset-0 bg-radial-gradient from-transparent via-black/20 to-black/60 pointer-events-none" />
 
             {/* Editorial Content Overlay */}
             <div className="relative z-10 max-w-4xl mx-auto px-5 sm:px-8 py-16 sm:py-24 text-center flex flex-col items-center">
-              {/* Bold Slogan Title (Patagonia "Worth it." inspired) */}
+              <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-emerald-400 mb-3 drop-shadow">
+                British Technical Outdoor Gear
+              </span>
+
+              {/* Bold Editorial Title */}
               <h1 className="font-serif-display text-4xl sm:text-6xl lg:text-7xl font-normal tracking-tight leading-[1.05] mb-5 text-white drop-shadow-md">
                 Worth every wag.
               </h1>
@@ -357,6 +352,22 @@ export default function Home() {
                   <span>Featured Collar</span>
                   <ArrowRight size={15} />
                 </a>
+              </div>
+
+              {/* British Trust Badges */}
+              <div className="pt-8 mt-8 border-t border-white/15 flex flex-wrap items-center justify-center gap-6 text-xs text-white/80">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 size={15} className="text-emerald-400" />
+                  <span>Free UK Delivery &gt; £50</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 size={15} className="text-emerald-400" />
+                  <span>Klarna 0% Interest</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 size={15} className="text-emerald-400" />
+                  <span>30-Day British Returns</span>
+                </div>
               </div>
             </div>
           </div>
@@ -430,8 +441,10 @@ export default function Home() {
                         sizes="(max-width: 640px) 78vw, 305px"
                         className="object-cover transition-transform duration-500 group-hover/card:scale-105"
                       />
-                      {/* Gentle Dark Bottom Gradient */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-70" />
+                      {/* Gentle Dark Bottom Gradient for lifestyle imagery */}
+                      {!cat.image.startsWith('/campaign/') && (
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-70" />
+                      )}
                     </div>
 
                     <div className="pt-4 flex flex-col flex-1">
@@ -619,9 +632,45 @@ export default function Home() {
         </section>
 
         {/* =====================================================================
-            5. NO BREAKER BANNER
-               (As requested: "we dont want another breaker" — skipped completely)
+            5. CAMPAIGN SHOWCASE: "ENGINEERED FOR THE ELEMENTS"
         ====================================================================== */}
+        <section className="py-14 sm:py-24 bg-neutral-950 text-white border-t border-neutral-800">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="relative w-full aspect-[16/11] sm:aspect-[16/9] lg:aspect-[21/9] min-h-[440px] rounded-3xl overflow-hidden shadow-2xl border border-white/10 flex items-center justify-center group">
+              <Image
+                src="/campaign/banner-engineered-elements.jpg"
+                alt="MB-Paws – Engineered for the Elements"
+                fill
+                sizes="(max-width: 1280px) 100vw, 1280px"
+                className="object-cover object-[center_45%] brightness-[0.76] contrast-[1.05] transition-transform duration-700 group-hover:scale-[1.02]"
+              />
+
+              {/* High-contrast gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/90 via-neutral-950/35 to-neutral-950/40" />
+
+              {/* Centered Display Typography & Interactive CTA */}
+              <div className="relative z-10 text-center px-6 max-w-3xl flex flex-col items-center">
+                <span className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-400 mb-3 drop-shadow">
+                  All-Weather Hydrophobic Ripstop
+                </span>
+                <h2 className="font-serif-display text-3xl sm:text-5xl lg:text-6xl font-normal tracking-tight text-white mb-4 drop-shadow-md">
+                  Engineered For The Elements
+                </h2>
+                <p className="text-sm sm:text-base text-white/90 max-w-xl mb-8 font-light leading-relaxed drop-shadow">
+                  High-tenacity technical fleece and taped weatherproof protection crafted for torrential British downpours and rocky Highland rambles.
+                </p>
+
+                <Link
+                  href="/products?search=Fleece"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full font-semibold text-xs uppercase tracking-[0.14em] bg-white text-neutral-950 hover:bg-neutral-100 transition-all shadow-lg active:scale-95"
+                >
+                  <span>Shop Fleece</span>
+                  <ArrowRight size={15} />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* =====================================================================
             6. STORIES & PET CARE TIPS / TRICKS (Patagonia Latest Stories)
