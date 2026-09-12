@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { useStoreSettings } from '@/context/StoreSettingsContext';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 
@@ -33,6 +34,18 @@ function InstagramIcon({ className = 'w-4 h-4' }: { className?: string }) {
 export default function Footer() {
   const { settings } = useStoreSettings();
   const storeName = settings?.storename || 'MB-Paws';
+  const pathname = usePathname();
+
+  const handleFaqClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (pathname === '/') {
+      e.preventDefault();
+      const el = document.getElementById('faq');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.history.pushState(null, '', '#faq');
+      }
+    }
+  };
 
   // Newsletter state
   const [email, setEmail] = useState('');
@@ -83,10 +96,10 @@ export default function Footer() {
           <div>
             <Link href="/" className="inline-block group" aria-label={storeName}>
               <Image
-                src="/Logo-white.png"
+                src="/logo-white-new.jpeg"
                 alt={storeName}
-                width={120}
-                height={48}
+                width={130}
+                height={95}
                 className="h-9 w-auto object-contain shrink-0 group-hover:opacity-85 transition-opacity"
               />
             </Link>
@@ -128,7 +141,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/support" className="hover:text-white transition-colors">
+                <Link
+                  href="/#faq"
+                  onClick={handleFaqClick}
+                  className="hover:text-white transition-colors"
+                >
                   FAQ
                 </Link>
               </li>
@@ -232,10 +249,10 @@ export default function Footer() {
             <div className="col-span-5 space-y-3">
               <Link href="/" className="inline-block group" aria-label={storeName}>
                 <Image
-                  src="/Logo-white.png"
+                  src="/logo-white-new.jpeg"
                   alt={storeName}
-                  width={130}
-                  height={50}
+                  width={140}
+                  height={100}
                   className="h-10 w-auto object-contain shrink-0 group-hover:opacity-85 transition-opacity"
                 />
               </Link>
@@ -268,7 +285,11 @@ export default function Footer() {
                     </Link>
                   </li>
                   <li>
-                    <Link href="/support" className="hover:text-white transition-colors">
+                    <Link
+                      href="/#faq"
+                      onClick={handleFaqClick}
+                      className="hover:text-white transition-colors"
+                    >
                       FAQ
                     </Link>
                   </li>

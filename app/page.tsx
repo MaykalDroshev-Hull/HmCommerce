@@ -271,6 +271,25 @@ export default function Home() {
     document.title = `${storeName} | Premium Adventure Pet Gear`;
   }, [settings?.storename]);
 
+  // Handle smooth scroll if landing on the page with a hash like /#faq
+  useEffect(() => {
+    const scrollToHash = () => {
+      if (typeof window !== 'undefined' && window.location.hash) {
+        const hash = window.location.hash.replace('#', '');
+        const targetElement = document.getElementById(hash);
+        if (targetElement) {
+          setTimeout(() => {
+            targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 150);
+        }
+      }
+    };
+
+    scrollToHash();
+    window.addEventListener('hashchange', scrollToHash);
+    return () => window.removeEventListener('hashchange', scrollToHash);
+  }, []);
+
   const handleSetIsAdmin = (value: boolean) => {
     setIsAdmin(value);
     localStorage.setItem('isAdmin', value.toString());
@@ -426,12 +445,14 @@ export default function Home() {
             <div className="relative group">
               <div
                 ref={categoriesScrollRef}
-                className="flex items-stretch gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar pb-4 -mx-4 px-4 sm:mx-0 sm:px-0"
+                className="flex items-stretch gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar pb-4 -mx-4 sm:mx-0 scroll-pl-4 sm:scroll-pl-0 scroll-pr-4 sm:scroll-pr-0"
               >
-                {PET_CATEGORIES.map((cat) => (
+                {PET_CATEGORIES.map((cat, idx) => (
                   <div
                     key={cat.id}
-                    className="flex-shrink-0 w-[78vw] sm:w-[280px] lg:w-[305px] snap-start flex flex-col group/card"
+                    className={`flex-shrink-0 w-[78vw] sm:w-[280px] lg:w-[305px] snap-start flex flex-col group/card ${
+                      idx === 0 ? 'ml-4 sm:ml-0' : ''
+                    } ${idx === PET_CATEGORIES.length - 1 ? 'mr-4 sm:mr-0' : ''}`}
                   >
                     <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden bg-neutral-100 shadow-sm transition-transform duration-300 group-hover/card:-translate-y-1">
                       <Image
@@ -718,12 +739,14 @@ export default function Home() {
             <div className="relative group">
               <div
                 ref={storiesScrollRef}
-                className="flex items-stretch gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar pb-4 -mx-4 px-4 sm:mx-0 sm:px-0"
+                className="flex items-stretch gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar pb-4 -mx-4 sm:mx-0 scroll-pl-4 sm:scroll-pl-0 scroll-pr-4 sm:scroll-pr-0"
               >
-                {STORIES.map((story) => (
+                {STORIES.map((story, idx) => (
                   <div
                     key={story.id}
-                    className="flex-shrink-0 w-[82vw] sm:w-[320px] lg:w-[350px] snap-start flex flex-col bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-sm hover:shadow-md hover:border-neutral-300 transition-all duration-300"
+                    className={`flex-shrink-0 w-[82vw] sm:w-[320px] lg:w-[350px] snap-start flex flex-col bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-sm hover:shadow-md hover:border-neutral-300 transition-all duration-300 ${
+                      idx === 0 ? 'ml-4 sm:ml-0' : ''
+                    } ${idx === STORIES.length - 1 ? 'mr-4 sm:mr-0' : ''}`}
                   >
                     {/* Story Photo */}
                     <div className="relative aspect-[16/10] w-full bg-neutral-100">

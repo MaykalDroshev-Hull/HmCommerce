@@ -130,11 +130,30 @@ export default function Header({ isAdmin = false, setIsAdmin }: HeaderProps) {
 
   const navLinks = [
     { label: 'Shop', href: '/products' },
-    { label: 'Features', href: '/#features' },
     { label: 'Size Guide', href: '/size-guide' },
     { label: 'Reviews', href: '/#reviews' },
     { label: 'FAQ', href: '/#faq' },
   ];
+
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (href.startsWith('/#')) {
+      const hash = href.replace('/#', '');
+      if (pathname === '/') {
+        e.preventDefault();
+        setMobileMenuOpen(false);
+        document.body.style.overflow = '';
+        setTimeout(() => {
+          const el = document.getElementById(hash);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            window.history.pushState(null, '', `#${hash}`);
+          }
+        }, 50);
+        return;
+      }
+    }
+    setMobileMenuOpen(false);
+  };
 
   return (
     <>
@@ -159,10 +178,9 @@ export default function Header({ isAdmin = false, setIsAdmin }: HeaderProps) {
                 className="p-2 -ml-2 text-neutral-900 hover:text-neutral-700 active:scale-95 transition-transform"
                 aria-label="Toggle navigation menu"
               >
-                <div className="relative w-6 h-6 flex items-center justify-center">
+                <div className="relative w-5 h-5">
                   <Menu
-                    size={26}
-                    strokeWidth={2}
+                    size={20}
                     className={`absolute inset-0 transition-all duration-200 ease-out ${
                       mobileMenuOpen
                         ? 'opacity-0 rotate-90 scale-75'
@@ -170,8 +188,7 @@ export default function Header({ isAdmin = false, setIsAdmin }: HeaderProps) {
                     }`}
                   />
                   <X
-                    size={26}
-                    strokeWidth={2}
+                    size={20}
                     className={`absolute inset-0 transition-all duration-200 ease-out ${
                       mobileMenuOpen
                         ? 'opacity-100 rotate-0 scale-100'
@@ -191,10 +208,10 @@ export default function Header({ isAdmin = false, setIsAdmin }: HeaderProps) {
                 aria-label={storeName}
               >
                 <Image
-                  src={settings?.logourl || '/Logo.jpg'}
+                  src="/logo-black-new.jpeg"
                   alt={storeName}
                   width={140}
-                  height={55}
+                  height={100}
                   priority
                   className="h-10 sm:h-11 w-auto object-contain group-hover:opacity-80 transition-opacity"
                 />
@@ -209,6 +226,7 @@ export default function Header({ isAdmin = false, setIsAdmin }: HeaderProps) {
                   <Link
                     key={link.label}
                     href={link.href}
+                    onClick={(e) => handleNavClick(e, link.href)}
                     className={`text-xs font-semibold uppercase tracking-[0.14em] transition-colors py-1 relative ${
                       isActive
                         ? 'text-neutral-900 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-neutral-900'
@@ -368,10 +386,10 @@ export default function Header({ isAdmin = false, setIsAdmin }: HeaderProps) {
                 aria-label={storeName}
               >
                 <Image
-                  src={settings?.logourl || '/Logo.jpg'}
+                  src="/logo-black-new.jpeg"
                   alt={storeName}
-                  width={90}
-                  height={36}
+                  width={110}
+                  height={80}
                   className="h-8 w-auto object-contain"
                 />
               </Link>
@@ -390,7 +408,7 @@ export default function Header({ isAdmin = false, setIsAdmin }: HeaderProps) {
                 <Link
                   key={link.label}
                   href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={(e) => handleNavClick(e, link.href)}
                   style={{
                     transitionDelay: mobileMenuAnim ? `${idx * 25 + 40}ms` : '0ms',
                   }}

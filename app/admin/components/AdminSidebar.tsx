@@ -23,7 +23,8 @@ import {
   Boxes,
   ClipboardList,
   ShoppingCart,
-  Mail
+  Mail,
+  MailCheck
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -163,6 +164,12 @@ export default function AdminSidebar({ currentPath, collapsed: externalCollapsed
       label: 'Newsletter',
       path: '/admin/newsletter',
       icon: Mail
+    },
+    {
+      id: 'email-testing',
+      label: 'Email Testing',
+      path: '/admin/email-testing',
+      icon: MailCheck
     },
     {
       id: 'analytics',

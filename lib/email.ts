@@ -4,7 +4,7 @@ import { translations, Language } from '@/lib/translations';
 import { getShippingEstimateMessage } from '@/lib/order-shipping-estimate';
 import type { OrderEmailItem } from '@/lib/order-email-items';
 
-interface OrderDetails {
+export interface OrderDetails {
   orderId: string;
   customer: {
     firstName: string;
@@ -32,6 +32,8 @@ interface OrderDetails {
   };
   orderDate: string;
 }
+
+export type OrderStatus = 'confirmed' | 'shipped' | 'dispatched' | 'delivered' | 'cancelled';
 
 function getDeliveryTypeLabel(type: string, language: Language): string {
   const t = translations[language];
@@ -103,21 +105,14 @@ function getValidCustomerEmail(email?: string): string | null {
   return null;
 }
 
-export async function sendCustomerOrderEmail(orderDetails: OrderDetails, language: Language = 'en'): Promise<void> {
-  if (!isEmailConfigured()) {
-    logger.warn('Skipping customer order email: email not configured');
-    return;
-  }
-
-  const customerEmail = getValidCustomerEmail(orderDetails.customer.email);
-  if (!customerEmail) {
-    logger.debug('Skipping customer order email: no valid customer email');
-    return;
-  }
-
+export function generateCustomerOrderEmailHtml(
+  orderDetails: OrderDetails,
+  language: Language = 'en'
+): { subject: string; html: string } {
   const t = translations[language];
   const contactEmail = getContactEmail();
-  const customerEmailHtml = `
+  const subject = `${t.emailOrderReceivedSubject} - #${orderDetails.orderId}`;
+  const html = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -216,25 +211,41 @@ export async function sendCustomerOrderEmail(orderDetails: OrderDetails, languag
     </body>
     </html>
   `;
+  return { subject, html };
+}
+
+export async function sendCustomerOrderEmail(orderDetails: OrderDetails, language: Language = 'en'): Promise<void> {
+  if (!isEmailConfigured()) {
+    logger.warn('Skipping customer order email: email not configured');
+    return;
+  }
+
+  const customerEmail = getValidCustomerEmail(orderDetails.customer.email);
+  if (!customerEmail) {
+    logger.debug('Skipping customer order email: no valid customer email');
+    return;
+  }
+
+  const contactEmail = getContactEmail();
+  const { subject, html } = generateCustomerOrderEmailHtml(orderDetails, language);
 
   await sendEmail({
     to: customerEmail,
-    subject: `${t.emailOrderReceivedSubject} - #${orderDetails.orderId}`,
-    html: customerEmailHtml,
+    subject,
+    html,
     replyTo: contactEmail,
   });
 
   logger.debug('Customer order email sent');
 }
 
-export async function sendAdminOrderEmail(orderDetails: OrderDetails, language: Language = 'en'): Promise<void> {
-  if (!isEmailConfigured()) {
-    logger.warn('Skipping admin order email: email not configured');
-    return;
-  }
-
+export function generateAdminOrderEmailHtml(
+  orderDetails: OrderDetails,
+  language: Language = 'en'
+): { subject: string; html: string } {
   const t = translations[language];
-  const adminEmailHtml = `
+  const subject = `${t.emailNewOrderReceived} - #${orderDetails.orderId}`;
+  const html = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -339,32 +350,31 @@ export async function sendAdminOrderEmail(orderDetails: OrderDetails, language: 
     </body>
     </html>
   `;
+  return { subject, html };
+}
+
+export async function sendAdminOrderEmail(orderDetails: OrderDetails, language: Language = 'en'): Promise<void> {
+  if (!isEmailConfigured()) {
+    logger.warn('Skipping admin order email: email not configured');
+    return;
+  }
+
+  const { subject, html } = generateAdminOrderEmailHtml(orderDetails, language);
 
   await sendEmail({
     to: getAdminNotificationEmails(),
-    subject: `${t.emailNewOrderReceived} - #${orderDetails.orderId}`,
-    html: adminEmailHtml,
+    subject,
+    html,
   });
 
   logger.debug('Admin order email sent');
 }
 
-export async function sendOrderStatusEmail(
+export function generateOrderStatusEmailHtml(
   orderDetails: OrderDetails,
-  status: 'confirmed' | 'shipped' | 'dispatched' | 'delivered' | 'cancelled',
+  status: OrderStatus,
   language: Language = 'en'
-): Promise<void> {
-  if (!isEmailConfigured()) {
-    logger.warn('Skipping order status email: email not configured');
-    return;
-  }
-
-  const customerEmail = getValidCustomerEmail(orderDetails.customer.email);
-  if (!customerEmail) {
-    logger.debug('Skipping order status email: no valid customer email');
-    return;
-  }
-
+): { subject: string; html: string } {
   const t = translations[language];
   const contactEmail = getContactEmail();
   const emailStatus = status === 'shipped' ? 'dispatched' : status;
@@ -407,7 +417,8 @@ export async function sendOrderStatusEmail(
         `
       : '';
 
-  const customerEmailHtml = `
+  const subject = `Order ${statusInfo.title} - #${orderDetails.orderId}`;
+  const html = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -447,14 +458,14 @@ export async function sendOrderStatusEmail(
             </div>
 
             <div class="item total">
-                        <strong>${t.total}:</strong>
-                        <span>£${orderDetails.totals.total.toFixed(2)}</span>
-                      </div>
-                    </div>
+              <strong>${t.total}:</strong>
+              <span>£${orderDetails.totals.total.toFixed(2)}</span>
+            </div>
+          </div>
 
-                    ${shippingEstimateHtml}
+          ${shippingEstimateHtml}
 
-                    ${(emailStatus === 'dispatched' || status === 'shipped') ? `
+          ${(emailStatus === 'dispatched' || status === 'shipped') ? `
           <div style="background: #e6fffa; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${statusInfo.color};">
             <p><strong>${t.emailTrackingInformation}</strong></p>
             <p>${t.emailOrderOnWay} ${t.emailTrackingDetailsSoon}</p>
@@ -484,11 +495,32 @@ export async function sendOrderStatusEmail(
     </body>
     </html>
   `;
+  return { subject, html };
+}
+
+export async function sendOrderStatusEmail(
+  orderDetails: OrderDetails,
+  status: OrderStatus,
+  language: Language = 'en'
+): Promise<void> {
+  if (!isEmailConfigured()) {
+    logger.warn('Skipping order status email: email not configured');
+    return;
+  }
+
+  const customerEmail = getValidCustomerEmail(orderDetails.customer.email);
+  if (!customerEmail) {
+    logger.debug('Skipping order status email: no valid customer email');
+    return;
+  }
+
+  const contactEmail = getContactEmail();
+  const { subject, html } = generateOrderStatusEmailHtml(orderDetails, status, language);
 
   await sendEmail({
     to: customerEmail,
-    subject: `Order ${statusInfo.title} - #${orderDetails.orderId}`,
-    html: customerEmailHtml,
+    subject,
+    html,
     replyTo: contactEmail,
   });
 
