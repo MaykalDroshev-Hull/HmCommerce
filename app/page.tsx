@@ -653,43 +653,39 @@ export default function Home() {
         </section>
 
         {/* =====================================================================
-            5. CAMPAIGN SHOWCASE: "ENGINEERED FOR THE ELEMENTS"
+            5. CAMPAIGN SHOWCASE: "ENGINEERED FOR THE ELEMENTS" (Full Bleed)
         ====================================================================== */}
-        <section className="py-14 sm:py-24 bg-neutral-950 text-white border-t border-neutral-800">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="relative w-full aspect-[16/11] sm:aspect-[16/9] lg:aspect-[21/9] min-h-[440px] rounded-3xl overflow-hidden shadow-2xl border border-white/10 flex items-center justify-center group">
-              <Image
-                src="/campaign/banner-engineered-elements.jpg"
-                alt="MB-Paws – Engineered for the Elements"
-                fill
-                sizes="(max-width: 1280px) 100vw, 1280px"
-                className="object-cover object-[center_45%] brightness-[0.76] contrast-[1.05] transition-transform duration-700 group-hover:scale-[1.02]"
-              />
+        <section className="relative w-full overflow-hidden bg-neutral-950 text-white min-h-[500px] sm:min-h-[580px] lg:min-h-[660px] flex items-center justify-center border-t border-b border-neutral-800 group">
+          <Image
+            src="/campaign/banner-engineered-elements.jpg"
+            alt="MB-Paws – Engineered for the Elements"
+            fill
+            sizes="100vw"
+            className="object-cover object-[center_45%] brightness-[0.76] contrast-[1.05] transition-transform duration-700 group-hover:scale-[1.01]"
+          />
 
-              {/* High-contrast gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/90 via-neutral-950/35 to-neutral-950/40" />
+          {/* High-contrast gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/90 via-neutral-950/35 to-neutral-950/45" />
 
-              {/* Centered Display Typography & Interactive CTA */}
-              <div className="relative z-10 text-center px-6 max-w-3xl flex flex-col items-center">
-                <span className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-400 mb-3 drop-shadow">
-                  All-Weather Hydrophobic Ripstop
-                </span>
-                <h2 className="font-serif-display text-3xl sm:text-5xl lg:text-6xl font-normal tracking-tight text-white mb-4 drop-shadow-md">
-                  Engineered For The Elements
-                </h2>
-                <p className="text-sm sm:text-base text-white/90 max-w-xl mb-8 font-light leading-relaxed drop-shadow">
-                  High-tenacity technical fleece and taped weatherproof protection crafted for torrential British downpours and rocky Highland rambles.
-                </p>
+          {/* Centered Display Typography & Interactive CTA */}
+          <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto flex flex-col items-center py-16 sm:py-24">
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-400 mb-3 drop-shadow">
+              All-Weather Hydrophobic Ripstop
+            </span>
+            <h2 className="font-serif-display text-3xl sm:text-5xl lg:text-6xl font-normal tracking-tight text-white mb-4 drop-shadow-md">
+              Engineered For The Elements
+            </h2>
+            <p className="text-sm sm:text-base text-white/90 max-w-xl mb-8 font-light leading-relaxed drop-shadow">
+              High-tenacity technical fleece and taped weatherproof protection crafted for torrential British downpours and rocky Highland rambles.
+            </p>
 
-                <Link
-                  href="/products?search=Fleece"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full font-semibold text-xs uppercase tracking-[0.14em] bg-white text-neutral-950 hover:bg-neutral-100 transition-all shadow-lg active:scale-95"
-                >
-                  <span>Shop Fleece</span>
-                  <ArrowRight size={15} />
-                </Link>
-              </div>
-            </div>
+            <Link
+              href="/products?search=Fleece"
+              className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full font-semibold text-xs uppercase tracking-[0.14em] bg-white text-neutral-950 hover:bg-neutral-100 transition-all shadow-lg active:scale-95"
+            >
+              <span>Shop Fleece</span>
+              <ArrowRight size={15} />
+            </Link>
           </div>
         </section>
 

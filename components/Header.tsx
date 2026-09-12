@@ -208,10 +208,10 @@ export default function Header({ isAdmin = false, setIsAdmin }: HeaderProps) {
                 aria-label={storeName}
               >
                 <Image
-                  src="/logo-black-new.jpeg"
+                  src="/Black Logo.png"
                   alt={storeName}
-                  width={140}
-                  height={100}
+                  width={142}
+                  height={102}
                   priority
                   className="h-10 sm:h-11 w-auto object-contain group-hover:opacity-80 transition-opacity"
                 />
@@ -386,9 +386,9 @@ export default function Header({ isAdmin = false, setIsAdmin }: HeaderProps) {
                 aria-label={storeName}
               >
                 <Image
-                  src="/logo-black-new.jpeg"
+                  src="/Black Logo.png"
                   alt={storeName}
-                  width={110}
+                  width={112}
                   height={80}
                   className="h-8 w-auto object-contain"
                 />

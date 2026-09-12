@@ -62,35 +62,72 @@ function renderEmailOrderItemRow(
   ]
     .filter(Boolean)
     .join(' • ');
-  const productLink = item.productUrl
-    ? `<p style="margin: 8px 0 0;"><a href="${item.productUrl}" style="color: #667eea; text-decoration: none; font-weight: 600;">${t.emailViewProduct}</a><br><small style="color: #666;">${item.productUrl.replace(/^https?:\/\//, '')}</small></p>`
-    : '';
+
+  const titleText = `${item.brand ? `${item.brand} ` : ''}${item.model || item.name}`;
   const productTitle = item.productUrl
-    ? `<a href="${item.productUrl}" style="color: #333; text-decoration: none;">${item.brand} ${item.model}</a>`
-    : `<strong>${item.brand} ${item.model}</strong>`;
+    ? `<a href="${item.productUrl}" style="color: #111827; text-decoration: none; font-weight: 700; font-size: 14px; line-height: 1.35;">${titleText}</a>`
+    : `<span style="font-weight: 700; color: #111827; font-size: 14px; line-height: 1.35;">${titleText}</span>`;
+
+  const productLink = item.productUrl
+    ? `<div style="margin-top: 4px;"><a href="${item.productUrl}" style="color: #4f46e5; text-decoration: none; font-size: 11px; font-weight: 600;">${t.emailViewProduct} &rarr;</a></div>`
+    : '';
+
   const productImage = item.productUrl
-    ? `<a href="${item.productUrl}" style="text-decoration: none;"><img src="${item.imageUrl}" alt="${item.name}" width="72" height="72" style="display: block; object-fit: cover; border-radius: 8px; border: 1px solid #eee;" /></a>`
-    : `<img src="${item.imageUrl}" alt="${item.name}" width="72" height="72" style="display: block; object-fit: cover; border-radius: 8px; border: 1px solid #eee;" />`;
+    ? `<a href="${item.productUrl}" style="text-decoration: none; display: block;"><img src="${item.imageUrl}" alt="${item.name}" width="64" height="64" style="display: block; width: 64px; height: 64px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e7eb;" /></a>`
+    : `<img src="${item.imageUrl}" alt="${item.name}" width="64" height="64" style="display: block; width: 64px; height: 64px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e7eb;" />`;
 
   return `
-    <table width="100%" cellpadding="0" cellspacing="0" style="border-bottom: 1px solid #eee;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-bottom: 1px solid #e5e7eb; margin-bottom: 12px; padding-bottom: 12px;">
       <tr>
-        <td width="84" valign="top" style="padding: 12px 12px 12px 0;">
+        <td width="72" valign="top" style="width: 72px; padding-right: 12px; vertical-align: top;">
           ${productImage}
         </td>
-        <td valign="top" style="padding: 12px 0;">
-          ${productTitle}<br>
-          <small>${variantDetails}</small>
-          ${showSku ? `<br><small>SKU: ${item.id}</small>` : ''}
+        <td valign="top" style="vertical-align: top;">
+          <div style="margin-bottom: 2px;">
+            ${productTitle}
+          </div>
+          ${variantDetails ? `<div style="font-size: 12px; color: #6b7280; line-height: 1.4; margin-bottom: 4px;">${variantDetails}</div>` : ''}
+          ${showSku ? `<div style="font-size: 11px; color: #9ca3af; font-family: ui-monospace, monospace; margin-bottom: 4px;">SKU: ${item.id}</div>` : ''}
           ${showProductLink ? productLink : ''}
-        </td>
-        <td valign="top" align="right" style="padding: 12px 0; white-space: nowrap;">
-          <div>${item.quantity} × £${item.price.toFixed(2)}</div>
-          <div style="font-weight: bold;">£${(item.quantity * item.price).toFixed(2)}</div>
+          
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 6px;">
+            <tr>
+              <td style="font-size: 12px; color: #4b5563; vertical-align: middle;">
+                <span style="display: inline-block; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 2px 7px; font-weight: 600; color: #1f2937; font-size: 11px;">${item.quantity} &times; &pound;${item.price.toFixed(2)}</span>
+              </td>
+              <td align="right" style="font-size: 14px; font-weight: 700; color: #111827; vertical-align: middle; white-space: nowrap;">
+                &pound;${(item.quantity * item.price).toFixed(2)}
+              </td>
+            </tr>
+          </table>
         </td>
       </tr>
     </table>
   `;
+}
+
+function formatOrderDate(dateIso: string, language: Language = 'en', includeTime = false): string {
+  try {
+    const d = new Date(dateIso);
+    if (isNaN(d.getTime())) return dateIso;
+    const locale = language === 'bg' ? 'bg-BG' : 'en-GB';
+    if (includeTime) {
+      return d.toLocaleString(locale, {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    }
+    return d.toLocaleDateString(locale, {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  } catch {
+    return dateIso;
+  }
 }
 
 function getValidCustomerEmail(email?: string): string | null {
@@ -117,17 +154,24 @@ export function generateCustomerOrderEmailHtml(
     <html>
     <head>
       <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Order Confirmation - ${orderDetails.orderId}</title>
       <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-        .content { background: white; padding: 30px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; }
-        .order-details { background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0; }
-        .item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f7f7f8; }
+        .container { max-width: 600px; margin: 0 auto; padding: 16px 12px; }
+        .header { background: linear-gradient(135deg, #18181b 0%, #27272a 100%); color: white; padding: 28px 20px; text-align: center; border-radius: 12px 12px 0 0; }
+        .content { background: white; padding: 24px 20px; border: 1px solid #e4e4e7; border-top: none; border-radius: 0 0 12px 12px; }
+        .order-details { background: #fafafa; padding: 16px; border-radius: 10px; margin: 20px 0; border: 1px solid #f0f0f0; }
+        .item { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 13px; }
         .item:last-child { border-bottom: none; }
-        .total { font-weight: bold; font-size: 18px; color: #667eea; }
-        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+        .total { font-weight: bold; font-size: 16px; color: #18181b; }
+        .footer { text-align: center; margin-top: 28px; color: #71717a; font-size: 13px; }
+        @media only screen and (max-width: 480px) {
+          .container { padding: 8px 4px !important; }
+          .header { padding: 20px 14px !important; border-radius: 8px 8px 0 0 !important; }
+          .content { padding: 18px 12px !important; border-radius: 0 0 8px 8px !important; }
+          .order-details { padding: 12px 10px !important; }
+        }
       </style>
     </head>
     <body>
@@ -204,7 +248,7 @@ export function generateCustomerOrderEmailHtml(
 
           <div class="footer">
             <p>${t.emailContactUs} ${contactEmail}</p>
-            <p>${t.emailOrderDate} ${new Date(orderDetails.orderDate).toLocaleDateString(language === 'bg' ? 'bg-BG' : 'en-US')}</p>
+            <p>${t.emailOrderDate} ${formatOrderDate(orderDetails.orderDate, language)}</p>
           </div>
         </div>
       </div>
@@ -250,17 +294,24 @@ export function generateAdminOrderEmailHtml(
     <html>
     <head>
       <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>New Order - ${orderDetails.orderId}</title>
       <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-        .content { background: white; padding: 30px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; }
-        .order-details { background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0; }
-        .item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f7f7f8; }
+        .container { max-width: 600px; margin: 0 auto; padding: 16px 12px; }
+        .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 28px 20px; text-align: center; border-radius: 12px 12px 0 0; }
+        .content { background: white; padding: 24px 20px; border: 1px solid #e4e4e7; border-top: none; border-radius: 0 0 12px 12px; }
+        .order-details { background: #fafafa; padding: 16px; border-radius: 10px; margin: 20px 0; border: 1px solid #f0f0f0; }
+        .item { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 13px; }
         .item:last-child { border-bottom: none; }
-        .customer-info { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; }
-        .total { font-weight: bold; font-size: 18px; color: #ee5a24; }
+        .customer-info { background: #fffbeb; border: 1px solid #fef3c7; padding: 14px; border-radius: 8px; margin: 20px 0; }
+        .total { font-weight: bold; font-size: 16px; color: #0f172a; }
+        @media only screen and (max-width: 480px) {
+          .container { padding: 8px 4px !important; }
+          .header { padding: 20px 14px !important; border-radius: 8px 8px 0 0 !important; }
+          .content { padding: 18px 12px !important; border-radius: 0 0 8px 8px !important; }
+          .order-details { padding: 12px 10px !important; }
+        }
       </style>
     </head>
     <body>
@@ -342,7 +393,7 @@ export function generateAdminOrderEmailHtml(
           </div>
 
           <div style="text-align: center; margin-top: 30px; color: #666; font-size: 14px;">
-            <p>${t.emailOrderDate} ${new Date(orderDetails.orderDate).toLocaleString(language === 'bg' ? 'bg-BG' : 'en-US')}</p>
+            <p>${t.emailOrderDate} ${formatOrderDate(orderDetails.orderDate, language, true)}</p>
             <p>${t.emailAutomatedNotification}</p>
           </div>
         </div>
@@ -423,18 +474,25 @@ export function generateOrderStatusEmailHtml(
     <html>
     <head>
       <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Order ${statusInfo.title} - ${orderDetails.orderId}</title>
       <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(135deg, ${statusInfo.color} 0%, ${statusInfo.color}dd 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-        .content { background: white; padding: 30px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; }
-        .order-details { background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0; }
-        .item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f7f7f8; }
+        .container { max-width: 600px; margin: 0 auto; padding: 16px 12px; }
+        .header { background: linear-gradient(135deg, ${statusInfo.color} 0%, ${statusInfo.color}dd 100%); color: white; padding: 28px 20px; text-align: center; border-radius: 12px 12px 0 0; }
+        .content { background: white; padding: 24px 20px; border: 1px solid #e4e4e7; border-top: none; border-radius: 0 0 12px 12px; }
+        .order-details { background: #fafafa; padding: 16px; border-radius: 10px; margin: 20px 0; border: 1px solid #f0f0f0; }
+        .item { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 13px; }
         .item:last-child { border-bottom: none; }
-        .total { font-weight: bold; font-size: 18px; color: ${statusInfo.color}; }
-        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
-        .status-badge { display: inline-block; padding: 8px 16px; background: ${statusInfo.color}; color: white; border-radius: 20px; font-weight: bold; margin: 10px 0; }
+        .total { font-weight: bold; font-size: 16px; color: ${statusInfo.color}; }
+        .footer { text-align: center; margin-top: 28px; color: #71717a; font-size: 13px; }
+        .status-badge { display: inline-block; padding: 6px 14px; background: ${statusInfo.color}; color: white; border-radius: 20px; font-weight: bold; font-size: 13px; margin: 8px 0; }
+        @media only screen and (max-width: 480px) {
+          .container { padding: 8px 4px !important; }
+          .header { padding: 20px 14px !important; border-radius: 8px 8px 0 0 !important; }
+          .content { padding: 18px 12px !important; border-radius: 0 0 8px 8px !important; }
+          .order-details { padding: 12px 10px !important; }
+        }
       </style>
     </head>
     <body>
@@ -488,7 +546,7 @@ export function generateOrderStatusEmailHtml(
 
           <div class="footer">
             <p>${t.emailContactUs} ${contactEmail}</p>
-            <p>${t.emailOrderDate} ${new Date(orderDetails.orderDate).toLocaleDateString(language === 'bg' ? 'bg-BG' : 'en-US')}</p>
+            <p>${t.emailOrderDate} ${formatOrderDate(orderDetails.orderDate, language)}</p>
           </div>
         </div>
       </div>

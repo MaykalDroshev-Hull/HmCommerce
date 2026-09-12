@@ -87,20 +87,20 @@ export default function Footer() {
 
   return (
     <footer className="w-full bg-black text-white border-t border-neutral-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* =====================================================================
             1. MOBILE LAYOUT
         ====================================================================== */}
-        <div className="block md:hidden space-y-8">
+        <div className="block md:hidden space-y-6">
           {/* 1. Brand Logo */}
           <div>
             <Link href="/" className="inline-block group" aria-label={storeName}>
               <Image
-                src="/logo-white-new.jpeg"
+                src="/White-logo.png"
                 alt={storeName}
-                width={130}
-                height={95}
-                className="h-9 w-auto object-contain shrink-0 group-hover:opacity-85 transition-opacity"
+                width={220}
+                height={158}
+                className="h-[5rem] w-auto object-contain shrink-0 group-hover:opacity-85 transition-opacity"
               />
             </Link>
           </div>
@@ -244,16 +244,16 @@ export default function Footer() {
         ====================================================================== */}
         <div className="hidden md:block">
           {/* Top Row: Brand on Left, Columns on Right */}
-          <div className="grid grid-cols-12 gap-12 lg:gap-16 items-start pb-12 sm:pb-16">
+          <div className="grid grid-cols-12 gap-12 lg:gap-16 items-start pb-8 sm:pb-10">
             {/* Left: Brand Mark */}
-            <div className="col-span-5 space-y-3">
+            <div className="col-span-5 space-y-2.5">
               <Link href="/" className="inline-block group" aria-label={storeName}>
                 <Image
-                  src="/logo-white-new.jpeg"
+                  src="/White-logo.png"
                   alt={storeName}
-                  width={140}
-                  height={100}
-                  className="h-10 w-auto object-contain shrink-0 group-hover:opacity-85 transition-opacity"
+                  width={220}
+                  height={158}
+                  className="h-[5rem] w-auto object-contain shrink-0 group-hover:opacity-85 transition-opacity"
                 />
               </Link>
               <p className="text-xs leading-relaxed text-neutral-400 max-w-sm">
@@ -335,7 +335,7 @@ export default function Footer() {
           </div>
 
           {/* Bottom Row: Copyright/Legal on Left, GET UPDATES Pill Input on Right */}
-          <div className="grid grid-cols-12 gap-12 lg:gap-16 items-end pt-8 sm:pt-10 border-t border-neutral-800/80">
+          <div className="grid grid-cols-12 gap-12 lg:gap-16 items-end pt-6 sm:pt-8 border-t border-neutral-800/80">
             {/* Left: Copyright and Legal */}
             <div className="col-span-5 text-xs text-neutral-400 space-y-1.5 leading-relaxed">
               <p>
