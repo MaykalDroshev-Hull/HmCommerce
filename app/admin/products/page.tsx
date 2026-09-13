@@ -73,6 +73,7 @@ interface Product {
   promotional_price?: number | null;
   variants?: any[];
   Variants?: any[];
+  images?: string[];
 }
 
 interface Variant {
@@ -155,6 +156,8 @@ export default function ProductsPage() {
   const [showCompleteAnimation, setShowCompleteAnimation] = useState(false);
   const [showDeleteCompleteAnimation, setShowDeleteCompleteAnimation] = useState(false);
   const [showBulkDeleteCompleteAnimation, setShowBulkDeleteCompleteAnimation] = useState(false);
+  const [selectedRelatedProductIds, setSelectedRelatedProductIds] = useState<string[]>([]);
+  const [relatedSearchQuery, setRelatedSearchQuery] = useState('');
 
   // Filter state
   const [selectedProductTypeFilter, setSelectedProductTypeFilter] = useState<string>('all');
@@ -344,7 +347,8 @@ export default function ProductsPage() {
           promotional_price: p.promotional_price != null ? Number(p.promotional_price) : null,
           variants: p.variants || p.Variants || [],
           ProductType: p.producttype,
-          propertyvalues: p.propertyvalues || {}
+          propertyvalues: p.propertyvalues || {},
+          images: Array.isArray(p.images) ? p.images : (p.images ? [p.images] : [])
         }));
 
         setProducts(mappedProducts);
@@ -560,6 +564,20 @@ export default function ProductsPage() {
       const result = await response.json();
       
       if (result.success) {
+        // Persist assigned related products
+        const savedProductId = editingProduct ? editingProduct.productid : (result.product?.productid || result.productId || result.id);
+        if (savedProductId) {
+          try {
+            await fetch(`/api/products/${savedProductId}/related`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ relatedProductIds: selectedRelatedProductIds })
+            });
+          } catch (relErr) {
+            console.error('Failed to update related products', relErr);
+          }
+        }
+
         // Show complete animation
         setShowCompleteAnimation(true);
         
@@ -575,6 +593,8 @@ export default function ProductsPage() {
           setSelectedPropertyValues({});
           setNewPropertyValues({});
           setProductImages([]);
+          setSelectedRelatedProductIds([]);
+          setRelatedSearchQuery('');
           setValidationErrors({});
           loadProducts();
         }, 1200);
@@ -693,6 +713,20 @@ export default function ProductsPage() {
           setOriginalPropertyValues({});
         }
       }
+
+      // Load assigned related products
+      try {
+        const relRes = await fetch(`/api/products/${product.productid}/related`);
+        const relData = await relRes.json();
+        if (relData.success && relData.isAssigned && Array.isArray(relData.products)) {
+          setSelectedRelatedProductIds(relData.products.map((p: any) => p.id || p.productid));
+        } else {
+          setSelectedRelatedProductIds([]);
+        }
+      } catch {
+        setSelectedRelatedProductIds([]);
+      }
+      setRelatedSearchQuery('');
     } catch (error) {
       alert('Failed to load product details');
       return;
@@ -1148,6 +1182,8 @@ export default function ProductsPage() {
     setVariants([]);
     setVariantDisplayValues({});
     setProductImages([]);
+    setSelectedRelatedProductIds([]);
+    setRelatedSearchQuery('');
     setValidationErrors({});
     setShowModal(true);
   };
@@ -2959,6 +2995,90 @@ export default function ProductsPage() {
                       </div>
                     </div>
                   )}
+                      {/* Related Products Section */}
+                      <div className="mt-6 pt-6 border-t border-gray-200">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900">
+                              {'Related Products'}
+                            </h3>
+                            <p className="text-xs text-gray-500">
+                              {'Select products to recommend together ("Pairs Well With This"). If none are selected, random products from the store will be displayed automatically.'}
+                            </p>
+                          </div>
+                          {selectedRelatedProductIds.length > 0 && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-neutral-900 text-white self-start sm:self-auto">
+                              {selectedRelatedProductIds.length} {'selected'}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Search / Filter */}
+                        <input
+                          type="text"
+                          placeholder="Search products to relate..."
+                          value={relatedSearchQuery}
+                          onChange={(e) => setRelatedSearchQuery(e.target.value)}
+                          className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-neutral-900 mb-2"
+                        />
+
+                        {/* Scrollable list */}
+                        <div className="max-h-52 overflow-y-auto border border-gray-200 rounded-md divide-y divide-gray-100 bg-white">
+                          {products
+                            .filter((p) => (!editingProduct || p.productid !== editingProduct.productid))
+                            .filter((p) => !relatedSearchQuery.trim() || p.name.toLowerCase().includes(relatedSearchQuery.toLowerCase()))
+                            .length === 0 ? (
+                            <div className="p-4 text-center text-xs text-gray-400">
+                              {'No other products found'}
+                            </div>
+                          ) : (
+                            products
+                              .filter((p) => (!editingProduct || p.productid !== editingProduct.productid))
+                              .filter((p) => !relatedSearchQuery.trim() || p.name.toLowerCase().includes(relatedSearchQuery.toLowerCase()))
+                              .map((p) => {
+                                const isChecked = selectedRelatedProductIds.includes(p.productid);
+                                const thumb = p.images?.[0] || '/image.png';
+                                return (
+                                  <label
+                                    key={p.productid}
+                                    className="flex items-center gap-3 p-2 hover:bg-neutral-50 cursor-pointer transition-colors"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setSelectedRelatedProductIds((prev) => [...prev, p.productid]);
+                                        } else {
+                                          setSelectedRelatedProductIds((prev) => prev.filter((id) => id !== p.productid));
+                                        }
+                                      }}
+                                      className="w-4 h-4 text-neutral-900 border-gray-300 rounded focus:ring-neutral-900 cursor-pointer"
+                                    />
+                                    <div className="w-8 h-8 rounded border border-gray-200 overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center">
+                                      <img
+                                        src={thumb}
+                                        alt={p.name}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          (e.target as HTMLElement).style.display = 'none';
+                                        }}
+                                      />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs font-medium text-gray-900 truncate">
+                                        {p.name}
+                                      </p>
+                                      <p className="text-[11px] text-gray-500">
+                                        £{Number(p.price || 0).toFixed(2)}
+                                      </p>
+                                    </div>
+                                  </label>
+                                );
+                              })
+                          )}
+                        </div>
+                      </div>
                     </div>
 
                     {/* Validation Error Message */}
@@ -2986,6 +3106,8 @@ export default function ProductsPage() {
                             setVariants([]);
         setVariantDisplayValues({});
                             setNewPropertyValues({});
+                            setSelectedRelatedProductIds([]);
+                            setRelatedSearchQuery('');
                             setValidationErrors({});
                             setShowCompleteAnimation(false);
                           }

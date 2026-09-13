@@ -6,12 +6,14 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ShoppingBag, Heart, Share2, ChevronDown, ChevronUp, RotateCcw, Truck, ShieldCheck, Check, Info, X, Star } from 'lucide-react';
+import { ShoppingBag, Heart, Share2, ChevronDown, ChevronUp, Truck, Check, Info, X, Star } from 'lucide-react';
 import KlarnaWidget from './KlarnaWidget';
 import QuickLoginModal from './QuickLoginModal';
 import { PaymentBadgesRow } from './PaymentIcons';
 import PayPalButtons from './PayPalButtons';
 import { getVariantEffectivePrice } from '@/lib/product-promo';
+import { useStoreSettings } from '@/context/StoreSettingsContext';
+import { parseShippingSettings } from '@/lib/shipping-rules';
 
 interface ProductDetailsProps {
   product: Product;
@@ -82,6 +84,8 @@ export default function ProductDetails({
 }: ProductDetailsProps) {
   const { addItem, openCart } = useCart();
   const { user, isAuthenticated } = useAuth();
+  const { settings: storeSettings } = useStoreSettings();
+  const { threshold: freeDeliveryThreshold, standardFee: standardDeliveryFee } = parseShippingSettings(storeSettings);
   const router = useRouter();
 
   const [variants, setVariants] = useState<Variant[]>([]);
@@ -423,7 +427,7 @@ export default function ProductDetails({
             Direct Tracked Delivery
           </span>
           <span className="text-neutral-500 text-[11px] block mt-0.5">
-            Free delivery on orders over £50 · Standard delivery £3.99
+            Free delivery on orders over £{freeDeliveryThreshold} · Standard delivery £{standardDeliveryFee.toFixed(2)}
           </span>
         </div>
         <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
@@ -481,29 +485,13 @@ export default function ProductDetails({
         <PaymentBadgesRow />
       </div>
 
-      {/* Trust Badges / Perks below button */}
-      <div className="pt-2 space-y-3 text-xs text-neutral-600 border-b border-neutral-100 pb-6">
-        <div className="flex items-start gap-3">
-          <RotateCcw size={16} className="text-neutral-900 shrink-0 mt-0.5" />
-          <div>
-            <span className="font-semibold text-neutral-900 block">Free 30-day returns</span>
-            <span className="text-[11px] text-neutral-500">Hassle-free returns within 30 days of delivery.</span>
-          </div>
-        </div>
-
+      {/* Shipping Perk below button */}
+      <div className="pt-2 text-xs text-neutral-600 border-b border-neutral-100 pb-6">
         <div className="flex items-start gap-3">
           <Truck size={16} className="text-neutral-900 shrink-0 mt-0.5" />
           <div>
-            <span className="font-semibold text-neutral-900 block">Free shipping over £50</span>
-            <span className="text-[11px] text-neutral-500">Standard delivery £3.99 for orders under £50.</span>
-          </div>
-        </div>
-
-        <div className="flex items-start gap-3">
-          <ShieldCheck size={16} className="text-neutral-900 shrink-0 mt-0.5" />
-          <div>
-            <span className="font-semibold text-neutral-900 block">1-Year Hardware Guarantee</span>
-            <span className="text-[11px] text-neutral-500">Anodised alloy hardware covered against mechanical defects.</span>
+            <span className="font-semibold text-neutral-900 block">Free shipping over £{freeDeliveryThreshold}</span>
+            <span className="text-[11px] text-neutral-500">Standard delivery £{standardDeliveryFee.toFixed(2)} for orders under £{freeDeliveryThreshold}.</span>
           </div>
         </div>
       </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, Upload, Settings as SettingsIcon, Image as ImageIcon, Trash2, ArrowUp, ArrowDown, Plus } from 'lucide-react';
+import { Save, Upload, Settings as SettingsIcon, Image as ImageIcon, Trash2, ArrowUp, ArrowDown, Plus, Truck } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import RichTextEditor from '@/components/RichTextEditor';
 import { useTheme } from '@/context/ThemeContext';
@@ -40,6 +40,8 @@ interface StoreSettings {
   closingremarks: string | null;
   aboutusphoto: string | null;
   aboutustext: string | null;
+  delivery_standard_price?: number | string | null;
+  free_delivery_threshold?: number | string | null;
   createdat: string;
   updatedat: string;
 }
@@ -169,7 +171,9 @@ export default function AdminSettingsPage() {
             telephonenumber: null,
             closingremarks: null,
             aboutusphoto: null,
-            aboutustext: null
+            aboutustext: null,
+            delivery_standard_price: 3.99,
+            free_delivery_threshold: 50.00
           };
 
           const createResponse = await fetch('/api/store-settings', {
@@ -261,7 +265,9 @@ export default function AdminSettingsPage() {
           telephonenumber: settings.telephonenumber,
           closingremarks: settings.closingremarks,
           aboutusphoto: settings.aboutusphoto,
-          aboutustext: settings.aboutustext
+          aboutustext: settings.aboutustext,
+          delivery_standard_price: settings.delivery_standard_price != null && settings.delivery_standard_price !== '' ? Number(settings.delivery_standard_price) : 3.99,
+          free_delivery_threshold: settings.free_delivery_threshold != null && settings.free_delivery_threshold !== '' ? Number(settings.free_delivery_threshold) : 50.00,
         })
       });
 
@@ -1015,6 +1021,100 @@ export default function AdminSettingsPage() {
                     />
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+
+          {/* Delivery & Shipping Settings */}
+          <div
+            id="settings-shipping"
+            className="p-6 rounded-lg"
+            style={{
+              backgroundColor: theme.colors.cardBg,
+              border: `1px solid ${theme.colors.border}`
+            }}
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <Truck size={22} style={{ color: theme.colors.primary }} />
+              <h2
+                className="text-xl font-semibold"
+                style={{ color: theme.colors.text }}
+              >
+                {'Delivery & Shipping Settings'}
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {/* Free Delivery Threshold */}
+              <div>
+                <label
+                  className="block text-sm font-medium mb-2"
+                  style={{ color: theme.colors.text }}
+                >
+                  {'Free Delivery Threshold (£)'}
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold text-sm">
+                    £
+                  </span>
+                  <input
+                    id="settings-free-delivery-threshold"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={settings.free_delivery_threshold ?? 50.00}
+                    onChange={(e) => {
+                      const val = e.target.value === '' ? '' : parseFloat(e.target.value);
+                      handleSettingChange('free_delivery_threshold', val);
+                    }}
+                    className="w-full pl-8 pr-3 py-2 rounded-md border transition-colors duration-300 font-medium"
+                    style={{
+                      backgroundColor: theme.colors.background,
+                      borderColor: theme.colors.border,
+                      color: theme.colors.text
+                    }}
+                    placeholder="50.00"
+                  />
+                </div>
+                <p className="text-xs mt-1.5" style={{ color: theme.colors.textSecondary }}>
+                  {'Orders at or above this amount automatically receive free UK tracked delivery.'}
+                </p>
+              </div>
+
+              {/* Standard Delivery Fee */}
+              <div>
+                <label
+                  className="block text-sm font-medium mb-2"
+                  style={{ color: theme.colors.text }}
+                >
+                  {'Standard Delivery Fee (£)'}
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold text-sm">
+                    £
+                  </span>
+                  <input
+                    id="settings-delivery-standard-price"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={settings.delivery_standard_price ?? 3.99}
+                    onChange={(e) => {
+                      const val = e.target.value === '' ? '' : parseFloat(e.target.value);
+                      handleSettingChange('delivery_standard_price', val);
+                    }}
+                    className="w-full pl-8 pr-3 py-2 rounded-md border transition-colors duration-300 font-medium"
+                    style={{
+                      backgroundColor: theme.colors.background,
+                      borderColor: theme.colors.border,
+                      color: theme.colors.text
+                    }}
+                    placeholder="3.99"
+                  />
+                </div>
+                <p className="text-xs mt-1.5" style={{ color: theme.colors.textSecondary }}>
+                  {'Charged on orders below the free delivery threshold.'}
+                </p>
               </div>
             </div>
           </div>

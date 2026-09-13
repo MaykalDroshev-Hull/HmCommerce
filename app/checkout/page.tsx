@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import PublicPageLayout from '@/components/PublicPageLayout';
 import LoadingScreen from '@/components/LoadingScreen';
 import { useLanguage } from '@/context/LanguageContext';
@@ -11,7 +12,8 @@ import { useStoreSettings } from '@/context/StoreSettingsContext';
 import { useAuth } from '@/context/AuthContext';
 import { useCheckoutStore, type DeliveryType, type CityOption } from '@/store/checkoutStore';
 import { translations } from '@/lib/translations';
-import { ShoppingBag, Truck, MapPin, Package, ShieldCheck, Tag, CheckCircle2, Loader2 } from 'lucide-react';
+import { ShoppingBag, Truck, MapPin, Package, ShieldCheck, Tag, CheckCircle2, Loader2, Check, ChevronRight } from 'lucide-react';
+import { getFreeDeliveryProgress } from '@/lib/shipping-rules';
 import FomoBadge, { type FomoMessage } from '@/components/FomoBadge';
 import { trackStoreEvent } from '@/lib/vercel-analytics';
 import { ApplePayIcon, PayPalIcon, KlarnaBadgeIcon, PaymentBadgesRow } from '@/components/PaymentIcons';
@@ -392,10 +394,13 @@ function CheckoutContent() {
     });
   };
 
-  const getDeliveryCost = (deliveryType: DeliveryType) => {
-    // UK Tracked Delivery: Free over £50, else £3.99
-    if (totalPrice >= 50) return 0.0;
-    return 3.99;
+  const freeDeliveryProgress = useMemo(
+    () => getFreeDeliveryProgress(totalPrice, settings),
+    [totalPrice, settings]
+  );
+
+  const getDeliveryCost = (deliveryType?: DeliveryType) => {
+    return freeDeliveryProgress.isFree ? 0.0 : freeDeliveryProgress.standardFee;
   };
 
   const deliveryCost = getDeliveryCost(formData.deliveryType);
@@ -774,6 +779,76 @@ function CheckoutContent() {
             </div>
           </div>
 
+          {/* Free Shipping Progress & Upsell Prompt Banner */}
+          <div className="mb-6">
+            {freeDeliveryProgress.isFree ? (
+              <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/70 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                    <Check size={16} />
+                  </div>
+                  <div>
+                    <p className="text-xs sm:text-sm font-bold text-emerald-950">
+                      You’ve unlocked FREE UK Tracked Delivery!
+                    </p>
+                    <p className="text-[11px] text-emerald-800 mt-0.5">
+                      Direct tracked dispatch applied at checkout.
+                    </p>
+                  </div>
+                </div>
+                <span className="text-xs font-bold text-emerald-700 bg-white px-2.5 py-1 rounded-md border border-emerald-200 shrink-0">
+                  QUALIFIED
+                </span>
+              </div>
+            ) : (
+              <div className={`p-4 rounded-xl border transition-all ${
+                freeDeliveryProgress.isClose
+                  ? 'border-amber-300 bg-amber-50/70 shadow-xs'
+                  : 'border-neutral-200 bg-neutral-50/80'
+              }`}>
+                <div className="flex items-center justify-between gap-3 mb-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <Truck size={18} className={freeDeliveryProgress.isClose ? 'text-amber-700 shrink-0' : 'text-neutral-700 shrink-0'} />
+                    <span className="text-xs sm:text-sm font-bold text-neutral-950">
+                      {freeDeliveryProgress.isClose ? (
+                        <>
+                          You&apos;re only <span className="text-amber-800 font-extrabold underline decoration-amber-400">£{freeDeliveryProgress.amountNeeded.toFixed(2)}</span> away from FREE Delivery!
+                        </>
+                      ) : (
+                        <>
+                          Free Tracked Delivery on orders over £{freeDeliveryProgress.threshold.toFixed(2)}
+                        </>
+                      )}
+                    </span>
+                  </div>
+                  <Link
+                    href="/products"
+                    className="text-xs font-semibold text-neutral-900 hover:text-neutral-700 underline shrink-0 inline-flex items-center gap-1"
+                  >
+                    <span>Add items</span>
+                    <ChevronRight size={13} />
+                  </Link>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="space-y-1">
+                  <div className="w-full bg-neutral-200/80 h-2 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-500 rounded-full ${
+                        freeDeliveryProgress.isClose ? 'bg-amber-600' : 'bg-neutral-900'
+                      }`}
+                      style={{ width: `${freeDeliveryProgress.progressPercent}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-neutral-500 font-medium">
+                    <span>£{totalPrice.toFixed(2)} in bag</span>
+                    <span>£{freeDeliveryProgress.threshold.toFixed(2)} target</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left Column - Form (Desktop) / Top (Mobile) */}
             <div className="order-1 lg:order-1 space-y-6">
@@ -1026,12 +1101,14 @@ function CheckoutContent() {
                           Direct Tracked Delivery
                         </div>
                         <div className="text-xs text-neutral-500">
-                          {totalPrice >= 50 ? 'Free Delivery (orders over £50)' : 'Standard Tracked Delivery (£3.99)'} · Direct to your door
+                          {freeDeliveryProgress.isFree
+                            ? `Free Delivery (orders over £${freeDeliveryProgress.threshold.toFixed(2)})`
+                            : `Standard Tracked Delivery (£${freeDeliveryProgress.standardFee.toFixed(2)})`} · Direct to your door
                         </div>
                       </div>
                     </div>
                     <span className="text-xs font-bold text-neutral-900">
-                      {totalPrice >= 50 ? 'FREE' : '£3.99'}
+                      {freeDeliveryProgress.isFree ? 'FREE' : `£${freeDeliveryProgress.standardFee.toFixed(2)}`}
                     </span>
                   </div>
 
@@ -1424,9 +1501,27 @@ function CheckoutContent() {
                       <span>-£{appliedDiscount.discountAmount.toFixed(2)}</span>
                     </div>
                   )}
+                  {/* Free Delivery Close Callout in Summary */}
+                  {freeDeliveryProgress.isClose && (
+                    <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-between text-xs">
+                      <span className="text-amber-900 font-medium">
+                        Add <span className="font-bold">£{freeDeliveryProgress.amountNeeded.toFixed(2)}</span> more to save £{freeDeliveryProgress.standardFee.toFixed(2)} delivery!
+                      </span>
+                      <Link href="/products" className="font-bold text-amber-950 underline hover:text-amber-800 shrink-0">
+                        Add item
+                      </Link>
+                    </div>
+                  )}
+
                   <div className="flex justify-between text-sm">
                     <span className="text-[#6b6b6b]">{t.delivery} (Direct Tracked Delivery):</span>
-                    <span className="font-medium">£{deliveryCost.toFixed(2)}</span>
+                    <span className="font-medium">
+                      {freeDeliveryProgress.isFree ? (
+                        <span className="text-emerald-700 font-bold">FREE</span>
+                      ) : (
+                        `£${deliveryCost.toFixed(2)}`
+                      )}
+                    </span>
                   </div>
                   <div className="flex justify-between text-lg font-bold pt-2 border-t">
                     <span>{t.orderTotal}:</span>

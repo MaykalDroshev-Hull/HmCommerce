@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createPaypalOrder, type PaypalItem } from '@/lib/paypal';
 import { logger } from '@/lib/logger';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { calculateDeliveryCost } from '@/lib/shipping-rules';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,8 +22,12 @@ export async function POST(request: NextRequest) {
       const numQuantity = Math.max(1, Number(quantity) || 1);
       const subtotal = numPrice * numQuantity;
 
-      // UK Standard delivery: Free over £50, else £3.99
-      const shipping = subtotal >= 50 ? 0.0 : 3.99;
+      const { data: storeSettings } = await supabaseAdmin
+        .from('store_settings')
+        .select('free_delivery_threshold, delivery_standard_price')
+        .limit(1)
+        .single();
+      const shipping = calculateDeliveryCost(subtotal, storeSettings);
       const total = subtotal + shipping;
 
       const itemName = [title, colour, size].filter(Boolean).join(' - ');

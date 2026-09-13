@@ -8,6 +8,7 @@ import { sendCustomerOrderEmail, sendAdminOrderEmail } from '@/lib/email';
 import { buildOrderEmailItems } from '@/lib/order-email-items';
 import { logger } from '@/lib/logger';
 import { trackServerEvent } from '@/lib/vercel-analytics';
+import { calculateDeliveryCost } from '@/lib/shipping-rules';
 
 async function getOrCreateCustomer(customerData: {
   firstName: string;
@@ -146,11 +147,17 @@ export async function POST(request: NextRequest) {
     let deliveryCost = 0;
     let total = Number(capture?.amount?.value) || 0;
 
+    const { data: storeSettings } = await supabaseAdmin
+      .from('store_settings')
+      .select('free_delivery_threshold, delivery_standard_price')
+      .limit(1)
+      .single();
+
     if (type === 'product' && productData) {
       const pPrice = Number(productData.price) || 0;
       const pQty = Number(productData.quantity) || 1;
       subtotal = pPrice * pQty;
-      deliveryCost = subtotal >= 50 ? 0.0 : 3.99;
+      deliveryCost = calculateDeliveryCost(subtotal, storeSettings);
       if (!total) total = subtotal + deliveryCost;
 
       orderItems = [
@@ -169,7 +176,7 @@ export async function POST(request: NextRequest) {
         name: (ci.name || `${ci.brand || ''} ${ci.model || ''}`).trim(),
       }));
       subtotal = orderItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-      deliveryCost = subtotal >= 50 ? 0.0 : 3.99;
+      deliveryCost = calculateDeliveryCost(subtotal, storeSettings);
       if (!total) total = subtotal + deliveryCost;
     } else {
       total = Number(capture?.amount?.value) || 0;

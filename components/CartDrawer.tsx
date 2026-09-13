@@ -2,15 +2,17 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { X, Plus, Minus, ShoppingCart, Trash2 } from 'lucide-react';
+import { X, Plus, Minus, ShoppingCart, Trash2, Truck, Check } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useCart } from '@/context/CartContext';
+import { useStoreSettings } from '@/context/StoreSettingsContext';
 import { translations } from '@/lib/translations';
 import Link from 'next/link';
 import { ExpressCheckoutButtons } from './PaymentIcons';
+import { getFreeDeliveryProgress } from '@/lib/shipping-rules';
 
 function unlockBodyScroll(savedScrollY: number) {
   document.body.style.position = '';
@@ -24,6 +26,7 @@ const CartDrawer: React.FC = () => {
   const router = useRouter();
   const { language } = useLanguage();
   const { theme } = useTheme();
+  const { settings } = useStoreSettings();
   const {
     items,
     isCartOpen,
@@ -36,6 +39,7 @@ const CartDrawer: React.FC = () => {
   } = useCart();
 
   const t = translations[language || 'en'];
+  const freeDeliveryProgress = getFreeDeliveryProgress(totalPrice, settings);
   const scrollYRef = useRef(0);
 
   // Smooth entry & exit transition states
@@ -305,6 +309,39 @@ const CartDrawer: React.FC = () => {
             className="border-t p-5 sm:p-6 space-y-4"
             style={{ borderColor: theme.colors.border }}
           >
+            {/* Free Delivery Bar in Drawer */}
+            <div className="pb-1">
+              <div className="flex items-center justify-between text-xs mb-1.5 font-medium">
+                <span className="flex items-center gap-1.5 text-neutral-800">
+                  <Truck size={14} className={freeDeliveryProgress.isClose ? 'text-amber-700' : 'text-neutral-700'} />
+                  {freeDeliveryProgress.isFree ? (
+                    <span className="text-emerald-700 font-bold">You&apos;ve qualified for FREE Delivery!</span>
+                  ) : freeDeliveryProgress.isClose ? (
+                    <span>Only <strong className="text-amber-800">£{freeDeliveryProgress.amountNeeded.toFixed(2)}</strong> away from FREE Delivery</span>
+                  ) : (
+                    <span>Free delivery over £{freeDeliveryProgress.threshold.toFixed(2)}</span>
+                  )}
+                </span>
+                {freeDeliveryProgress.isFree && (
+                  <span className="text-[10px] font-bold text-emerald-700 uppercase bg-emerald-50 px-1.5 py-0.5 rounded">
+                    Free
+                  </span>
+                )}
+              </div>
+              <div className="w-full bg-neutral-200 h-1.5 rounded-full overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-500 rounded-full ${
+                    freeDeliveryProgress.isFree
+                      ? 'bg-emerald-600'
+                      : freeDeliveryProgress.isClose
+                      ? 'bg-amber-600'
+                      : 'bg-neutral-900'
+                  }`}
+                  style={{ width: `${freeDeliveryProgress.progressPercent}%` }}
+                />
+              </div>
+            </div>
+
             <div className="flex justify-between items-center">
               <span className="text-lg font-medium" style={{ color: theme.colors.text }}>
                 {t.total}:

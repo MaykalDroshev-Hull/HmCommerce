@@ -26,6 +26,8 @@ interface StoreSettings {
   closingremarks: string | null;
   aboutusphoto: string | null;
   aboutustext: string | null;
+  delivery_standard_price?: number | string | null;
+  free_delivery_threshold?: number | string | null;
   createdat: string;
   updatedat: string;
 }

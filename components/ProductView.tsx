@@ -5,57 +5,14 @@ import Link from 'next/link';
 import ProductMediaGallery from './ProductMediaGallery';
 import ProductDetails from './ProductDetails';
 import ProductStickyBanner from './ProductStickyBanner';
+import ProductCard from './ProductCard';
 import { Product } from '@/lib/data';
-import { Shield, Sparkles, Droplets, Compass, CheckCircle2, ChevronDown, ChevronUp, ChevronRight, Star } from 'lucide-react';
-
+import { ChevronRight } from 'lucide-react';
 
 interface ProductViewProps {
   product: Product;
   superPromo?: any;
 }
-
-const FAQS = [
-  {
-    q: 'How do I choose the right size for my dog?',
-    a: 'Measure around your dog\'s neck with a soft tape measure where the collar would naturally sit. Add two fingers of breathing room. Consult our size guide table (XS to XL) to find the ideal match.',
-  },
-  {
-    q: 'Is the collar waterproof and suitable for swimming?',
-    a: 'Yes! The high-tenacity ripstop webbing and anodised zinc-alloy buckle are mud and water-resistant. Rinse with freshwater after saltwater swims and air dry.',
-  },
-  {
-    q: 'How does Klarna Pay in 3 work?',
-    a: 'At checkout, select Klarna. The total cost is split into 3 equal interest-free payments. The first is taken when your order is dispatched, and the remaining two every 30 days. No interest, no fees when paid on time.',
-  },
-  {
-    q: 'What is your UK returns policy?',
-    a: 'We offer hassle-free 30-day returns on all unworn items with original tags intact. Simply contact support@mb-paws.co.uk with your order details for straightforward return instructions.',
-  },
-];
-
-const REVIEWS = [
-  {
-    author: 'James W. (Cotswolds)',
-    dog: 'Labrador Retriever • Size L',
-    rating: 5,
-    title: 'Outstanding build quality',
-    comment: 'The zinc-alloy buckle feels indestructible, and the Heathered Graphite colour looks gorgeous on my black lab. Handles muddy woodland walks effortlessly.',
-  },
-  {
-    author: 'Charlotte H. (Edinburgh)',
-    dog: 'Cocker Spaniel • Size M',
-    rating: 5,
-    title: 'Comfortable and no fur matting',
-    comment: 'Previous nylon collars pinched his fur, but the soft folded edges on the Daydrift collar are smooth and gentle. Klarna made buying matching leads easy too.',
-  },
-  {
-    author: 'Oliver T. (London)',
-    dog: 'French Bulldog • Size S',
-    rating: 5,
-    title: 'Sleek, minimal, premium',
-    comment: 'Very Lululemon-like aesthetic for dogs. Super clean matte finish and no annoying jingle from tags thanks to the separate loop.',
-  },
-];
 
 export default function ProductView({ product }: ProductViewProps) {
   const [galleryImages, setGalleryImages] = useState<string[]>(() => {
@@ -79,7 +36,11 @@ export default function ProductView({ product }: ProductViewProps) {
   const [selectedColourHex, setSelectedColourHex] = useState('#4A4D50');
   const [selectedSize, setSelectedSize] = useState('XS');
   const [activePrice, setActivePrice] = useState<number>(() => Number(product?.price || 36.00));
-  const [faqOpenIdx, setFaqOpenIdx] = useState<number | null>(0);
+
+  // Related products state
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [isAssigned, setIsAssigned] = useState(false);
+  const [isLoadingRelated, setIsLoadingRelated] = useState(false);
 
   const buyButtonRef = useRef<HTMLButtonElement | null>(null);
 
@@ -100,6 +61,36 @@ export default function ProductView({ product }: ProductViewProps) {
       'https://rrpmpvffewatuldyytqf.supabase.co/storage/v1/object/public/products/collar-lifestyle.jpg',
     ]);
   }, [product.images, (product as any).Images]);
+
+  // Load related products
+  const currentProductId = product.id || (product as any).productid;
+  useEffect(() => {
+    if (!currentProductId) return;
+    let isCancelled = false;
+
+    const fetchRelated = async () => {
+      try {
+        setIsLoadingRelated(true);
+        const res = await fetch(`/api/products/${currentProductId}/related`);
+        const data = await res.json();
+        if (!isCancelled && data.success && Array.isArray(data.products)) {
+          setRelatedProducts(data.products);
+          setIsAssigned(Boolean(data.isAssigned));
+        }
+      } catch (err) {
+        console.error('Failed to load related products', err);
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingRelated(false);
+        }
+      }
+    };
+
+    fetchRelated();
+    return () => {
+      isCancelled = true;
+    };
+  }, [currentProductId]);
 
 
   // Variant change callback
@@ -251,143 +242,51 @@ export default function ProductView({ product }: ProductViewProps) {
         </div>
       </main>
 
-      {/* Deep-Dive Features Section (#features) */}
-      <section id="features" className="border-t border-neutral-200 bg-neutral-50/60 py-16 sm:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-2xl mx-auto text-center space-y-3 mb-12 sm:mb-16">
-            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-500">
-              Crafted For Performance
-            </h2>
-            <p className="text-2xl sm:text-3xl font-bold text-neutral-950 tracking-tight">
-              Minimalist design. Maximum all-weather endurance.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="p-6 bg-white rounded-lg border border-neutral-200 space-y-3">
-              <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-900">
-                <Shield size={20} />
+      {/* Related Products Section */}
+      {(relatedProducts.length > 0 || isLoadingRelated) && (
+        <section className="border-t border-neutral-200 py-16 sm:py-24 bg-neutral-50/40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-12 gap-4">
+              <div>
+                <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-500 mb-1.5">
+                  {isAssigned ? 'Pairs Well With This' : 'Recommended For You'}
+                </h2>
+                <p className="text-2xl sm:text-3xl font-bold text-neutral-950 tracking-tight">
+                  {isAssigned ? 'Complete The Look' : 'You May Also Like'}
+                </p>
               </div>
-              <h3 className="font-bold text-base text-neutral-950">Matte Zinc-Alloy Buckle</h3>
-              <p className="text-xs text-neutral-600 leading-relaxed">
-                Aircraft-grade quick-release buckle tested for swift unfastening while locking rigidly under rigorous pulling force.
-              </p>
+              <Link
+                href="/products"
+                className="text-xs font-bold uppercase tracking-wider text-neutral-900 hover:text-neutral-600 underline shrink-0 inline-flex items-center gap-1.5"
+              >
+                <span>View All Products</span>
+                <ChevronRight size={14} />
+              </Link>
             </div>
 
-            <div className="p-6 bg-white rounded-lg border border-neutral-200 space-y-3">
-              <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-900">
-                <Droplets size={20} />
-              </div>
-              <h3 className="font-bold text-base text-neutral-950">Water & Mud Repellent</h3>
-              <p className="text-xs text-neutral-600 leading-relaxed">
-                Hydrophobic weave prevents water absorption, foul odour buildup, and heavy soggy collars after rainy country walks.
-              </p>
-            </div>
-
-            <div className="p-6 bg-white rounded-lg border border-neutral-200 space-y-3">
-              <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-900">
-                <Sparkles size={20} />
-              </div>
-              <h3 className="font-bold text-base text-neutral-950">Zero Coat Breakage</h3>
-              <p className="text-xs text-neutral-600 leading-relaxed">
-                Silky tubular webbing edges eliminate neck friction, protecting delicate fur and sensitive skin on long daily excursions.
-              </p>
-            </div>
-
-            <div className="p-6 bg-white rounded-lg border border-neutral-200 space-y-3">
-              <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-900">
-                <Compass size={20} />
-              </div>
-              <h3 className="font-bold text-base text-neutral-950">Quiet Tag Attachment</h3>
-              <p className="text-xs text-neutral-600 leading-relaxed">
-                Separate dedicated silicone-backed loop isolates dog tags away from the main lead attachment ring, silencing constant metal jingle.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Verified Reviews Section (#reviews) */}
-      <section id="reviews" className="py-16 sm:py-24 border-t border-neutral-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-2xl mx-auto text-center space-y-3 mb-12 sm:mb-16">
-            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-500">
-              Verified Customer Feedback
-            </h2>
-            <div className="flex items-center justify-center gap-2 text-neutral-900 text-lg">
-              <div className="flex items-center gap-0.5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} size={16} className="fill-neutral-950 text-neutral-950" />
+            {isLoadingRelated ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="animate-pulse space-y-3">
+                    <div className="aspect-square bg-neutral-200/80 rounded-lg" />
+                    <div className="h-4 bg-neutral-200/80 rounded w-3/4" />
+                    <div className="h-4 bg-neutral-200/80 rounded w-1/4" />
+                  </div>
                 ))}
               </div>
-              <span className="font-bold text-base">4.9 / 5.0 (12 Reviews)</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {REVIEWS.map((rev) => (
-              <div
-                key={rev.author}
-                className="p-6 rounded-lg border border-neutral-200 bg-white space-y-3 flex flex-col justify-between"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center gap-0.5 text-neutral-900">
-                    {Array.from({ length: rev.rating }).map((_, i) => (
-                      <Star key={i} size={14} className="fill-neutral-950 text-neutral-950" />
-                    ))}
-                  </div>
-                  <h3 className="font-bold text-sm text-neutral-950">{rev.title}</h3>
-                  <p className="text-xs text-neutral-600 leading-relaxed">&ldquo;{rev.comment}&rdquo;</p>
-                </div>
-
-                <div className="pt-3 border-t border-neutral-100 flex items-center justify-between text-[11px] text-neutral-500">
-                  <span className="font-semibold text-neutral-900">{rev.author}</span>
-                  <span className="flex items-center gap-1 text-emerald-700">
-                    <CheckCircle2 size={12} /> Verified
-                  </span>
-                </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {relatedProducts.map((relProduct) => (
+                  <ProductCard
+                    key={relProduct.id || (relProduct as any).productid}
+                    product={relProduct}
+                  />
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        </div>
-      </section>
-
-      {/* FAQ Section (#faq) */}
-      <section id="faq" className="py-16 sm:py-24 border-t border-neutral-200 bg-neutral-50/60">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center space-y-3 mb-12">
-            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-500">
-              Questions & Answers
-            </h2>
-            <p className="text-2xl sm:text-3xl font-bold text-neutral-950 tracking-tight">
-              Frequently Asked Questions
-            </p>
-          </div>
-
-          <div className="divide-y divide-neutral-200 bg-white rounded-lg border border-neutral-200 px-6">
-            {FAQS.map((faq, idx) => {
-              const isOpen = faqOpenIdx === idx;
-              return (
-                <div key={faq.q} className="py-5">
-                  <button
-                    type="button"
-                    onClick={() => setFaqOpenIdx(isOpen ? null : idx)}
-                    className="w-full flex items-center justify-between text-left font-bold text-sm text-neutral-900 hover:text-neutral-700 transition-colors"
-                  >
-                    <span>{faq.q}</span>
-                    {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                  </button>
-                  {isOpen && (
-                    <div className="pt-3 text-xs text-neutral-600 leading-relaxed animate-in fade-in duration-200">
-                      <p>{faq.a}</p>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 }
