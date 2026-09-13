@@ -24,7 +24,8 @@ import {
   ClipboardList,
   ShoppingCart,
   Mail,
-  MailCheck
+  MailCheck,
+  Truck
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -128,6 +129,12 @@ export default function AdminSidebar({ currentPath, collapsed: externalCollapsed
       label: 'Items',
       path: '/admin/products',
       icon: Package
+    },
+    {
+      id: 'dropshipping',
+      label: 'Dropshipping',
+      path: '/admin/dropshipping',
+      icon: Truck
     },
     {
       id: 'stock',
