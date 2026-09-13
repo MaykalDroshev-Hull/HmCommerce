@@ -6,6 +6,8 @@ export type PromoDiscountSource = {
 
 export type VariantPriceSource = {
   price?: number | null;
+  compare_at_price?: number | null;
+  compareAtPrice?: number | null;
   promotional_price?: number | null;
   promotionalPrice?: number | null;
 };
@@ -79,10 +81,14 @@ export function getVariantEffectivePrice(
   variant: VariantPriceSource | null | undefined,
   product?: PromoDiscountSource | null
 ): EffectivePriceResult {
-  const original = roundMoney(Number(variant?.price) || 0);
+  const basePrice = roundMoney(Number(variant?.price) || 0);
+  const compareAtRaw = variant?.compare_at_price ?? variant?.compareAtPrice;
+  const compareAt = compareAtRaw != null && Number(compareAtRaw) > 0 ? roundMoney(Number(compareAtRaw)) : null;
   const variantPromo = getVariantPromotionalPrice(variant);
 
-  if (variantPromo != null && variantPromo < original) {
+  // If explicit promotional_price is set and less than base price
+  if (variantPromo != null && variantPromo < basePrice) {
+    const original = compareAt && compareAt > basePrice ? compareAt : basePrice;
     return {
       original,
       sale: variantPromo,
@@ -91,17 +97,27 @@ export function getVariantEffectivePrice(
     };
   }
 
-  const productPercent = getPromoDiscountPercent(product);
-  if (productPercent > 0 && original > 0) {
+  // If compare_at_price is set and higher than base price (base price is the sale price)
+  if (compareAt != null && compareAt > basePrice && basePrice > 0) {
     return {
-      original,
-      sale: getPromoSalePrice(original, product),
+      original: compareAt,
+      sale: basePrice,
+      promoPercent: getDiscountPercentFromPrices(compareAt, basePrice),
+      promoActive: true,
+    };
+  }
+
+  const productPercent = getPromoDiscountPercent(product);
+  if (productPercent > 0 && basePrice > 0) {
+    return {
+      original: basePrice,
+      sale: getPromoSalePrice(basePrice, product),
       promoPercent: productPercent,
       promoActive: true,
     };
   }
 
-  return { original, sale: original, promoPercent: 0, promoActive: false };
+  return { original: basePrice, sale: basePrice, promoPercent: 0, promoActive: false };
 }
 
 export function hasVariantOrProductPromo(

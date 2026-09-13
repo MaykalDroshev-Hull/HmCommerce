@@ -11,12 +11,13 @@ import KlarnaWidget from './KlarnaWidget';
 import QuickLoginModal from './QuickLoginModal';
 import { PaymentBadgesRow } from './PaymentIcons';
 import PayPalButtons from './PayPalButtons';
+import { getVariantEffectivePrice } from '@/lib/product-promo';
 
 interface ProductDetailsProps {
   product: Product;
   onVariantChange?: (images: string[] | string | undefined) => void;
   onAddToCartTrigger?: () => void;
-  onOptionChangeCallback?: (colour: string, colourHex: string, size: string) => void;
+  onOptionChangeCallback?: (colour: string, colourHex: string, size: string, price?: number) => void;
   buyButtonRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
@@ -24,6 +25,10 @@ interface Variant {
   productvariantid: string;
   sku?: string;
   price?: number;
+  promotional_price?: number | null;
+  compare_at_price?: number | null;
+  promotionalprice?: number | null;
+  compareatprice?: number | null;
   quantity: number;
   isvisible: boolean;
   ProductVariantPropertyvalues?: Array<{
@@ -161,13 +166,20 @@ export default function ProductDetails({
     }
   }, [product.variants, (product as any).Variants]);
 
-  // Current Price
-  const currentPrice = useMemo(() => {
-    if (selectedVariant?.price != null) return Number(selectedVariant.price);
-    if (variants.length > 0 && variants[0].price != null) return Number(variants[0].price);
-    if (product.price != null) return Number(product.price);
-    return 36.00;
-  }, [selectedVariant, variants, product.price]);
+  // Effective Price calculation
+  const effectivePricing = useMemo(() => {
+    const targetVariant = selectedVariant || (variants.length > 0 ? variants[0] : null);
+    const variantSource = targetVariant
+      ? {
+          price: targetVariant.price != null ? Number(targetVariant.price) : Number(product.price || 36.00),
+          promotional_price: (targetVariant as any).promotional_price ?? (targetVariant as any).promotionalprice,
+          compare_at_price: (targetVariant as any).compare_at_price ?? (targetVariant as any).compareatprice,
+        }
+      : { price: Number(product.price || 36.00) };
+    return getVariantEffectivePrice(variantSource, product);
+  }, [selectedVariant, variants, product]);
+
+  const currentPrice = effectivePricing.sale;
 
   // Handle Option Click (Colour or Size)
   const handleOptionSelect = (propertyKey: string, value: string) => {
@@ -195,11 +207,22 @@ export default function ProductDetails({
       }
     }
 
+    const eff = getVariantEffectivePrice(
+      match
+        ? {
+            price: match.price != null ? Number(match.price) : Number(product.price || 36.00),
+            promotional_price: (match as any).promotional_price ?? (match as any).promotionalprice,
+            compare_at_price: (match as any).compare_at_price ?? (match as any).compareatprice,
+          }
+        : { price: Number(product.price || 36.00) },
+      product
+    );
+
     // Notify parent for sticky banner
     const colourVal = updated['colour'] || updated['color'] || '';
     const sizeVal = updated['size'] || '';
     const hex = COLOUR_HEX_MAP[colourVal.toLowerCase()] || '#4A4D50';
-    onOptionChangeCallback?.(colourVal, hex, sizeVal);
+    onOptionChangeCallback?.(colourVal, hex, sizeVal, eff.sale);
   };
 
   const selectedColour = selectedOptions['colour'] || selectedOptions['color'] || 'Heathered Graphite Grey';
@@ -207,8 +230,8 @@ export default function ProductDetails({
   const selectedColourHex = COLOUR_HEX_MAP[selectedColour.toLowerCase()] || '#4A4D50';
 
   useEffect(() => {
-    onOptionChangeCallback?.(selectedColour, selectedColourHex, selectedSize);
-  }, [selectedColour, selectedColourHex, selectedSize]);
+    onOptionChangeCallback?.(selectedColour, selectedColourHex, selectedSize, effectivePricing.sale);
+  }, [selectedColour, selectedColourHex, selectedSize, effectivePricing.sale, onOptionChangeCallback]);
 
   const handleAddToCart = () => {
     const cartProps: Record<string, string> = {};
@@ -301,8 +324,20 @@ export default function ProductDetails({
 
       {/* Price & Klarna */}
       <div className="space-y-2 pt-2 border-t border-neutral-100">
-        <div className="text-xl sm:text-2xl font-bold text-neutral-950">
-          £{currentPrice.toFixed(2)}
+        <div className="flex items-baseline gap-2.5 flex-wrap">
+          <span className="text-xl sm:text-2xl font-bold text-neutral-950">
+            £{effectivePricing.sale.toFixed(2)}
+          </span>
+          {effectivePricing.promoActive && (
+            <>
+              <span className="text-sm sm:text-base text-neutral-400 line-through font-normal">
+                £{effectivePricing.original.toFixed(2)}
+              </span>
+              <span className="inline-flex items-center text-[11px] font-bold uppercase tracking-wider text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                Save {effectivePricing.promoPercent}%
+              </span>
+            </>
+          )}
         </div>
         <KlarnaWidget price={currentPrice} currencySymbol="£" />
       </div>

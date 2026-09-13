@@ -262,6 +262,8 @@ export async function GET(request: NextRequest) {
           color: variantProperties.color || variantProperties.colour || '',
           size: variantProperties.size || '',
           price: firstVariant?.price || 0,
+          compare_at_price: firstVariant?.compare_at_price ?? null,
+          promotional_price: firstVariant?.promotional_price ?? null,
           quantity: firstVariant?.quantity || 0,
           visible: firstVariant?.isvisible ?? true,
           images: productImageUrls.length > 0 ? productImageUrls : ['/image.png'],
@@ -380,14 +382,34 @@ export async function POST(request: NextRequest) {
 
       // Batch create all variants at once
       if (uniqueVariants.length > 0) {
-        const variantRows = uniqueVariants.map((variantData) => ({
-          productid: product.productid,
-          sku: variantData.sku,
-          price: variantData.price,
-          quantity: variantData.quantity,
-          trackquantity: variantData.trackquantity ?? true,
-          isvisible: variantData.isvisible ?? true
-        }));
+        const variantRows = uniqueVariants.map((variantData) => {
+          const price = Number(variantData.price) || 0;
+          const promotionalPrice =
+            variantData.promotional_price != null &&
+            variantData.promotional_price !== '' &&
+            !isNaN(Number(variantData.promotional_price)) &&
+            Number(variantData.promotional_price) > 0
+              ? Number(variantData.promotional_price)
+              : null;
+          const compareAtPrice =
+            variantData.compare_at_price != null &&
+            variantData.compare_at_price !== '' &&
+            !isNaN(Number(variantData.compare_at_price)) &&
+            Number(variantData.compare_at_price) > 0
+              ? Number(variantData.compare_at_price)
+              : (promotionalPrice && promotionalPrice < price ? price : null);
+
+          return {
+            productid: product.productid,
+            sku: variantData.sku,
+            price,
+            compare_at_price: compareAtPrice,
+            promotional_price: promotionalPrice,
+            quantity: variantData.quantity || 0,
+            trackquantity: variantData.trackquantity ?? true,
+            isvisible: variantData.isvisible ?? true
+          };
+        });
 
         const { data: createdVariants, error: variantError } = await supabase
           .from('product_variants')

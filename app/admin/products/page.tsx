@@ -68,12 +68,19 @@ interface Product {
   promodiscountpercent?: number | null;
   ProductType?: ProductType;
   propertyvalues?: Record<string, string>;
+  price?: number;
+  compare_at_price?: number | null;
+  promotional_price?: number | null;
+  variants?: any[];
+  Variants?: any[];
 }
 
 interface Variant {
   productvariantid?: string;
   sku?: string;
   price: number;
+  compare_at_price?: number | null;
+  promotional_price?: number | null;
   quantity: number;
   trackquantity: boolean;
   isvisible: boolean;
@@ -113,13 +120,15 @@ export default function ProductsPage() {
     awaitingrestock: false,
     hasPromo: false,
     promodiscountpercent: '' as string,
+    promosellprice: '' as string,
+    promooriginalprice: '' as string,
     propertyvalues: {} as Record<string, string>
   });
   const [availableProperties, setAvailableProperties] = useState<Property[]>([]);
   const [selectedPropertyValues, setSelectedPropertyValues] = useState<Record<string, string[]>>({});
   const [originalPropertyValues, setOriginalPropertyValues] = useState<Record<string, string[]>>({});
   const [variants, setVariants] = useState<Variant[]>([]);
-  const [variantDisplayValues, setVariantDisplayValues] = useState<Record<string, { price?: string; quantity?: string }>>({});
+  const [variantDisplayValues, setVariantDisplayValues] = useState<Record<string, { price?: string; compare_at_price?: string; promotional_price?: string; quantity?: string }>>({});
   const [rfProductTypes, setRfProductTypes] = useState<Array<{rfproducttypeid: number, name: string}>>([]);
   const [filteredProductTypes, setFilteredProductTypes] = useState<ProductType[]>([]);
   const [showMediaModal, setShowMediaModal] = useState(false);
@@ -330,6 +339,10 @@ export default function ProductsPage() {
             p.promodiscountpercent != null && Number(p.promodiscountpercent) > 0
               ? Number(p.promodiscountpercent)
               : null,
+          price: p.price != null ? Number(p.price) : 0,
+          compare_at_price: p.compare_at_price != null ? Number(p.compare_at_price) : null,
+          promotional_price: p.promotional_price != null ? Number(p.promotional_price) : null,
+          variants: p.variants || p.Variants || [],
           ProductType: p.producttype,
           propertyvalues: p.propertyvalues || {}
         }));
@@ -554,7 +567,7 @@ export default function ProductsPage() {
         setTimeout(() => {
           setShowModal(false);
           setShowCompleteAnimation(false);
-          setFormData({ name: '', sku: '', description: '', rfproducttypeid: 1, producttypeid: '', isfeatured: false, isdisabled: false, awaitingrestock: false, hasPromo: false, promodiscountpercent: '', propertyvalues: {} });
+          setFormData({ name: '', sku: '', description: '', rfproducttypeid: 1, producttypeid: '', isfeatured: false, isdisabled: false, awaitingrestock: false, hasPromo: false, promodiscountpercent: '', promosellprice: '', promooriginalprice: '', propertyvalues: {} });
           setEditingProduct(null);
           setVariants([]);
           setVariantDisplayValues({});
@@ -592,6 +605,17 @@ export default function ProductsPage() {
           fullProduct.promodiscountpercent != null && Number(fullProduct.promodiscountpercent) > 0
             ? Number(fullProduct.promodiscountpercent)
             : null;
+
+        const allProductVariants = fullProduct.Variants || fullProduct.variants || [];
+        const firstVariantWithPrice = allProductVariants.find((v: any) => Number(v.price) > 0);
+        const originalPriceVal = firstVariantWithPrice ? Number(firstVariantWithPrice.price) : (fullProduct.price ? Number(fullProduct.price) : 0);
+        let sellPriceVal = '';
+        if (promoPercent != null && originalPriceVal > 0) {
+          sellPriceVal = (Math.round(originalPriceVal * (1 - promoPercent / 100) * 100) / 100).toFixed(2);
+        } else if (firstVariantWithPrice?.promotional_price != null && Number(firstVariantWithPrice.promotional_price) > 0) {
+          sellPriceVal = Number(firstVariantWithPrice.promotional_price).toFixed(2);
+        }
+
         setFormData({
           name: fullProduct.name,
           sku: fullProduct.sku || '',
@@ -601,8 +625,10 @@ export default function ProductsPage() {
           isfeatured: fullProduct.isfeatured || false,
           isdisabled: fullProduct.isdisabled === true,
           awaitingrestock: fullProduct.awaitingrestock === true,
-          hasPromo: promoPercent != null,
+          hasPromo: promoPercent != null || (firstVariantWithPrice?.promotional_price != null && Number(firstVariantWithPrice.promotional_price) > 0),
           promodiscountpercent: promoPercent != null ? String(promoPercent) : '',
+          promosellprice: sellPriceVal,
+          promooriginalprice: originalPriceVal > 0 ? originalPriceVal.toFixed(2) : '',
           propertyvalues: {}
         });
 
@@ -624,6 +650,8 @@ export default function ProductsPage() {
               productvariantid: v.productvariantid,
               sku: v.sku,
               price: v.price || 0,
+              compare_at_price: v.compare_at_price != null ? Number(v.compare_at_price) : null,
+              promotional_price: v.promotional_price != null ? Number(v.promotional_price) : null,
               quantity: v.quantity || 0,
               trackquantity: v.trackquantity ?? true,
               isvisible: v.isvisible ?? true,
@@ -935,9 +963,13 @@ export default function ProductsPage() {
           sku: existingVariant.sku || variantSKU, // Keep existing SKU if present
         };
       } else {
+        const defaultPrice = parseFloat(formData.promooriginalprice) || 0;
+        const defaultPromo = parseFloat(formData.promosellprice) || null;
         return {
           sku: variantSKU,
-          price: 0,
+          price: defaultPrice,
+          compare_at_price: null,
+          promotional_price: defaultPromo && defaultPromo > 0 && defaultPromo < defaultPrice ? defaultPromo : null,
           quantity: 0,
           trackquantity: true,
           isvisible: true,
@@ -976,8 +1008,12 @@ export default function ProductsPage() {
     }
   };
 
-  // Helper function to format value for display (empty string if 0)
-  const formatNumericValue = (value: number, variantIndex: number, field: 'price' | 'quantity'): string => {
+  // Helper function to format value for display (empty string if 0 or null)
+  const formatNumericValue = (
+    value: number | null | undefined,
+    variantIndex: number,
+    field: 'price' | 'compare_at_price' | 'promotional_price' | 'quantity'
+  ): string => {
     const key = `variant_${variantIndex}`;
     const displayValue = variantDisplayValues[key]?.[field];
     
@@ -987,7 +1023,7 @@ export default function ProductsPage() {
     }
     
     // Otherwise, format the numeric value
-    return value === 0 ? '' : value.toString();
+    return value === 0 || value == null ? '' : value.toString();
   };
 
   const deleteVariant = (index: number) => {
@@ -1103,6 +1139,8 @@ export default function ProductsPage() {
       awaitingrestock: false,
       hasPromo: false,
       promodiscountpercent: '',
+      promosellprice: '',
+      promooriginalprice: '',
       propertyvalues: {},
     });
     setProductTypeProperties([]);
@@ -1331,8 +1369,8 @@ export default function ProductsPage() {
                         <TableHeaderCell columnId="type" defaultWidth={220} minWidth={120}>
                           {t.productType}
                         </TableHeaderCell>
-                        <TableHeaderCell align="center" columnId="shop" defaultWidth={150} minWidth={110}>
-                          {'Shop'}
+                        <TableHeaderCell align="center" columnId="shop" defaultWidth={180} minWidth={130}>
+                          {'Price & Status'}
                         </TableHeaderCell>
                         <TableHeaderCell align="right" columnId="actions" defaultWidth={128} resizable={false}>
                           {t.actions}
@@ -1340,51 +1378,95 @@ export default function ProductsPage() {
                       </TableHeaderRow>
                     </TableHeader>
                     <TableBody>
-                      {currentProducts.map((product) => (
-                        <TableRow key={product.productid}>
-                          <TableCell align="center" columnId="select" defaultWidth={52}>
-                            <input
-                              type="checkbox"
-                              checked={selectedProductIds.includes(product.productid)}
-                              onChange={() => toggleProductSelection(product.productid)}
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                              aria-label={'Select product'}
-                            />
-                          </TableCell>
-                          <TableCell columnId="name" defaultWidth={360}>
-                            <div className="font-medium whitespace-normal break-words leading-snug">
-                              {product.name}
-                            </div>
-                          </TableCell>
-                          <TableCell columnId="type" defaultWidth={220}>
-                            <div className="whitespace-normal break-words leading-snug">
-                              {productTypes.find(pt => pt.producttypeid === product.producttypeid)?.name || '-'}
-                            </div>
-                          </TableCell>
-                          <TableCell align="center" columnId="shop" defaultWidth={150}>
-                            <div className="flex flex-col items-center gap-1">
-                              {product.isdisabled ? (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-900 border border-amber-200">
-                                  {'Hidden'}
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-100">
-                                  {'Live'}
-                                </span>
-                              )}
-                              {product.awaitingrestock && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200">
-                                  {'OOS'}
-                                </span>
-                              )}
-                              {product.promodiscountpercent != null &&
-                                Number(product.promodiscountpercent) > 0 && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-rose-100 text-rose-800 border border-rose-200">
-                                  SALE −{Number(product.promodiscountpercent)}%
-                                </span>
-                              )}
-                            </div>
-                          </TableCell>
+                      {currentProducts.map((product) => {
+                        const variantsList = product.variants || [];
+                        const hasVariantPromos = variantsList.some(
+                          (v: any) => v.promotional_price != null && Number(v.promotional_price) > 0 && Number(v.promotional_price) < Number(v.price)
+                        );
+                        const hasProductPromo = product.promodiscountpercent != null && Number(product.promodiscountpercent) > 0;
+                        const isPromoActive = hasProductPromo || hasVariantPromos;
+
+                        let originalPrice = Number(product.price) || 0;
+                        if (originalPrice === 0 && variantsList.length > 0) {
+                          originalPrice = Number(variantsList[0]?.price) || 0;
+                        }
+
+                        let salePrice = originalPrice;
+                        let discountPercent = 0;
+
+                        if (hasProductPromo) {
+                          discountPercent = Number(product.promodiscountpercent);
+                          salePrice = Math.round(originalPrice * (1 - discountPercent / 100) * 100) / 100;
+                        } else if (hasVariantPromos) {
+                          const promoVar = variantsList.find((v: any) => v.promotional_price != null && Number(v.promotional_price) > 0 && Number(v.promotional_price) < Number(v.price));
+                          if (promoVar) {
+                            originalPrice = Number(promoVar.price);
+                            salePrice = Number(promoVar.promotional_price);
+                            discountPercent = Math.round((1 - salePrice / originalPrice) * 100);
+                          }
+                        }
+
+                        return (
+                          <TableRow key={product.productid}>
+                            <TableCell align="center" columnId="select" defaultWidth={52}>
+                              <input
+                                type="checkbox"
+                                checked={selectedProductIds.includes(product.productid)}
+                                onChange={() => toggleProductSelection(product.productid)}
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                aria-label={'Select product'}
+                              />
+                            </TableCell>
+                            <TableCell columnId="name" defaultWidth={360}>
+                              <div className="font-medium whitespace-normal break-words leading-snug">
+                                {product.name}
+                              </div>
+                            </TableCell>
+                            <TableCell columnId="type" defaultWidth={220}>
+                              <div className="whitespace-normal break-words leading-snug">
+                                {productTypes.find(pt => pt.producttypeid === product.producttypeid)?.name || '-'}
+                              </div>
+                            </TableCell>
+                            <TableCell align="center" columnId="shop" defaultWidth={180}>
+                              <div className="flex flex-col items-center gap-1.5">
+                                {isPromoActive && originalPrice > 0 ? (
+                                  <div className="flex flex-col items-center leading-tight">
+                                    <div className="flex items-baseline gap-1.5">
+                                      <span className="text-sm font-bold text-rose-700">
+                                        £{salePrice.toFixed(2)}
+                                      </span>
+                                      <span className="text-xs text-gray-400 line-through">
+                                        £{originalPrice.toFixed(2)}
+                                      </span>
+                                    </div>
+                                    <span className="inline-flex items-center px-1.5 py-0.5 mt-0.5 rounded text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                                      SALE −{discountPercent}%
+                                    </span>
+                                  </div>
+                                ) : originalPrice > 0 ? (
+                                  <span className="text-xs font-semibold text-gray-800">
+                                    £{originalPrice.toFixed(2)}
+                                  </span>
+                                ) : null}
+
+                                <div className="flex items-center gap-1 flex-wrap justify-center">
+                                  {product.isdisabled ? (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-900 border border-amber-200">
+                                      {'Hidden'}
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-100">
+                                      {'Live'}
+                                    </span>
+                                  )}
+                                  {product.awaitingrestock && (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-800 border border-slate-200">
+                                      {'OOS'}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </TableCell>
                           <TableCell align="right" columnId="actions" defaultWidth={128}>
                             <div className="flex justify-end gap-2">
                               <button
@@ -1411,7 +1493,8 @@ export default function ProductsPage() {
                             </div>
                           </TableCell>
                         </TableRow>
-                      ))}
+                      );
+                    })}
                     </TableBody>
                   </DataTableShell>
                 </div>
@@ -1434,7 +1517,35 @@ export default function ProductsPage() {
                 </label>
               </div>
               <div className="space-y-3">
-              {currentProducts.map((product) => (
+              {currentProducts.map((product) => {
+                const variantsList = product.variants || [];
+                const hasVariantPromos = variantsList.some(
+                  (v: any) => v.promotional_price != null && Number(v.promotional_price) > 0 && Number(v.promotional_price) < Number(v.price)
+                );
+                const hasProductPromo = product.promodiscountpercent != null && Number(product.promodiscountpercent) > 0;
+                const isPromoActive = hasProductPromo || hasVariantPromos;
+
+                let originalPrice = Number(product.price) || 0;
+                if (originalPrice === 0 && variantsList.length > 0) {
+                  originalPrice = Number(variantsList[0]?.price) || 0;
+                }
+
+                let salePrice = originalPrice;
+                let discountPercent = 0;
+
+                if (hasProductPromo) {
+                  discountPercent = Number(product.promodiscountpercent);
+                  salePrice = Math.round(originalPrice * (1 - discountPercent / 100) * 100) / 100;
+                } else if (hasVariantPromos) {
+                  const promoVar = variantsList.find((v: any) => v.promotional_price != null && Number(v.promotional_price) > 0 && Number(v.promotional_price) < Number(v.price));
+                  if (promoVar) {
+                    originalPrice = Number(promoVar.price);
+                    salePrice = Number(promoVar.promotional_price);
+                    discountPercent = Math.round((1 - salePrice / originalPrice) * 100);
+                  }
+                }
+
+                return (
                 <div key={product.productid} className="bg-white p-3 sm:p-4 rounded-lg shadow border">
                   <div className="flex justify-between items-start gap-3">
                     <div className="min-w-0 flex-1">
@@ -1452,6 +1563,19 @@ export default function ProductsPage() {
                         <p>
                           <span className="font-medium">{t.productType}:</span> {productTypes.find(pt => pt.producttypeid === product.producttypeid)?.name || '-'}
                         </p>
+                        {isPromoActive && originalPrice > 0 ? (
+                          <div className="flex items-center gap-2 pt-0.5">
+                            <span className="font-bold text-rose-700">£{salePrice.toFixed(2)}</span>
+                            <span className="text-xs text-gray-400 line-through">£{originalPrice.toFixed(2)}</span>
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-rose-100 text-rose-800 border border-rose-200">
+                              SALE −{discountPercent}%
+                            </span>
+                          </div>
+                        ) : originalPrice > 0 ? (
+                          <p>
+                            <span className="font-semibold text-gray-800">£{originalPrice.toFixed(2)}</span>
+                          </p>
+                        ) : null}
                         <p>
                           <span className="font-medium">{'Shop'}:</span>{' '}
                           {product.isdisabled ? (
@@ -1465,14 +1589,6 @@ export default function ProductsPage() {
                             <span className="font-medium">{'Status:'}</span>{' '}
                             <span className="text-slate-700">
                               {'Out of stock display'}
-                            </span>
-                          </p>
-                        )}
-                        {product.promodiscountpercent != null &&
-                          Number(product.promodiscountpercent) > 0 && (
-                          <p>
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-rose-100 text-rose-800 border border-rose-200">
-                              SALE −{Number(product.promodiscountpercent)}%
                             </span>
                           </p>
                         )}
@@ -1503,7 +1619,8 @@ export default function ProductsPage() {
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+            })}
               </div>
             </Section>
           )}
@@ -1826,17 +1943,29 @@ export default function ProductsPage() {
                   </div>
 
                   <div className="rounded-lg border border-rose-200 bg-rose-50/60 p-3 sm:p-4">
-                    <label className="flex items-start gap-2">
+                    <label className="flex items-start gap-2 cursor-pointer select-none">
                       <input
                         type="checkbox"
                         checked={formData.hasPromo}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          const originalVal =
+                            variants.find((v) => Number(v.price) > 0)?.price ||
+                            variants[0]?.price ||
+                            0;
+                          const percentVal = checked ? (formData.promodiscountpercent || '20') : '';
+                          const percentNum = parseFloat(percentVal) || 20;
+                          const sellVal = checked && originalVal > 0
+                            ? (Math.round(originalVal * (1 - percentNum / 100) * 100) / 100).toFixed(2)
+                            : '';
                           setFormData({
                             ...formData,
-                            hasPromo: e.target.checked,
-                            promodiscountpercent: e.target.checked ? formData.promodiscountpercent || '20' : '',
-                          })
-                        }
+                            hasPromo: checked,
+                            promodiscountpercent: percentVal,
+                            promooriginalprice: originalVal > 0 ? originalVal.toFixed(2) : formData.promooriginalprice,
+                            promosellprice: sellVal,
+                          });
+                        }}
                         className="mt-0.5 w-4 h-4 text-rose-600 border-border rounded focus:ring-rose-500"
                       />
                       <div className="flex-1 min-w-0">
@@ -1844,58 +1973,170 @@ export default function ProductsPage() {
                           {'PROMOTION — product discount'}
                         </span>
                         <p className="text-xs text-gray-500 mt-1">
-                          {'Shows a "SALE" badge on the card, struck-through original price, and the new sale price.'}
+                          {'Set original price and discounted sale price. Apply to all options or customize per option below.'}
                         </p>
                       </div>
                     </label>
                     {formData.hasPromo && (
-                      <div className="mt-3 ml-6 space-y-2">
-                        <label className="block text-xs font-medium text-gray-700">
-                          {'Discount (%)'}
-                          <div className="mt-1 flex items-center gap-2 max-w-[200px]">
-                            <input
-                              type="number"
-                              min={1}
-                              max={99}
-                              step={1}
-                              value={formData.promodiscountpercent}
-                              onChange={(e) =>
-                                setFormData({ ...formData, promodiscountpercent: e.target.value })
-                              }
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-rose-500 focus:border-rose-500"
-                              placeholder="20"
-                            />
-                            <span className="text-sm text-gray-600 shrink-0">%</span>
+                      <div className="mt-3 ml-6 space-y-3 p-3 bg-white/70 rounded-lg border border-rose-100">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          {/* Original Price */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              {'Original Price (£)'}
+                            </label>
+                            <div className="relative">
+                              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">£</span>
+                              <input
+                                type="number"
+                                min={0}
+                                step="0.01"
+                                value={formData.promooriginalprice}
+                                onChange={(e) => {
+                                  const orig = parseFloat(e.target.value) || 0;
+                                  const disc = parseFloat(formData.promosellprice) || 0;
+                                  let newPercent = formData.promodiscountpercent;
+                                  if (orig > 0 && disc > 0 && disc < orig) {
+                                    newPercent = String(Math.round((1 - disc / orig) * 100));
+                                  } else if (orig > 0 && formData.promodiscountpercent) {
+                                    const p = parseFloat(formData.promodiscountpercent) || 0;
+                                    if (p > 0) {
+                                      setFormData(prev => ({
+                                        ...prev,
+                                        promooriginalprice: e.target.value,
+                                        promosellprice: (Math.round(orig * (1 - p / 100) * 100) / 100).toFixed(2),
+                                      }));
+                                      return;
+                                    }
+                                  }
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    promooriginalprice: e.target.value,
+                                    promodiscountpercent: newPercent,
+                                  }));
+                                }}
+                                className="w-full pl-6 pr-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-rose-500 focus:border-rose-500 bg-white"
+                                placeholder="36.00"
+                              />
+                            </div>
                           </div>
-                        </label>
-                        {(() => {
-                          const percent = parseFloat(formData.promodiscountpercent);
-                          const original =
-                            variants.find((v) => v.price > 0)?.price ||
-                            variants[0]?.price ||
-                            0;
-                          if (!Number.isFinite(percent) || percent <= 0 || original <= 0) {
+
+                          {/* Discounted Price */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              {'Discounted Price (£)'}
+                            </label>
+                            <div className="relative">
+                              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-rose-500 text-xs font-bold">£</span>
+                              <input
+                                type="number"
+                                min={0}
+                                step="0.01"
+                                value={formData.promosellprice}
+                                onChange={(e) => {
+                                  const disc = parseFloat(e.target.value) || 0;
+                                  const orig = parseFloat(formData.promooriginalprice) || variants.find((v) => Number(v.price) > 0)?.price || 0;
+                                  let newPercent = '';
+                                  if (orig > 0 && disc > 0 && disc < orig) {
+                                    newPercent = String(Math.round((1 - disc / orig) * 100));
+                                  }
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    promosellprice: e.target.value,
+                                    promodiscountpercent: newPercent,
+                                  }));
+                                }}
+                                className="w-full pl-6 pr-3 py-1.5 text-sm border border-rose-300 rounded-md focus:ring-rose-500 focus:border-rose-500 bg-white font-medium text-rose-700"
+                                placeholder="28.80"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Discount Percentage */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              {'Discount (%)'}
+                            </label>
+                            <div className="relative">
+                              <input
+                                type="number"
+                                min={1}
+                                max={99}
+                                step={1}
+                                value={formData.promodiscountpercent}
+                                onChange={(e) => {
+                                  const p = parseFloat(e.target.value) || 0;
+                                  const orig = parseFloat(formData.promooriginalprice) || variants.find((v) => Number(v.price) > 0)?.price || 0;
+                                  let newSell = formData.promosellprice;
+                                  if (orig > 0 && p > 0 && p < 100) {
+                                    newSell = (Math.round(orig * (1 - p / 100) * 100) / 100).toFixed(2);
+                                  }
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    promodiscountpercent: e.target.value,
+                                    promosellprice: newSell,
+                                  }));
+                                }}
+                                className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-rose-500 focus:border-rose-500 bg-white"
+                                placeholder="20"
+                              />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">%</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Preview and Apply to all options button */}
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-2 border-t border-rose-100">
+                          {(() => {
+                            const orig = parseFloat(formData.promooriginalprice) || variants.find((v) => Number(v.price) > 0)?.price || 0;
+                            const sale = parseFloat(formData.promosellprice) || (orig > 0 && parseFloat(formData.promodiscountpercent) > 0 ? Math.round(orig * (1 - parseFloat(formData.promodiscountpercent) / 100) * 100) / 100 : 0);
+                            const percent = parseFloat(formData.promodiscountpercent) || (orig > 0 && sale > 0 && sale < orig ? Math.round((1 - sale / orig) * 100) : 0);
+
+                            if (orig <= 0 || sale <= 0 || sale >= orig) {
+                              return (
+                                <p className="text-xs text-gray-500">
+                                  {'Enter original price and discounted price to preview the sale offer.'}
+                                </p>
+                              );
+                            }
+
                             return (
-                              <p className="text-xs text-gray-500">
-                                {'Set a percent and a variant price to preview the sale price.'}
+                              <p className="text-xs sm:text-sm text-gray-800">
+                                <span className="line-through text-gray-400 mr-2">£{orig.toFixed(2)}</span>
+                                <span className="font-bold text-rose-700 mr-2">£{sale.toFixed(2)}</span>
+                                <span className="text-rose-600 font-semibold">(−{percent}%)</span>
                               </p>
                             );
-                          }
-                          const sale = Math.round(original * (1 - percent / 100) * 100) / 100;
-                          return (
-                            <p className="text-xs sm:text-sm text-gray-800">
-                              <span className="line-through text-gray-500 mr-2">
-                                €{original.toFixed(2)}
-                              </span>
-                              <span className="font-semibold text-rose-700">
-                                €{sale.toFixed(2)}
-                              </span>
-                              <span className="ml-2 text-rose-600 font-medium">
-                                (−{percent}%)
-                              </span>
-                            </p>
-                          );
-                        })()}
+                          })()}
+
+                          {variants.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const orig = parseFloat(formData.promooriginalprice);
+                                const percent = parseFloat(formData.promodiscountpercent);
+                                const sale = parseFloat(formData.promosellprice);
+
+                                const updated = variants.map(v => {
+                                  const base = orig > 0 ? orig : Number(v.price);
+                                  let variantSale = sale;
+                                  if (percent > 0 && base > 0) {
+                                    variantSale = Math.round(base * (1 - percent / 100) * 100) / 100;
+                                  }
+                                  return {
+                                    ...v,
+                                    price: base > 0 ? base : v.price,
+                                    promotional_price: variantSale > 0 && variantSale < (base > 0 ? base : v.price) ? variantSale : null,
+                                  };
+                                });
+                                setVariants(updated);
+                              }}
+                              className="px-3 py-1.5 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded-md transition-colors shadow-xs"
+                            >
+                              {'Apply discount to all options'}
+                            </button>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -2096,7 +2337,8 @@ export default function ProductsPage() {
                             <thead className="bg-gray-50 sticky top-0">
                               <tr>
                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t.variant}</th>
-                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t.price}</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{'Original (£)'}</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{'Discounted (£)'}</th>
                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t.quantity}</th>
                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t.image}</th>
                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t.primary}</th>
@@ -2107,7 +2349,7 @@ export default function ProductsPage() {
                               {variants.map((variant, index) => (
                                 <tr key={index} className="hover:bg-gray-50">
                                   <td className="px-3 py-2 text-xs">
-                                    <div className="max-w-xs truncate">
+                                    <div className="max-w-xs truncate font-medium text-gray-800">
                                       {variant.propertyvalues.map(pv => {
                                         const prop = productTypeProperties.find(p => p.propertyid === pv.propertyid);
                                         return `${prop?.name}: ${pv.value}`;
@@ -2115,72 +2357,42 @@ export default function ProductsPage() {
                                     </div>
                                   </td>
                                   <td className="px-3 py-2">
-                                    <input
-                                      type="text"
-                                      data-variant-index={index}
-                                      value={formatNumericValue(variant.price, index, 'price')}
-                                      onChange={(e) => {
-                                        const validated = handleNumericInput(e.target.value, true);
-                                        const key = `variant_${index}`;
-                                        
-                                        // Clear validation error for this field
-                                        setValidationErrors(prev => {
-                                          const updated = { ...prev };
-                                          if (updated[index]?.price) {
-                                            delete updated[index].price;
-                                            if (Object.keys(updated[index]).length === 0) {
-                                              delete updated[index];
-                                            }
-                                          }
-                                          return updated;
-                                        });
-                                        
-                                        // Store the display value
-                                        setVariantDisplayValues(prev => ({
-                                          ...prev,
-                                          [key]: { ...prev[key], price: validated }
-                                        }));
-                                        
-                                        // Only update numeric value if it's a complete number
-                                        if (validated !== '' && validated !== '.' && !validated.endsWith('.')) {
-                                          const numValue = parseFloat(validated);
-                                          if (!isNaN(numValue)) {
-                                            updateVariant(index, 'price', numValue);
-                                          }
-                                        } else if (validated === '') {
-                                          updateVariant(index, 'price', 0);
-                                          setVariantDisplayValues(prev => {
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-gray-400 text-xs">£</span>
+                                      <input
+                                        type="text"
+                                        data-variant-index={index}
+                                        value={formatNumericValue(variant.price, index, 'price')}
+                                        onChange={(e) => {
+                                          const validated = handleNumericInput(e.target.value, true);
+                                          const key = `variant_${index}`;
+                                          
+                                          // Clear validation error for this field
+                                          setValidationErrors(prev => {
                                             const updated = { ...prev };
-                                            if (updated[key]) {
-                                              delete updated[key].price;
-                                              if (Object.keys(updated[key]).length === 0) {
-                                                delete updated[key];
+                                            if (updated[index]?.price) {
+                                              delete updated[index].price;
+                                              if (Object.keys(updated[index]).length === 0) {
+                                                delete updated[index];
                                               }
                                             }
                                             return updated;
                                           });
-                                        }
-                                      }}
-                                      onBlur={(e) => {
-                                        // Ensure we have a valid number on blur
-                                        const value = e.target.value.trim();
-                                        const key = `variant_${index}`;
-                                        if (value === '' || value === '.') {
-                                          updateVariant(index, 'price', 0);
-                                          setVariantDisplayValues(prev => {
-                                            const updated = { ...prev };
-                                            if (updated[key]) {
-                                              delete updated[key].price;
-                                              if (Object.keys(updated[key]).length === 0) {
-                                                delete updated[key];
-                                              }
+                                          
+                                          // Store the display value
+                                          setVariantDisplayValues(prev => ({
+                                            ...prev,
+                                            [key]: { ...prev[key], price: validated }
+                                          }));
+                                          
+                                          // Only update numeric value if it's a complete number
+                                          if (validated !== '' && validated !== '.' && !validated.endsWith('.')) {
+                                            const numValue = parseFloat(validated);
+                                            if (!isNaN(numValue)) {
+                                              updateVariant(index, 'price', numValue);
                                             }
-                                            return updated;
-                                          });
-                                        } else {
-                                          // Clear display value on blur if we have a valid number
-                                          const numValue = parseFloat(value);
-                                          if (!isNaN(numValue)) {
+                                          } else if (validated === '') {
+                                            updateVariant(index, 'price', 0);
                                             setVariantDisplayValues(prev => {
                                               const updated = { ...prev };
                                               if (updated[key]) {
@@ -2192,14 +2404,125 @@ export default function ProductsPage() {
                                               return updated;
                                             });
                                           }
-                                        }
-                                      }}
-                                      className={`w-20 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-2 ${
-                                        validationErrors[index]?.price
-                                          ? 'border-red-500 focus:ring-red-500'
-                                          : 'focus:ring-blue-500'
-                                      }`}
-                                    />
+                                        }}
+                                        onBlur={(e) => {
+                                          // Ensure we have a valid number on blur
+                                          const value = e.target.value.trim();
+                                          const key = `variant_${index}`;
+                                          if (value === '' || value === '.') {
+                                            updateVariant(index, 'price', 0);
+                                            setVariantDisplayValues(prev => {
+                                              const updated = { ...prev };
+                                              if (updated[key]) {
+                                                delete updated[key].price;
+                                                if (Object.keys(updated[key]).length === 0) {
+                                                  delete updated[key];
+                                                }
+                                              }
+                                              return updated;
+                                            });
+                                          } else {
+                                            // Clear display value on blur if we have a valid number
+                                            const numValue = parseFloat(value);
+                                            if (!isNaN(numValue)) {
+                                              setVariantDisplayValues(prev => {
+                                                const updated = { ...prev };
+                                                if (updated[key]) {
+                                                  delete updated[key].price;
+                                                  if (Object.keys(updated[key]).length === 0) {
+                                                    delete updated[key];
+                                                  }
+                                                }
+                                                return updated;
+                                              });
+                                            }
+                                          }
+                                        }}
+                                        placeholder="0.00"
+                                        className={`w-20 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-2 ${
+                                          validationErrors[index]?.price
+                                            ? 'border-red-500 focus:ring-red-500'
+                                            : 'focus:ring-blue-500'
+                                        }`}
+                                      />
+                                    </div>
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-gray-400 text-xs">£</span>
+                                      <input
+                                        type="text"
+                                        data-variant-index={index}
+                                        value={formatNumericValue(variant.promotional_price, index, 'promotional_price')}
+                                        onChange={(e) => {
+                                          const validated = handleNumericInput(e.target.value, true);
+                                          const key = `variant_${index}`;
+                                          setVariantDisplayValues(prev => ({
+                                            ...prev,
+                                            [key]: { ...prev[key], promotional_price: validated }
+                                          }));
+                                          if (validated !== '' && validated !== '.' && !validated.endsWith('.')) {
+                                            const numValue = parseFloat(validated);
+                                            if (!isNaN(numValue) && numValue > 0) {
+                                              updateVariant(index, 'promotional_price', numValue);
+                                            }
+                                          } else if (validated === '') {
+                                            updateVariant(index, 'promotional_price', null);
+                                            setVariantDisplayValues(prev => {
+                                              const updated = { ...prev };
+                                              if (updated[key]) {
+                                                delete updated[key].promotional_price;
+                                                if (Object.keys(updated[key]).length === 0) {
+                                                  delete updated[key];
+                                                }
+                                              }
+                                              return updated;
+                                            });
+                                          }
+                                        }}
+                                        onBlur={(e) => {
+                                          const value = e.target.value.trim();
+                                          const key = `variant_${index}`;
+                                          if (value === '' || value === '.') {
+                                            updateVariant(index, 'promotional_price', null);
+                                            setVariantDisplayValues(prev => {
+                                              const updated = { ...prev };
+                                              if (updated[key]) {
+                                                delete updated[key].promotional_price;
+                                                if (Object.keys(updated[key]).length === 0) {
+                                                  delete updated[key];
+                                                }
+                                              }
+                                              return updated;
+                                            });
+                                          } else {
+                                            const numValue = parseFloat(value);
+                                            if (!isNaN(numValue) && numValue > 0) {
+                                              updateVariant(index, 'promotional_price', numValue);
+                                              setVariantDisplayValues(prev => {
+                                                const updated = { ...prev };
+                                                if (updated[key]) {
+                                                  delete updated[key].promotional_price;
+                                                  if (Object.keys(updated[key]).length === 0) {
+                                                    delete updated[key];
+                                                  }
+                                                }
+                                                return updated;
+                                              });
+                                            } else {
+                                              updateVariant(index, 'promotional_price', null);
+                                            }
+                                          }
+                                        }}
+                                        placeholder="Optional"
+                                        className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-rose-500 font-medium text-rose-700"
+                                      />
+                                      {variant.promotional_price != null && Number(variant.promotional_price) > 0 && Number(variant.price) > Number(variant.promotional_price) && (
+                                        <span className="inline-flex items-center px-1 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 whitespace-nowrap">
+                                          −{Math.round((1 - Number(variant.promotional_price) / Number(variant.price)) * 100)}%
+                                        </span>
+                                      )}
+                                    </div>
                                   </td>
                                   <td className="px-3 py-2">
                                     <input
@@ -2358,9 +2681,9 @@ export default function ProductsPage() {
                                   <Trash2 className="w-4 h-4" />
                                 </button>
                               </div>
-                              <div className="grid grid-cols-2 gap-2 text-xs">
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                                 <div>
-                                  <label className="block text-gray-500 mb-1">{t.price}</label>
+                                  <label className="block text-gray-500 mb-1">{'Original (£)'}</label>
                                   <input
                                     type="text"
                                     data-variant-index={index}
@@ -2440,11 +2763,67 @@ export default function ProductsPage() {
                                         }
                                       }
                                     }}
+                                    placeholder="0.00"
                                     className={`w-full px-2 py-1.5 border rounded focus:outline-none focus:ring-2 text-xs ${
                                       validationErrors[index]?.price
                                         ? 'border-red-500 focus:ring-red-500'
                                         : 'focus:ring-blue-500'
                                     }`}
+                                  />
+                                </div>
+                                <div>
+                                  <div className="flex items-center justify-between mb-1">
+                                    <label className="text-gray-500">{'Discounted (£)'}</label>
+                                    {variant.promotional_price != null && Number(variant.promotional_price) > 0 && Number(variant.price) > Number(variant.promotional_price) && (
+                                      <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-1 rounded">
+                                        −{Math.round((1 - Number(variant.promotional_price) / Number(variant.price)) * 100)}%
+                                      </span>
+                                    )}
+                                  </div>
+                                  <input
+                                    type="text"
+                                    data-variant-index={index}
+                                    value={formatNumericValue(variant.promotional_price, index, 'promotional_price')}
+                                    onChange={(e) => {
+                                      const validated = handleNumericInput(e.target.value, true);
+                                      const key = `variant_${index}`;
+                                      setVariantDisplayValues(prev => ({
+                                        ...prev,
+                                        [key]: { ...prev[key], promotional_price: validated }
+                                      }));
+                                      if (validated !== '' && validated !== '.' && !validated.endsWith('.')) {
+                                        const numValue = parseFloat(validated);
+                                        if (!isNaN(numValue) && numValue > 0) {
+                                          updateVariant(index, 'promotional_price', numValue);
+                                        }
+                                      } else if (validated === '') {
+                                        updateVariant(index, 'promotional_price', null);
+                                      }
+                                    }}
+                                    onBlur={(e) => {
+                                      const value = e.target.value.trim();
+                                      const key = `variant_${index}`;
+                                      if (value === '' || value === '.') {
+                                        updateVariant(index, 'promotional_price', null);
+                                      } else {
+                                        const numValue = parseFloat(value);
+                                        if (!isNaN(numValue) && numValue > 0) {
+                                          updateVariant(index, 'promotional_price', numValue);
+                                        } else {
+                                          updateVariant(index, 'promotional_price', null);
+                                        }
+                                      }
+                                      setVariantDisplayValues(prev => {
+                                        const updated = { ...prev };
+                                        if (updated[key]) {
+                                          delete updated[key].promotional_price;
+                                          if (Object.keys(updated[key]).length === 0) delete updated[key];
+                                        }
+                                        return updated;
+                                      });
+                                    }}
+                                    placeholder="Optional"
+                                    className="w-full px-2 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-rose-500 text-xs font-medium text-rose-700"
                                   />
                                 </div>
                                 <div>

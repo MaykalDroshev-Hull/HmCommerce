@@ -78,6 +78,7 @@ export default function ProductView({ product }: ProductViewProps) {
   const [selectedColour, setSelectedColour] = useState('Heathered Graphite Grey');
   const [selectedColourHex, setSelectedColourHex] = useState('#4A4D50');
   const [selectedSize, setSelectedSize] = useState('XS');
+  const [activePrice, setActivePrice] = useState<number>(() => Number(product?.price || 36.00));
   const [faqOpenIdx, setFaqOpenIdx] = useState<number | null>(0);
 
   const buyButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -110,10 +111,13 @@ export default function ProductView({ product }: ProductViewProps) {
   }, []);
 
   // Option change callback from ProductDetails
-  const handleOptionChange = (col: string, hex: string, sz: string) => {
+  const handleOptionChange = (col: string, hex: string, sz: string, price?: number) => {
     setSelectedColour(col);
     setSelectedColourHex(hex);
     setSelectedSize(sz);
+    if (typeof price === 'number' && !Number.isNaN(price)) {
+      setActivePrice(price);
+    }
   };
 
   // Scroll observer to trigger sticky banners
@@ -172,7 +176,7 @@ export default function ProductView({ product }: ProductViewProps) {
       <ProductStickyBanner
         isVisible={isStickyVisible}
         productName={productName}
-        price={price}
+        price={activePrice}
         currencySymbol="£"
         selectedColour={selectedColour}
         selectedColourHex={selectedColourHex}
