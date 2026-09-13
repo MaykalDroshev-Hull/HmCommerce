@@ -46,7 +46,7 @@ export async function callAliExpressApi(
 
     const sysParams: Record<string, string> = {
       app_key: appKey,
-      timestamp: getTopTimestamp(),
+      timestamp: String(Date.now()),
       format: 'json',
       v: '2.0',
       sign_method: 'md5',
@@ -55,6 +55,7 @@ export async function callAliExpressApi(
 
     if (accessToken) {
       sysParams.session = accessToken;
+      sysParams.access_token = accessToken;
     }
 
     const allParams: Record<string, string> = {
@@ -108,6 +109,20 @@ export function extractProductId(urlOrId: string): string | null {
 }
 
 /**
+ * Helper to decode HTML entities in scraped text
+ */
+function decodeHtmlEntities(str: string): string {
+  return str
+    .replace(/&amp;/g, '&')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ');
+}
+
+/**
  * Scrapes product data directly from AliExpress item page (reliable fallback)
  */
 export async function scrapeAliExpressProduct(productId: string): Promise<AliExpressProductDetails | null> {
@@ -129,18 +144,25 @@ export async function scrapeAliExpressProduct(productId: string): Promise<AliExp
 
     const html = await res.text();
 
-    // Strategy 1: Extract runParams JSON object
+    // Strategy 1: Extract DCData JSON (Modern AliExpress Product Pages)
+    let dcData: any = null;
+    const dcDataMatch = html.match(/window\._d_c_\.DCData\s*=\s*(\{[\s\S]*?\});/);
+    if (dcDataMatch && dcDataMatch[1]) {
+      try {
+        dcData = JSON.parse(dcDataMatch[1]);
+      } catch (e) {}
+    }
+
+    // Strategy 2: Extract runParams JSON object
     let runParams: any = null;
     const runParamsMatch = html.match(/window\.runParams\s*=\s*(\{[\s\S]*?\});/);
     if (runParamsMatch && runParamsMatch[1]) {
       try {
         runParams = JSON.parse(runParamsMatch[1]);
-      } catch (e) {
-        // Continue to other extraction patterns
-      }
+      } catch (e) {}
     }
 
-    // Strategy 2: Extract data from script type="application/ld+json"
+    // Strategy 3: Extract data from script type="application/ld+json"
     let ldJson: any = null;
     const ldJsonMatches = html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g);
     for (const match of ldJsonMatches) {
@@ -153,45 +175,87 @@ export async function scrapeAliExpressProduct(productId: string): Promise<AliExp
       } catch (e) {}
     }
 
-    // Extract title
+    // Extract Title
     let title = '';
     if (runParams?.data?.titleModule?.subject) {
       title = runParams.data.titleModule.subject;
     } else if (ldJson?.name) {
       title = ldJson.name;
     } else {
-      const titleTag = html.match(/<title>([^<]+)<\/title>/i);
-      if (titleTag && titleTag[1]) {
-        title = titleTag[1].replace(/\|\s*AliExpress.*$/i, '').trim();
-      }
-    }
-
-    // Extract images
-    const images: string[] = [];
-    if (Array.isArray(runParams?.data?.imageModule?.imagePathList)) {
-      images.push(...runParams.data.imageModule.imagePathList);
-    } else if (ldJson?.image) {
-      const ldImgs = Array.isArray(ldJson.image) ? ldJson.image : [ldJson.image];
-      images.push(...ldImgs);
-    } else {
-      // Regex search for high-res images in HTML
-      const imgMatches = html.matchAll(/https:\/\/[^"'\s]+\.alicdn\.com\/kf\/[^"'\s]+(?:\.jpg|\.png|\.webp)/gi);
-      for (const m of imgMatches) {
-        const url = m[0].split('_')[0]; // strip thumbnail suffixes
-        if (!images.includes(url) && images.length < 8) {
-          images.push(url);
+      const ogTitleMatch = html.match(/<meta\s+property=["']og:title["']\s+content=["']([^"']+)["']/i);
+      if (ogTitleMatch && ogTitleMatch[1]) {
+        title = ogTitleMatch[1];
+      } else {
+        const twitterTitleMatch = html.match(/<meta\s+name=["']twitter:title["']\s+content=["']([^"']+)["']/i);
+        if (twitterTitleMatch && twitterTitleMatch[1]) {
+          title = twitterTitleMatch[1];
+        } else {
+          const titleTag = html.match(/<title>([^<]+)<\/title>/i);
+          if (titleTag && titleTag[1]) {
+            title = titleTag[1];
+          }
         }
       }
     }
 
-    // Ensure clean image URLs (remove resize query strings)
+    if (title) {
+      title = decodeHtmlEntities(title)
+        .replace(/\s*[-|]\s*AliExpress.*$/i, '')
+        .trim();
+    }
+
+    // Extract Images from all possible sources
+    const rawImages: string[] = [];
+
+    // A. DCData imagePathList (Current AliExpress Architecture)
+    if (Array.isArray(dcData?.imagePathList)) {
+      rawImages.push(...dcData.imagePathList);
+    }
+
+    // B. runParams imageModule
+    if (Array.isArray(runParams?.data?.imageModule?.imagePathList)) {
+      rawImages.push(...runParams.data.imageModule.imagePathList);
+    }
+
+    // C. ldJson image
+    if (ldJson?.image) {
+      const ldImgs = Array.isArray(ldJson.image) ? ldJson.image : [ldJson.image];
+      rawImages.push(...ldImgs);
+    }
+
+    // D. og:image
+    const ogImgMatch = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i);
+    if (ogImgMatch && ogImgMatch[1]) {
+      rawImages.push(ogImgMatch[1]);
+    }
+
+    // E. Regex search across full HTML for media CDN images (aliexpress-media.com and alicdn.com)
+    const imgMatches = html.matchAll(/https?:\/\/[a-zA-Z0-9_.-]+\.(?:aliexpress-media|alicdn)\.com\/kf\/[a-zA-Z0-9_.-]+(?:\/[^"'\s<>]+)?\.(?:jpg|png|webp|jpeg)/gi);
+    for (const m of imgMatches) {
+      rawImages.push(m[0]);
+    }
+
+    // Clean, validate and deduplicate image URLs
     const cleanedImages = Array.from(
       new Set(
-        images
-          .map((url) => url.replace(/_[0-9]+x[0-9]+.*$/i, '').trim())
-          .filter((url) => url.startsWith('http'))
+        rawImages
+          .map((url) => {
+            let u = url.trim();
+            if (u.startsWith('//')) u = 'https:' + u;
+            // Remove thumbnail suffixes (e.g. _80x80.jpg, _Q90.jpg)
+            u = u.replace(/_[0-9]+x[0-9]+.*$/i, '');
+            return u.split('?')[0];
+          })
+          .filter((url) => {
+            if (!url.startsWith('http')) return false;
+            // Exclude error icons, 404 assets or system images
+            if (url.includes('error') || url.includes('p_404') || url.includes('icon') || url.includes('S19538f0e')) return false;
+            return true;
+          })
       )
-    );
+    ).slice(0, 10);
+
+    const primaryImage = cleanedImages[0] || '/Logo.jpg';
 
     // Extract Price & Variants
     const variants: AliExpressVariant[] = [];
@@ -203,7 +267,6 @@ export async function scrapeAliExpressProduct(productId: string): Promise<AliExp
       skuList.forEach((sku: any, idx: number) => {
         const rawPrice = sku.skuVal?.actSkuCalPrice || sku.skuVal?.skuCalPrice || sku.skuVal?.actSkuPrice || sku.skuVal?.skuPrice || 19.99;
         const numPrice = Number(rawPrice) || 19.99;
-        // If prices are in USD, approximate to GBP (~0.79)
         const gbpPrice = Math.round(numPrice * 0.82 * 100) / 100;
 
         variants.push({
@@ -217,7 +280,7 @@ export async function scrapeAliExpressProduct(productId: string): Promise<AliExp
             name: 'Option',
             value: propId
           })),
-          imageUrl: sku.skuVal?.skuImage || cleanedImages[0]
+          imageUrl: sku.skuVal?.skuImage || primaryImage
         });
       });
 
@@ -230,33 +293,42 @@ export async function scrapeAliExpressProduct(productId: string): Promise<AliExp
       minPrice = gbpPrice;
       maxPrice = gbpPrice;
 
-      // Default S, M, L, XL variants
-      ['S', 'M', 'L', 'XL'].forEach((size, idx) => {
+      ['Small (S)', 'Medium (M)', 'Large (L)', 'Extra Large (XL)'].forEach((size) => {
         variants.push({
-          skuId: `${productId}-${size.toLowerCase()}`,
-          skuCode: `${productId}-${size}`,
+          skuId: `${productId}-${size.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+          skuCode: `${productId}-${size.split(' ')[0]}`,
           price: gbpPrice,
           originalPrice: Math.round(gbpPrice * 1.35 * 100) / 100,
           currency: 'GBP',
           stock: 30,
           properties: [{ name: 'Size', value: size }],
-          imageUrl: cleanedImages[0]
+          imageUrl: primaryImage
         });
       });
     } else {
-      // Fallback default variants
-      ['S', 'M', 'L', 'XL'].forEach((size) => {
+      // Intelligent fallback variants with realistic British pet pricing tiers
+      const sizeTiers = [
+        { name: 'Small (S)', price: 19.99, orig: 27.99 },
+        { name: 'Medium (M)', price: 24.99, orig: 34.99 },
+        { name: 'Large (L)', price: 29.99, orig: 41.99 },
+        { name: 'Extra Large (XL)', price: 34.99, orig: 48.99 }
+      ];
+
+      sizeTiers.forEach((tier) => {
         variants.push({
-          skuId: `${productId}-${size.toLowerCase()}`,
-          skuCode: `${productId}-${size}`,
-          price: 19.99,
-          originalPrice: 26.99,
+          skuId: `${productId}-${tier.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+          skuCode: `${productId}-${tier.name.slice(0, 1)}`,
+          price: tier.price,
+          originalPrice: tier.orig,
           currency: 'GBP',
           stock: 25,
-          properties: [{ name: 'Size', value: size }],
-          imageUrl: cleanedImages[0]
+          properties: [{ name: 'Size', value: tier.name }],
+          imageUrl: primaryImage
         });
       });
+
+      minPrice = 19.99;
+      maxPrice = 34.99;
     }
 
     // Extract Description / Specs
@@ -267,7 +339,6 @@ export async function scrapeAliExpressProduct(productId: string): Promise<AliExp
         const descRes = await fetch(descUrl);
         if (descRes.ok) {
           const descHtml = await descRes.text();
-          // Extract plain text from description
           description = descHtml
             .replace(/<style[\s\S]*?<\/style>/gi, '')
             .replace(/<script[\s\S]*?<\/script>/gi, '')
@@ -282,14 +353,18 @@ export async function scrapeAliExpressProduct(productId: string): Promise<AliExp
       description = ldJson.description;
     }
 
+    if (!description || description.includes('Smarter Shopping, Better Living')) {
+      description = `Treat your beloved pet to this premium, high-quality accessory. Designed with everyday comfort, enduring durability, and effortless care in mind, it provides the perfect addition to your furbaby's daily routine. Loved by devoted pet parents across the UK.`;
+    }
+
     return {
       productId,
       title: title || 'Premium Pet Product',
-      description: description || 'High-quality, durable pet accessory designed for comfort, ease of use, and everyday adventures.',
-      images: cleanedImages.length > 0 ? cleanedImages : ['/image.png'],
+      description: description,
+      images: cleanedImages.length > 0 ? cleanedImages : ['/Logo.jpg'],
       variants,
       properties: {
-        Size: ['S', 'M', 'L', 'XL']
+        Size: ['Small (S)', 'Medium (M)', 'Large (L)', 'Extra Large (XL)']
       },
       priceMin: minPrice,
       priceMax: maxPrice,
@@ -345,7 +420,7 @@ export async function fetchAliExpressProduct(urlOrId: string): Promise<AliExpres
               value: p.property_value_definition_name || p.sku_property_value || 'Default',
               imageUrl: p.sku_image
             })),
-            imageUrl: uniqueImages[0]
+            imageUrl: uniqueImages[0] || '/Logo.jpg'
           };
         });
 
@@ -354,7 +429,7 @@ export async function fetchAliExpressProduct(urlOrId: string): Promise<AliExpres
           productId,
           title: resp.subject || 'AliExpress Product',
           description: resp.detail || '',
-          images: uniqueImages.length > 0 ? uniqueImages : ['/image.png'],
+          images: uniqueImages.length > 0 ? uniqueImages : ['/Logo.jpg'],
           variants: variants.length > 0 ? variants : [],
           properties: {},
           priceMin: prices.length > 0 ? Math.min(...prices) : 19.99,

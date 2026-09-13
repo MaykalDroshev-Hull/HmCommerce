@@ -28,6 +28,14 @@ const nextConfig = {
         hostname: 'undmzklwxotqunctdxyv.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
+      {
+        protocol: 'https',
+        hostname: '**.aliexpress-media.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.alicdn.com',
+      },
     ],
   },
 };
