@@ -55,12 +55,14 @@ export default function ProductMediaGallery({
 
   return (
     <>
-      {/* Desktop View: 2x2 Clean Image Grid */}
+      {/* Desktop View: Clean 2-Column Editorial Image Grid */}
       <div className="hidden md:grid grid-cols-2 gap-2.5">
         {safeImages.map((imageUrl, idx) => (
           <div
             key={`${imageUrl}-${idx}`}
-            className="group relative aspect-square bg-neutral-100 rounded-sm overflow-hidden cursor-zoom-in"
+            className={`group relative aspect-square bg-neutral-100 rounded-sm overflow-hidden cursor-zoom-in ${
+              safeImages.length === 1 ? 'col-span-2 aspect-[4/3] sm:aspect-square' : ''
+            }`}
             onClick={() => setModalImage(imageUrl)}
           >
             <Image
@@ -131,21 +133,29 @@ export default function ProductMediaGallery({
               <ChevronRight size={18} />
             </button>
 
-            {/* Pagination Dots (Mobile) */}
-            <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-1.5 z-10">
-              {safeImages.map((_, dotIdx) => (
-                <button
-                  key={dotIdx}
-                  type="button"
-                  onClick={() => setActiveSlide(dotIdx)}
-                  className={`transition-all duration-300 rounded-full ${
-                    dotIdx === activeSlide
-                      ? 'w-5 h-1.5 bg-neutral-900'
-                      : 'w-1.5 h-1.5 bg-neutral-400 hover:bg-neutral-600'
-                  }`}
-                  aria-label={`Go to slide ${dotIdx + 1}`}
-                />
-              ))}
+            {/* Pagination: Dots (<= 8 images) or Counter Badge (> 8 images) */}
+            <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center z-10 pointer-events-none">
+              {safeImages.length <= 8 ? (
+                <div className="flex items-center gap-1.5 pointer-events-auto">
+                  {safeImages.map((_, dotIdx) => (
+                    <button
+                      key={dotIdx}
+                      type="button"
+                      onClick={() => setActiveSlide(dotIdx)}
+                      className={`transition-all duration-300 rounded-full ${
+                        dotIdx === activeSlide
+                          ? 'w-5 h-1.5 bg-neutral-900'
+                          : 'w-1.5 h-1.5 bg-neutral-400 hover:bg-neutral-600'
+                      }`}
+                      aria-label={`Go to slide ${dotIdx + 1}`}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-neutral-900/80 backdrop-blur-sm text-white text-[11px] font-semibold px-3 py-1 rounded-full shadow tracking-wider">
+                  {activeSlide + 1} / {safeImages.length}
+                </div>
+              )}
             </div>
           </>
         )}

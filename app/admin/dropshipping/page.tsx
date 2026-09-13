@@ -31,6 +31,7 @@ import {
   Trees
 } from 'lucide-react';
 import { AliExpressProductDetails, AliExpressVariant } from '@/lib/aliexpress/types';
+import { extractCleanSizeCode } from '@/lib/aliexpress/client';
 
 interface ProductType {
   producttypeid: string;
@@ -53,9 +54,11 @@ export default function DropshippingPage() {
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [sellingPrice, setSellingPrice] = useState<string>('24.99');
   const [compareAtPrice, setCompareAtPrice] = useState<string>('34.99');
+  const [supplierBaseCost, setSupplierBaseCost] = useState<string>('0.00');
   const [selectedImageUrls, setSelectedImageUrls] = useState<string[]>([]);
   const [primaryImageUrl, setPrimaryImageUrl] = useState<string>('');
   const [selectedVariants, setSelectedVariants] = useState<Array<AliExpressVariant & { isIncluded: boolean; customSku?: string; customPrice?: number }>>([]);
+  const [selectedColourFilter, setSelectedColourFilter] = useState<string>('all');
 
   // Import execution state
   const [isImporting, setIsImporting] = useState(false);
@@ -180,8 +183,24 @@ export default function DropshippingPage() {
       setCustomTitle(cleanedName);
       setCustomDescription(enhanceDescriptionForPetParents(prod.description, cleanedName));
       
-      const defaultSell = prod.priceMin ? (Math.ceil(prod.priceMin * 1.5) - 0.01).toFixed(2) : '24.99';
-      const defaultOriginal = prod.priceMin ? (Math.ceil(prod.priceMin * 2.1) - 0.01).toFixed(2) : '34.99';
+      const baseCost = prod.priceMin ? prod.priceMin.toFixed(2) : '0.00';
+      setSupplierBaseCost(baseCost);
+
+      const costNum = prod.priceMin || 9.99;
+      // High-converting UK pet retail markup:
+      // Sub-£10 items: 2.2x-2.4x markup (e.g. £5.79 cost -> £13.99 sale)
+      // £10-£25 items: ~1.6x markup (e.g. £15 cost -> £24.99 sale)
+      // >£25 items: ~1.45x markup
+      const defaultSell = costNum < 10
+        ? (Math.ceil(costNum * 2.3) - 0.01).toFixed(2)
+        : costNum < 25
+          ? (Math.ceil(costNum * 1.6) - 0.01).toFixed(2)
+          : (Math.ceil(costNum * 1.45) - 0.01).toFixed(2);
+
+      const defaultOriginal = prod.originalPrice && prod.originalPrice > parseFloat(defaultSell)
+        ? prod.originalPrice.toFixed(2)
+        : (Math.ceil(parseFloat(defaultSell) * 1.4) - 0.01).toFixed(2);
+
       setSellingPrice(defaultSell);
       setCompareAtPrice(defaultOriginal);
 
@@ -189,12 +208,25 @@ export default function DropshippingPage() {
       setPrimaryImageUrl(prod.images?.[0] || '');
 
       setSelectedVariants(
-        (prod.variants || []).map((v) => ({
-          ...v,
-          isIncluded: true,
-          customPrice: Number(defaultSell)
-        }))
+        (prod.variants || []).map((v, idx) => {
+          let sku = (v.skuCode || v.skuId || `SKU-${idx + 1}`).trim().toUpperCase();
+          const sizeProp = v.properties.find((p) => /size/i.test(p.name))?.value;
+          if (sizeProp) {
+            const cleanSize = extractCleanSizeCode(sizeProp);
+            if (cleanSize && !sku.endsWith(`-${cleanSize}`) && !sku.includes(`-${cleanSize}-`)) {
+              sku = `${sku}-${cleanSize}`;
+            }
+          }
+          return {
+            ...v,
+            skuCode: sku,
+            customSku: sku,
+            isIncluded: true,
+            customPrice: Number(defaultSell)
+          };
+        })
       );
+      setSelectedColourFilter('all');
     } catch (err: any) {
       setFetchError(err.message || 'An error occurred while contacting AliExpress');
     } finally {
@@ -568,16 +600,29 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
         compareAtPrice: comparePriceNum,
         promodiscountpercent: promoDiscount,
         images: orderedImages,
-        selectedVariants: includedVariants.map((v) => ({
-          skuId: v.skuId,
-          sku: v.skuCode,
-          price: v.customPrice || sellPriceNum,
-          compareAtPrice: comparePriceNum,
-          quantity: v.stock || 40,
-          size: v.properties.find((p) => /size/i.test(p.name))?.value || undefined,
-          colour: v.properties.find((p) => /colou?r/i.test(p.name))?.value || undefined,
-          imageUrl: v.imageUrl || orderedImages[0]
-        }))
+        selectedVariants: includedVariants.map((v) => {
+          let variantSku = (v.customSku || v.skuCode || v.skuId || '').trim().toUpperCase();
+          const sizeVal = v.properties.find((p) => /size/i.test(p.name))?.value;
+          const colourVal = v.properties.find((p) => /colou?r/i.test(p.name))?.value;
+
+          if (sizeVal) {
+            const cleanSize = extractCleanSizeCode(sizeVal);
+            if (cleanSize && !variantSku.endsWith(`-${cleanSize}`) && !variantSku.includes(`-${cleanSize}-`)) {
+              variantSku = `${variantSku}-${cleanSize}`;
+            }
+          }
+
+          return {
+            skuId: v.skuId,
+            sku: variantSku,
+            price: v.customPrice || sellPriceNum,
+            compareAtPrice: comparePriceNum,
+            quantity: v.stock || 40,
+            size: sizeVal || undefined,
+            colour: colourVal || undefined,
+            imageUrl: v.imageUrl || orderedImages[0]
+          };
+        })
       };
 
       const res = await fetch('/api/aliexpress/import', {
@@ -1066,17 +1111,26 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
 
                 {/* Section D: Pricing & Margins */}
                 <div className="bg-neutral-50 rounded-xl p-4 sm:p-5 border border-neutral-200">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-700 mb-3 sm:mb-4">
-                    Pricing & Profit Margin (£ GBP)
-                  </h4>
+                  <div className="flex items-center justify-between mb-3 sm:mb-4">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-700">
+                      Pricing & Profit Margin (£ GBP)
+                    </h4>
+                    <span className="text-[10px] text-neutral-500 bg-white px-2 py-0.5 rounded border border-neutral-200 font-medium">
+                      Live Supplier Rates
+                    </span>
+                  </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                     <div>
-                      <span className="text-[11px] font-medium text-neutral-500 block mb-1">
-                        Supplier Base Cost
-                      </span>
-                      <p className="text-base sm:text-lg font-bold text-neutral-900">
-                        £{stagedProduct.priceMin.toFixed(2)}
-                      </p>
+                      <label className="text-[11px] font-medium text-neutral-700 block mb-1">
+                        Supplier Base Cost (£)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={supplierBaseCost}
+                        onChange={(e) => setSupplierBaseCost(e.target.value)}
+                        className="w-full px-3 py-2 text-base sm:text-sm border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-neutral-900 bg-white font-medium"
+                      />
                     </div>
 
                     <div>
@@ -1087,7 +1141,19 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                         type="number"
                         step="0.01"
                         value={sellingPrice}
-                        onChange={(e) => setSellingPrice(e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setSellingPrice(val);
+                          const numVal = parseFloat(val);
+                          if (!isNaN(numVal) && numVal > 0) {
+                            setSelectedVariants((prev) =>
+                              prev.map((v) => ({
+                                ...v,
+                                customPrice: numVal
+                              }))
+                            );
+                          }
+                        }}
                         className="w-full px-3 py-2 text-base sm:text-sm border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-neutral-900 bg-white font-medium"
                       />
                     </div>
@@ -1109,82 +1175,213 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                       <span className="text-[11px] font-medium text-neutral-500 block mb-1">
                         Estimated Profit / Margin
                       </span>
-                      {parseFloat(sellingPrice) > stagedProduct.priceMin ? (
-                        <p className="text-lg font-bold text-emerald-600">
-                          +£{(parseFloat(sellingPrice) - stagedProduct.priceMin).toFixed(2)}{' '}
-                          <span className="text-xs text-neutral-500 font-normal">
-                            ({Math.round(((parseFloat(sellingPrice) - stagedProduct.priceMin) / parseFloat(sellingPrice)) * 100)}%)
-                          </span>
-                        </p>
-                      ) : (
-                        <p className="text-sm font-bold text-red-500">Below Cost</p>
-                      )}
+                      {(() => {
+                        const base = parseFloat(supplierBaseCost) || 0;
+                        const sell = parseFloat(sellingPrice) || 0;
+                        const profit = sell - base;
+                        const margin = sell > 0 ? Math.round((profit / sell) * 100) : 0;
+                        if (profit > 0) {
+                          return (
+                            <p className="text-lg font-bold text-emerald-600">
+                              +£{profit.toFixed(2)}{' '}
+                              <span className="text-xs text-neutral-500 font-normal">
+                                ({margin}%)
+                              </span>
+                            </p>
+                          );
+                        } else if (sell > 0) {
+                          return <p className="text-sm font-bold text-red-500">Below Cost</p>;
+                        } else {
+                          return <p className="text-sm text-neutral-400 font-medium">—</p>;
+                        }
+                      })()}
                     </div>
                   </div>
                 </div>
 
                 {/* Section E: Variants */}
-                {selectedVariants.length > 0 && (
-                  <div className="space-y-3">
-                    <label className="text-xs font-bold uppercase tracking-wider text-neutral-700 block">
-                      Product Variants & Stock ({selectedVariants.filter((v) => v.isIncluded).length} included)
-                    </label>
+                {selectedVariants.length > 0 && (() => {
+                  const availableColours = Array.from(
+                    new Set(
+                      selectedVariants
+                        .map((v) => v.properties.find((p) => /colou?r/i.test(p.name))?.value)
+                        .filter(Boolean) as string[]
+                    )
+                  );
 
-                    <div className="border border-neutral-200 rounded-lg overflow-x-auto">
-                      <table className="w-full text-left text-xs">
-                        <thead className="bg-neutral-50 border-b border-neutral-200 text-neutral-600">
-                          <tr>
-                            <th className="py-2.5 px-3 w-10 text-center">Include</th>
-                            <th className="py-2.5 px-3">Option / Size</th>
-                            <th className="py-2.5 px-3">Supplier SKU</th>
-                            <th className="py-2.5 px-3">Price (£)</th>
-                            <th className="py-2.5 px-3">Stock Qty</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-neutral-100">
-                          {selectedVariants.map((variant, idx) => (
-                            <tr key={variant.skuId} className={variant.isIncluded ? 'hover:bg-neutral-50/50' : 'bg-neutral-50/70 opacity-60'}>
-                              <td className="py-2.5 px-3 text-center">
-                                <input
-                                  type="checkbox"
-                                  checked={variant.isIncluded}
-                                  onChange={(e) => {
-                                    const updated = [...selectedVariants];
-                                    updated[idx].isIncluded = e.target.checked;
-                                    setSelectedVariants(updated);
-                                  }}
-                                  className="w-4 h-4 text-neutral-900 rounded focus:ring-neutral-900 cursor-pointer"
-                                />
-                              </td>
-                              <td className="py-2.5 px-3 font-medium text-neutral-900">
-                                {variant.properties.map((p) => `${p.name}: ${p.value}`).join(' / ') || `Variant #${idx + 1}`}
-                              </td>
-                              <td className="py-2.5 px-3 text-neutral-500">
-                                {variant.skuCode || variant.skuId}
-                              </td>
-                              <td className="py-2.5 px-3">
-                                <input
-                                  type="number"
-                                  step="0.01"
-                                  value={variant.customPrice || sellingPrice}
-                                  onChange={(e) => {
-                                    const updated = [...selectedVariants];
-                                    updated[idx].customPrice = parseFloat(e.target.value) || 0;
-                                    setSelectedVariants(updated);
-                                  }}
-                                  className="w-20 px-2 py-1 text-xs border border-neutral-300 rounded"
-                                />
-                              </td>
-                              <td className="py-2.5 px-3 text-neutral-700">
-                                {variant.stock || 40}
-                              </td>
+                  const displayedVariants = selectedVariants
+                    .map((variant, idx) => ({ ...variant, originalIndex: idx }))
+                    .filter((variant) => {
+                      if (selectedColourFilter === 'all') return true;
+                      const c = variant.properties.find((p) => /colou?r/i.test(p.name))?.value;
+                      return c === selectedColourFilter;
+                    });
+
+                  return (
+                    <div className="space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                          <label className="text-xs font-bold uppercase tracking-wider text-neutral-700 block">
+                            Product Variants & Stock ({selectedVariants.filter((v) => v.isIncluded).length} of {selectedVariants.length} included)
+                          </label>
+                          <p className="text-[11px] text-neutral-500">
+                            Customise prices, unique size-inclusive SKUs, and select which colours to offer.
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedVariants(selectedVariants.map((v) => ({ ...v, isIncluded: true })))}
+                            className="text-xs font-medium text-neutral-700 hover:text-black underline cursor-pointer"
+                          >
+                            Select All
+                          </button>
+                          <span className="text-neutral-300">|</span>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedVariants(selectedVariants.map((v) => ({ ...v, isIncluded: false })))}
+                            className="text-xs font-medium text-neutral-700 hover:text-black underline cursor-pointer"
+                          >
+                            Deselect All
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Colour Filter Pills */}
+                      {availableColours.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1.5 p-2 bg-neutral-50 rounded-lg border border-neutral-200">
+                          <span className="text-xs font-semibold text-neutral-600 mr-1">Filter Colour:</span>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedColourFilter('all')}
+                            className={`px-3 py-1 text-xs rounded-full font-medium transition-colors cursor-pointer ${
+                              selectedColourFilter === 'all'
+                                ? 'bg-neutral-900 text-white shadow-sm'
+                                : 'bg-white text-neutral-700 hover:bg-neutral-100 border border-neutral-200'
+                            }`}
+                          >
+                            All Colours ({selectedVariants.length})
+                          </button>
+                          {availableColours.map((col) => {
+                            const count = selectedVariants.filter(
+                              (v) => v.properties.find((p) => /colou?r/i.test(p.name))?.value === col
+                            ).length;
+                            const activeCount = selectedVariants.filter(
+                              (v) => v.properties.find((p) => /colou?r/i.test(p.name))?.value === col && v.isIncluded
+                            ).length;
+                            const isSelected = selectedColourFilter === col;
+                            return (
+                              <button
+                                key={col}
+                                type="button"
+                                onClick={() => setSelectedColourFilter(col)}
+                                className={`px-3 py-1 text-xs rounded-full font-medium transition-colors cursor-pointer inline-flex items-center gap-1.5 ${
+                                  isSelected
+                                    ? 'bg-neutral-900 text-white shadow-sm'
+                                    : 'bg-white text-neutral-700 hover:bg-neutral-100 border border-neutral-200'
+                                }`}
+                              >
+                                <span>{col}</span>
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${isSelected ? 'bg-neutral-700 text-neutral-200' : 'bg-neutral-100 text-neutral-600'}`}>
+                                  {activeCount}/{count}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      <div className="border border-neutral-200 rounded-lg overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-neutral-50 border-b border-neutral-200 text-neutral-600">
+                            <tr>
+                              <th className="py-2.5 px-3 w-10 text-center">Include</th>
+                              <th className="py-2.5 px-3">Colour & Size</th>
+                              <th className="py-2.5 px-3">Variant SKU</th>
+                              <th className="py-2.5 px-3">Price (£)</th>
+                              <th className="py-2.5 px-3">Stock Qty</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody className="divide-y divide-neutral-100">
+                            {displayedVariants.map((variant) => {
+                              const idx = variant.originalIndex;
+                              return (
+                                <tr key={variant.skuId} className={variant.isIncluded ? 'hover:bg-neutral-50/50' : 'bg-neutral-50/70 opacity-60'}>
+                                  <td className="py-2.5 px-3 text-center">
+                                    <input
+                                      type="checkbox"
+                                      checked={variant.isIncluded}
+                                      onChange={(e) => {
+                                        const updated = [...selectedVariants];
+                                        updated[idx].isIncluded = e.target.checked;
+                                        setSelectedVariants(updated);
+                                      }}
+                                      className="w-4 h-4 text-neutral-900 rounded focus:ring-neutral-900 cursor-pointer"
+                                    />
+                                  </td>
+                                  <td className="py-2.5 px-3 font-medium text-neutral-900">
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                      {variant.properties.map((p) => {
+                                        const isColour = /colou?r/i.test(p.name);
+                                        return (
+                                          <span
+                                            key={p.name}
+                                            className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold tracking-tight ${
+                                              isColour
+                                                ? 'bg-neutral-900 text-white'
+                                                : 'bg-neutral-100 text-neutral-800 border border-neutral-200'
+                                            }`}
+                                          >
+                                            <span className="opacity-70 text-[9px] mr-1 uppercase">{p.name}:</span>
+                                            {p.value}
+                                          </span>
+                                        );
+                                      })}
+                                    </div>
+                                    {variant.price > 0 && (
+                                      <div className="text-[10px] text-neutral-400 font-normal mt-1">
+                                        Supplier Cost: £{variant.price.toFixed(2)}
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="py-2.5 px-3">
+                                    <input
+                                      type="text"
+                                      value={variant.customSku || variant.skuCode || variant.skuId}
+                                      onChange={(e) => {
+                                        const updated = [...selectedVariants];
+                                        updated[idx].customSku = e.target.value.toUpperCase();
+                                        setSelectedVariants(updated);
+                                      }}
+                                      className="w-44 max-w-full px-2 py-1 text-xs font-mono border border-neutral-300 rounded uppercase bg-white"
+                                    />
+                                  </td>
+                                  <td className="py-2.5 px-3">
+                                    <input
+                                      type="number"
+                                      step="0.01"
+                                      value={variant.customPrice || sellingPrice}
+                                      onChange={(e) => {
+                                        const updated = [...selectedVariants];
+                                        updated[idx].customPrice = parseFloat(e.target.value) || 0;
+                                        setSelectedVariants(updated);
+                                      }}
+                                      className="w-20 px-2 py-1 text-xs border border-neutral-300 rounded"
+                                    />
+                                  </td>
+                                  <td className="py-2.5 px-3 text-neutral-700">
+                                    {variant.stock || 40}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* Bottom Action Bar */}
                 <div className="pt-6 border-t border-neutral-200 flex flex-col sm:flex-row items-center justify-between gap-4">

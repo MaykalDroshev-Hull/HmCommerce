@@ -14,6 +14,7 @@ import PayPalButtons from './PayPalButtons';
 import { getVariantEffectivePrice } from '@/lib/product-promo';
 import { useStoreSettings } from '@/context/StoreSettingsContext';
 import { parseShippingSettings } from '@/lib/shipping-rules';
+import { getColourHex } from '@/lib/colours';
 
 interface ProductDetailsProps {
   product: Product;
@@ -53,18 +54,92 @@ interface Variant {
   IsPrimaryImage?: boolean;
 }
 
-const COLOUR_HEX_MAP: Record<string, string> = {
-  'heathered graphite grey': '#4A4D50',
-  'graphite grey': '#4A4D50',
-  'grey': '#4A4D50',
-  'sand khaki': '#C2B29A',
-  'khaki': '#C2B29A',
-  'sand': '#C2B29A',
-  'black': '#1A1A1A',
-  'midnight black': '#1A1A1A',
-  'navy': '#1E293B',
-  'olive': '#4D5B44',
-};
+interface ParsedProductDescription {
+  intro: string;
+  featuresTitle: string;
+  features: string[];
+  sizing: string;
+  care: string;
+  rawText: string;
+}
+
+function parseProductDescription(raw?: string): ParsedProductDescription {
+  if (!raw || typeof raw !== 'string') {
+    return {
+      intro: '',
+      featuresTitle: 'Fit and Features',
+      features: [],
+      sizing: '',
+      care: '',
+      rawText: '',
+    };
+  }
+
+  const cleanRaw = raw.trim();
+
+  // Look for standard section headers
+  const featuresHeaderMatch = cleanRaw.match(/(?:Why Devoted Pet Parents Love It|Fit and Features|Features & Highlights|Features|Highlights):?/i);
+  const sizingHeaderMatch = cleanRaw.match(/(?:Sizing & Fit|Sizing and Fit|Sizing Guide|Size & Fit):?/i);
+  const careHeaderMatch = cleanRaw.match(/(?:Care Instructions|Materials and Care|Fabric & Materials|Fabric & Care|Care & Materials):?/i);
+
+  // Intro text: everything before the first recognized section header
+  const headerPositions = [
+    featuresHeaderMatch?.index,
+    sizingHeaderMatch?.index,
+    careHeaderMatch?.index,
+  ].filter((idx): idx is number => idx !== undefined && idx >= 0);
+
+  let intro = '';
+  if (headerPositions.length > 0) {
+    const firstHeader = Math.min(...headerPositions);
+    intro = cleanRaw.substring(0, firstHeader).trim();
+  } else {
+    intro = cleanRaw;
+  }
+
+  // Extract Features & Highlights
+  let featuresTitle = 'Fit and Features';
+  let features: string[] = [];
+  if (featuresHeaderMatch && featuresHeaderMatch.index !== undefined) {
+    featuresTitle = featuresHeaderMatch[0].replace(/:$/, '').trim() || 'Fit and Features';
+    const startIdx = featuresHeaderMatch.index + featuresHeaderMatch[0].length;
+    const remainingHeaders = [sizingHeaderMatch?.index, careHeaderMatch?.index]
+      .filter((idx): idx is number => idx !== undefined && idx > startIdx);
+    const endIdx = remainingHeaders.length > 0 ? Math.min(...remainingHeaders) : cleanRaw.length;
+    const featuresBlock = cleanRaw.substring(startIdx, endIdx).trim();
+
+    features = featuresBlock
+      .split(/\n+/)
+      .map((line) => line.replace(/^[•\-\*]\s*/, '').trim())
+      .filter(Boolean);
+  }
+
+  // Extract Sizing & Fit
+  let sizing = '';
+  if (sizingHeaderMatch && sizingHeaderMatch.index !== undefined) {
+    const startIdx = sizingHeaderMatch.index + sizingHeaderMatch[0].length;
+    const remainingHeaders = [careHeaderMatch?.index]
+      .filter((idx): idx is number => idx !== undefined && idx > startIdx);
+    const endIdx = remainingHeaders.length > 0 ? Math.min(...remainingHeaders) : cleanRaw.length;
+    sizing = cleanRaw.substring(startIdx, endIdx).trim();
+  }
+
+  // Extract Care Instructions
+  let care = '';
+  if (careHeaderMatch && careHeaderMatch.index !== undefined) {
+    const startIdx = careHeaderMatch.index + careHeaderMatch[0].length;
+    care = cleanRaw.substring(startIdx).trim();
+  }
+
+  return {
+    intro,
+    featuresTitle,
+    features,
+    sizing,
+    care,
+    rawText: cleanRaw,
+  };
+}
 
 const SIZE_GUIDE_DATA = [
   { size: 'XXS', neck: '9.4"–11.0" (24–28 cm)', chest: '11.8"–13.7" (30–35 cm)', leash: '5/8" × 5 ft', breeds: 'Chihuahua, Teacup, Cats' },
@@ -106,6 +181,10 @@ export default function ProductDetails({
 
   const internalBuyButtonRef = useRef<HTMLButtonElement | null>(null);
   const activeBuyButtonRef = buyButtonRef || internalBuyButtonRef;
+
+  const parsedDesc = useMemo(() => {
+    return parseProductDescription(product.description || (product as any).Description);
+  }, [product.description, (product as any).Description]);
 
   // Extract variants & options
   useEffect(() => {
@@ -190,7 +269,7 @@ export default function ProductDetails({
     const updated = { ...selectedOptions, [propertyKey]: value };
     setSelectedOptions(updated);
 
-    const match = variants.find((v) => {
+    let match = variants.find((v) => {
       const pvs =
         v.ProductVariantPropertyvalues ||
         v.ProductVariantPropertyValues ||
@@ -199,15 +278,31 @@ export default function ProductDetails({
       return Object.entries(updated).every(([k, val]) =>
         pvs.some((pv: any) => {
           const name = (pv.Property?.name || pv.properties?.name || pv.propertyid || '').toLowerCase();
-          return name === k && (pv.value || pv.Value) === val;
+          return name === k && (pv.value || pv.Value)?.toLowerCase() === val?.toLowerCase();
         })
       );
     });
 
+    // Fallback: If no exact combination match, find any variant matching the clicked property
+    if (!match) {
+      match = variants.find((v) => {
+        const pvs =
+          v.ProductVariantPropertyvalues ||
+          v.ProductVariantPropertyValues ||
+          v.product_variant_property_values ||
+          [];
+        return pvs.some((pv: any) => {
+          const name = (pv.Property?.name || pv.properties?.name || pv.propertyid || '').toLowerCase();
+          return name === propertyKey && (pv.value || pv.Value)?.toLowerCase() === value?.toLowerCase();
+        });
+      });
+    }
+
     if (match) {
       setSelectedVariant(match);
-      if (match.imageurl && onVariantChange) {
-        onVariantChange([match.imageurl]);
+      const variantImages = match.images && match.images.length > 0 ? match.images : match.imageurl ? [match.imageurl] : undefined;
+      if (variantImages && onVariantChange) {
+        onVariantChange(variantImages);
       }
     }
 
@@ -225,13 +320,25 @@ export default function ProductDetails({
     // Notify parent for sticky banner
     const colourVal = updated['colour'] || updated['color'] || '';
     const sizeVal = updated['size'] || '';
-    const hex = COLOUR_HEX_MAP[colourVal.toLowerCase()] || '#4A4D50';
+    const hex = getColourHex(colourVal);
     onOptionChangeCallback?.(colourVal, hex, sizeVal, eff.sale);
   };
 
-  const selectedColour = selectedOptions['colour'] || selectedOptions['color'] || 'Heathered Graphite Grey';
-  const selectedSize = selectedOptions['size'] || 'XS';
-  const selectedColourHex = COLOUR_HEX_MAP[selectedColour.toLowerCase()] || '#4A4D50';
+  const colourOptions = availableOptions['colour'] || availableOptions['color'] || new Set<string>();
+  const sizeOptions = availableOptions['size'] || new Set<string>();
+
+  const selectedColour =
+    selectedOptions['colour'] ||
+    selectedOptions['color'] ||
+    (colourOptions.size > 0 ? Array.from(colourOptions)[0] : '') ||
+    'Heathered Graphite Grey';
+
+  const selectedSize =
+    selectedOptions['size'] ||
+    (sizeOptions.size > 0 ? Array.from(sizeOptions)[0] : '') ||
+    'XS';
+
+  const selectedColourHex = getColourHex(selectedColour);
 
   useEffect(() => {
     onOptionChangeCallback?.(selectedColour, selectedColourHex, selectedSize, effectivePricing.sale);
@@ -285,8 +392,7 @@ export default function ProductDetails({
     }
   };
 
-  const colourOptions = availableOptions['colour'] || availableOptions['color'] || new Set(['Heathered Graphite Grey', 'Sand Khaki']);
-  const sizeOptions = availableOptions['size'] || new Set(['XS', 'S', 'M', 'L', 'XL']);
+
 
   const productName = product.name || `${product.brand || ''} ${product.model || ''}`.trim() || 'Daydrift Adventure Dog Collar';
   const subtitle = product.subtitle || (product as any).subTitle || 'DESIGNED FOR EVERYDAY WALKS';
@@ -347,41 +453,50 @@ export default function ProductDetails({
       </div>
 
       {/* Colour Swatches */}
-      <div className="space-y-2.5 pt-2">
-        <div className="flex items-center justify-between text-xs">
-          <span className="font-bold uppercase tracking-wider text-neutral-900">
-            Select Colour
-          </span>
-          <span className="text-neutral-600">
-            {selectedColour}
-          </span>
-        </div>
+      {colourOptions.size > 0 && (
+        <div className="space-y-2.5 pt-2">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-bold uppercase tracking-wider text-neutral-900">
+              Select Colour
+            </span>
+            <span className="text-neutral-600 font-medium">
+              {selectedColour}
+            </span>
+          </div>
 
-        <div className="flex items-center gap-3">
-          {Array.from(colourOptions).map((colName) => {
-            const isSelected = selectedColour.toLowerCase() === colName.toLowerCase();
-            const hex = COLOUR_HEX_MAP[colName.toLowerCase()] || '#4A4D50';
+          <div className="flex items-center gap-3 flex-wrap">
+            {Array.from(colourOptions).map((colName) => {
+              const isSelected = selectedColour.toLowerCase() === colName.toLowerCase();
+              const hex = getColourHex(colName);
+              const isWhiteOrLight =
+                hex.toLowerCase() === '#ffffff' ||
+                hex.toLowerCase() === '#fafafa' ||
+                hex.toLowerCase() === '#f8fafc' ||
+                hex.toLowerCase() === '#fef3c7';
 
-            return (
-              <button
-                key={colName}
-                type="button"
-                onClick={() => handleOptionSelect('colour', colName)}
-                className={`relative p-0.5 rounded-full transition-all duration-200 ${
-                  isSelected ? 'ring-2 ring-neutral-900 ring-offset-2' : 'hover:scale-105'
-                }`}
-                title={colName}
-                aria-label={`Select colour ${colName}`}
-              >
-                <span
-                  className="block w-8 h-8 rounded-full border border-neutral-300 shadow-inner"
-                  style={{ backgroundColor: hex }}
-                />
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={colName}
+                  type="button"
+                  onClick={() => handleOptionSelect('colour', colName)}
+                  className={`group relative p-0.5 rounded-full transition-all duration-200 cursor-pointer ${
+                    isSelected ? 'ring-2 ring-neutral-900 ring-offset-2 scale-110' : 'hover:scale-105 opacity-90 hover:opacity-100'
+                  }`}
+                  title={colName}
+                  aria-label={`Select colour ${colName}`}
+                >
+                  <span
+                    className={`block w-8 h-8 rounded-full shadow-inner transition-transform ${
+                      isWhiteOrLight ? 'border border-neutral-300' : 'border border-black/10'
+                    }`}
+                    style={{ backgroundColor: hex }}
+                  />
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Size Selector */}
       <div className="space-y-2.5 pt-2">
@@ -496,73 +611,117 @@ export default function ProductDetails({
         </div>
       </div>
 
-      {/* Product Accordions (from Screenshot #2 & #5) */}
+      {/* Product Overview Story from DB */}
+      {parsedDesc.intro && (
+        <div className="pt-2 text-xs sm:text-[13px] text-neutral-700 leading-relaxed font-normal border-b border-neutral-100 pb-4">
+          <p>{parsedDesc.intro}</p>
+        </div>
+      )}
+
+      {/* Product Accordions (Dynamic from DB Description) */}
       <div className="space-y-0 divide-y divide-neutral-200 text-xs">
-        {/* Fit and Features */}
+        {/* Fit and Features / Why Pet Parents Love It */}
         <div>
           <button
             type="button"
             onClick={() => setFeaturesOpen(!featuresOpen)}
-            className="w-full py-4 flex items-center justify-between text-left font-bold text-sm text-neutral-900 hover:text-neutral-700"
+            className="w-full py-4 flex items-center justify-between text-left font-bold text-sm text-neutral-900 hover:text-neutral-700 cursor-pointer"
           >
-            <span>Fit and Features</span>
+            <span>{parsedDesc.features.length > 0 ? parsedDesc.featuresTitle : 'Fit and Features'}</span>
             {featuresOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </button>
           {featuresOpen && (
             <div className="pb-4 text-neutral-600 space-y-2 leading-relaxed">
-              <p className="font-medium text-neutral-900">Engineered for Daily Reliability</p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>Heavy-duty matte gunmetal quick-release alloy buckle</li>
-                <li>Welded stainless steel D-ring for secure lead fastening</li>
-                <li>Dedicated secondary quick-tag loop to eliminate tag jingle</li>
-                <li>Adjustable slider provides custom snug fit across neck shapes</li>
-                <li>Soft-folded tubular webbing edges prevent friction and coat breakage</li>
-              </ul>
+              {parsedDesc.features.length > 0 ? (
+                <ul className="list-disc list-inside space-y-2">
+                  {parsedDesc.features.map((feature, idx) => (
+                    <li key={idx} className="leading-relaxed">
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              ) : parsedDesc.rawText ? (
+                <p className="whitespace-pre-line leading-relaxed">{parsedDesc.rawText}</p>
+              ) : (
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Engineered with skin-friendly materials for all-day comfort</li>
+                  <li>Secure, fuss-free fastening for effortless dressing</li>
+                  <li>Reinforced stitching designed for active, playful dogs</li>
+                  <li>Lightweight design to prevent restriction of movement</li>
+                </ul>
+              )}
             </div>
           )}
         </div>
 
-        {/* Fabric & Materials */}
+        {/* Fabric, Materials & Care */}
         <div>
           <button
             type="button"
             onClick={() => setFabricOpen(!fabricOpen)}
-            className="w-full py-4 flex items-center justify-between text-left font-bold text-sm text-neutral-900 hover:text-neutral-700"
+            className="w-full py-4 flex items-center justify-between text-left font-bold text-sm text-neutral-900 hover:text-neutral-700 cursor-pointer"
           >
-            <span>Fabric & Materials</span>
+            <span>Fabric, Materials &amp; Care</span>
             {fabricOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </button>
           {fabricOpen && (
             <div className="pb-4 text-neutral-600 space-y-2 leading-relaxed">
-              <p className="font-medium text-neutral-900">Technical Webbing & Alloy Hardware</p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>High-density woven ripstop nylon webbing</li>
-                <li>Water-repellent and mud-resistant finish for wet weather and muddy walks</li>
-                <li>Anodised zinc-alloy buckle with corrosion-resistant coating</li>
-                <li>Tensile strength tested to withstand up to 250 kg pull force</li>
-              </ul>
+              {parsedDesc.care ? (
+                <div className="space-y-1.5">
+                  <p className="font-semibold text-neutral-900">Care Instructions:</p>
+                  <p className="leading-relaxed whitespace-pre-line">{parsedDesc.care}</p>
+                </div>
+              ) : (
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Gentle hand or machine wash on cold cycle (30°C)</li>
+                  <li>Air dry naturally away from direct sunlight</li>
+                  <li>Do not tumble dry or bleach to preserve fabric softness</li>
+                </ul>
+              )}
             </div>
           )}
         </div>
 
-        {/* Materials and Care */}
+        {/* Sizing, Delivery & Returns */}
         <div>
           <button
             type="button"
             onClick={() => setCareOpen(!careOpen)}
-            className="w-full py-4 flex items-center justify-between text-left font-bold text-sm text-neutral-900 hover:text-neutral-700"
+            className="w-full py-4 flex items-center justify-between text-left font-bold text-sm text-neutral-900 hover:text-neutral-700 cursor-pointer"
           >
-            <span>Materials and Care</span>
+            <span>Sizing, Delivery &amp; Returns</span>
             {careOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </button>
           {careOpen && (
-            <div className="pb-4 text-neutral-600 space-y-2 leading-relaxed">
-              <ul className="list-disc list-inside space-y-1">
-                <li>Hand wash with warm soapy water after muddy trails</li>
-                <li>Rinse thoroughly and air dry away from direct sunlight</li>
-                <li>Do not machine wash or tumble dry</li>
-                <li>Do not bleach or iron</li>
-              </ul>
+            <div className="pb-4 text-neutral-600 space-y-3 leading-relaxed">
+              {parsedDesc.sizing ? (
+                <div>
+                  <p className="font-semibold text-neutral-900 mb-1">Sizing Advice:</p>
+                  <p className="leading-relaxed whitespace-pre-line">{parsedDesc.sizing}</p>
+                </div>
+              ) : (
+                <p className="leading-relaxed">
+                  We recommend measuring your dog&apos;s neck and chest girth before ordering to ensure the most comfortable fit.
+                </p>
+              )}
+
+              <div className="pt-2 border-t border-neutral-100 flex items-center justify-between">
+                <span className="text-neutral-500">Need sizing measurements?</span>
+                <button
+                  type="button"
+                  onClick={() => setShowSizeGuide(true)}
+                  className="font-semibold text-neutral-900 underline hover:text-neutral-700 cursor-pointer"
+                >
+                  View Sizing Guide
+                </button>
+              </div>
+
+              <div className="pt-2 border-t border-neutral-100 space-y-1">
+                <p className="font-semibold text-neutral-900">Tracked UK Delivery &amp; Returns:</p>
+                <p className="text-neutral-500 leading-relaxed">
+                  Free standard delivery on orders over £{freeDeliveryThreshold}. Dispatched with tracking. 30-day returns on unworn items with original tags.
+                </p>
+              </div>
             </div>
           )}
         </div>
@@ -573,13 +732,15 @@ export default function ProductDetails({
         <button
           type="button"
           onClick={handleShare}
-          className="flex items-center gap-1.5 hover:text-neutral-900 transition-colors"
+          className="flex items-center gap-1.5 hover:text-neutral-900 transition-colors cursor-pointer"
         >
           <Share2 size={14} />
           <span>{shareCopied ? 'Link Copied!' : 'Share'}</span>
         </button>
 
-        <span className="text-[11px] text-neutral-400">SKU: DD-COL-001</span>
+        <span className="text-[11px] text-neutral-400 font-mono uppercase">
+          SKU: {selectedVariant?.sku || product.sku || (product as any).skucode || 'N/A'}
+        </span>
       </div>
 
       {/* Size Guide Modal */}
@@ -593,18 +754,22 @@ export default function ProductDetails({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-3 border-b border-neutral-200">
-              <h3 className="text-base font-bold text-neutral-900">Collar Size Guide</h3>
+              <h3 className="text-base font-bold text-neutral-900">
+                {product.type?.toLowerCase().includes('collar') ? 'Collar Size Guide' : 'Pet Sizing Guide'}
+              </h3>
               <button
                 type="button"
                 onClick={() => setShowSizeGuide(false)}
-                className="p-1 text-neutral-400 hover:text-neutral-700"
+                className="p-1 text-neutral-400 hover:text-neutral-700 cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
             <p className="text-xs text-neutral-600 my-4 leading-relaxed">
-              Measure around your dog&apos;s neck with a soft tape measure where the collar would naturally sit. Allow space for two fingers between the collar and neck for optimal comfort.
+              {product.type?.toLowerCase().includes('collar')
+                ? "Measure around your dog's neck with a soft tape measure where the collar would naturally sit. Allow space for two fingers between the collar and neck for optimal comfort."
+                : "Measure around your dog's neck and the widest part of their chest girth. Allow comfortable breathing room to ensure a snug, happy fit."}
             </p>
 
             <div className="overflow-x-auto max-h-[50vh] border border-neutral-200 rounded-md">

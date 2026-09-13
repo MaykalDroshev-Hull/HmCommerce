@@ -23,6 +23,7 @@ export interface AliExpressProductDetails {
   categoryName?: string;
   priceMin: number;
   priceMax: number;
+  originalPrice?: number;
   currency: string;
   sourceUrl: string;
 }

@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { ALIEXPRESS_CONFIG, getStoredAliExpressToken } from './auth';
 import { AliExpressProductDetails, AliExpressVariant, DropshipOrderFulfillmentRequest } from './types';
 import { logger } from '@/lib/logger';
+import { getGeminiApiKey } from '@/lib/gemini/copywriter';
 
 /**
  * Generate TOP (Taobao/AliExpress Open Platform) MD5 signature
@@ -120,6 +121,236 @@ function decodeHtmlEntities(str: string): string {
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&nbsp;/g, ' ');
+}
+
+/**
+ * Cleanly extracts standard size codes (e.g. "XS", "S", "M", "L", "XL", "XXL") from descriptive option strings
+ */
+export function extractCleanSizeCode(val: string): string {
+  if (!val) return '';
+  const sizeMatch = val.match(/\b(XXS|XS|S|M|L|XL|XXL|2XL|3XL|4XL|5XL)\b/i);
+  if (sizeMatch) return sizeMatch[1].toUpperCase();
+
+  const parenMatch = val.match(/\(([^)]+)\)/);
+  if (parenMatch) {
+    const inside = parenMatch[1].trim();
+    const insideMatch = inside.match(/\b(XXS|XS|S|M|L|XL|XXL|2XL|3XL|4XL|5XL)\b/i);
+    if (insideMatch) return insideMatch[1].toUpperCase();
+    return inside.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 6);
+  }
+
+  const clean = val.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  return clean.slice(0, 6);
+}
+
+/**
+ * Generate a clean, descriptive, and unique SKU code incorporating product ID, colour, and size
+ */
+export function generateVariantSku(productId: string, variantName: string, index?: number): string {
+  if (!variantName || typeof variantName !== 'string') {
+    return `${productId}-VAR-${(index || 0) + 1}`;
+  }
+
+  // Split on '/', '|', ',', or spaced dash ' - ' to separate attributes like "Color / Size"
+  const parts = variantName
+    .split(/\s*[\/|,]\s*|\s+-\s+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  const formattedParts: string[] = [];
+
+  for (const part of parts) {
+    const sizeMatch = part.match(/\b(XXS|XS|S|M|L|XL|XXL|2XL|3XL|4XL|5XL)\b/i);
+    let token = '';
+
+    if (sizeMatch) {
+      token = sizeMatch[1].toUpperCase();
+    } else {
+      const parenMatch = part.match(/\(([^)]+)\)/);
+      const beforeParen = part.replace(/\([^)]+\)/, '').trim();
+      const cleanBefore = beforeParen.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+
+      if (cleanBefore.length > 0 && cleanBefore.length <= 10) {
+        token = cleanBefore;
+      } else if (parenMatch) {
+        token = parenMatch[1].replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 6);
+      } else {
+        token = cleanBefore.slice(0, 6);
+      }
+    }
+
+    if (token) {
+      formattedParts.push(token);
+    }
+  }
+
+  const suffix = formattedParts.join('-');
+  const fallback = index !== undefined ? `VAR-${index + 1}` : 'VAR';
+  return `${productId}-${suffix || fallback}`.toUpperCase();
+}
+
+/**
+ * Ensures all variants in a list have unique SKU codes, appending a differentiator if collisions exist
+ */
+export function ensureUniqueVariantSkus(variants: AliExpressVariant[]): AliExpressVariant[] {
+  const seen = new Set<string>();
+  return variants.map((v, idx) => {
+    let sku = (v.skuCode || `${v.skuId || 'SKU'}-${idx + 1}`).trim().toUpperCase();
+    if (seen.has(sku)) {
+      let counter = 2;
+      while (seen.has(`${sku}-${counter}`)) {
+        counter++;
+      }
+      sku = `${sku}-${counter}`;
+    }
+    seen.add(sku);
+    return {
+      ...v,
+      skuCode: sku
+    };
+  });
+}
+
+/**
+ * Fetch live real-time pricing, compare-at discounts, and available variant sizes for an AliExpress item using Gemini Search Grounding
+ */
+export async function fetchLiveAliExpressPricingWithGemini(
+  productId: string,
+  title?: string
+): Promise<{
+  price: number;
+  originalPrice?: number;
+  currency: string;
+  colours: string[];
+  sizes: string[];
+  variants: Array<{ colour?: string; size?: string; name: string; price: number }>;
+} | null> {
+  try {
+    const apiKey = await getGeminiApiKey();
+    if (!apiKey) {
+      logger.warn('Gemini API key not configured, skipping live search pricing lookup.');
+      return null;
+    }
+
+    const prompt = `Find all available colours, sizes, options, current live price (in GBP £), and original/compare-at price for AliExpress product ID ${productId}.
+AliExpress URL: https://www.aliexpress.com/item/${productId}.html
+${title ? `Product Title: ${title}` : ''}
+
+CRITICAL RULES:
+1. Extract ALL available colours (e.g. "Pink", "Blue", "Black", "Red", "Grey", etc.).
+2. Extract ALL available sizes/options (e.g. "XS", "S", "M", "L", "XL", "XXL", or dimension tiers).
+3. If the product has both colours and sizes, generate the variants for all colour + size combinations (e.g. "Pink / XS", "Blue / M", "Black / L").
+4. Find the current live discounted UK sale price in British Pounds (GBP £) and original/compare-at price.
+5. Output strictly valid JSON ONLY, with NO markdown formatting, NO backticks:
+{
+  "price": number,
+  "originalPrice": number,
+  "currency": "GBP",
+  "colours": string[],
+  "sizes": string[],
+  "variants": [
+    {
+      "colour": string,
+      "size": string,
+      "name": string,
+      "price": number
+    }
+  ]
+}`;
+
+    const modelsToTry = ['gemini-3.6-flash', 'gemini-2.5-flash'];
+    let rawText: string | null = null;
+
+    for (const model of modelsToTry) {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            tools: [{ google_search: {} }]
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+          if (rawText) break;
+        } else {
+          logger.warn(`Gemini search pricing with model ${model} returned status ${res.status}`);
+        }
+      } catch (callErr) {
+        logger.warn(`Gemini search call with model ${model} failed:`, callErr);
+      }
+    }
+
+    if (!rawText) return null;
+
+    const cleanedJson = rawText.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
+    const jsonMatch = cleanedJson.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return null;
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    if (!parsed.price || isNaN(Number(parsed.price)) || Number(parsed.price) <= 0) {
+      return null;
+    }
+
+    const rawColours = Array.isArray(parsed.colours) ? parsed.colours.map(String).filter(Boolean) : [];
+    const rawSizes = Array.isArray(parsed.sizes) ? parsed.sizes.map(String).filter(Boolean) : [];
+
+    let parsedVariants: Array<{ colour?: string; size?: string; name: string; price: number }> = [];
+
+    if (Array.isArray(parsed.variants) && parsed.variants.length > 0) {
+      parsedVariants = parsed.variants.map((v: any) => ({
+        colour: v.colour ? String(v.colour) : undefined,
+        size: v.size ? String(v.size) : undefined,
+        name: String(v.name || (v.colour && v.size ? `${v.colour} / ${v.size}` : v.colour || v.size || 'Standard')),
+        price: Number(v.price) || Number(parsed.price)
+      }));
+    }
+
+    // If colours and sizes exist but combinations weren't populated in variants array, generate Cartesian product
+    if (parsedVariants.length === 0 && rawColours.length > 0 && rawSizes.length > 0) {
+      rawColours.forEach((c: string) => {
+        rawSizes.forEach((s: string) => {
+          parsedVariants.push({
+            colour: c,
+            size: s,
+            name: `${c} / ${s}`,
+            price: Number(parsed.price)
+          });
+        });
+      });
+    } else if (parsedVariants.length === 0 && rawColours.length > 0) {
+      rawColours.forEach((c: string) => {
+        parsedVariants.push({
+          colour: c,
+          name: c,
+          price: Number(parsed.price)
+        });
+      });
+    } else if (parsedVariants.length === 0 && rawSizes.length > 0) {
+      rawSizes.forEach((s: string) => {
+        parsedVariants.push({
+          size: s,
+          name: s,
+          price: Number(parsed.price)
+        });
+      });
+    }
+
+    return {
+      price: Math.round(Number(parsed.price) * 100) / 100,
+      originalPrice: parsed.originalPrice && !isNaN(Number(parsed.originalPrice)) ? Math.round(Number(parsed.originalPrice) * 100) / 100 : undefined,
+      currency: parsed.currency || 'GBP',
+      colours: rawColours,
+      sizes: rawSizes,
+      variants: parsedVariants
+    };
+  } catch (err) {
+    logger.warn(`Failed to fetch live AliExpress pricing with Gemini search for ${productId}:`, err);
+    return null;
+  }
 }
 
 /**
@@ -261,6 +492,7 @@ export async function scrapeAliExpressProduct(productId: string): Promise<AliExp
     const variants: AliExpressVariant[] = [];
     let minPrice = 19.99;
     let maxPrice = 29.99;
+    let originalPrice: number | undefined = undefined;
 
     const skuList = runParams?.data?.skuModule?.skuPriceList;
     if (Array.isArray(skuList) && skuList.length > 0) {
@@ -287,16 +519,18 @@ export async function scrapeAliExpressProduct(productId: string): Promise<AliExp
       const prices = variants.map((v) => v.price);
       minPrice = Math.min(...prices);
       maxPrice = Math.max(...prices);
+      originalPrice = Math.round(minPrice * 1.35 * 100) / 100;
     } else if (ldJson?.offers?.price) {
       const basePrice = Number(ldJson.offers.price) || 19.99;
       const gbpPrice = Math.round(basePrice * 0.82 * 100) / 100;
       minPrice = gbpPrice;
       maxPrice = gbpPrice;
+      originalPrice = Math.round(gbpPrice * 1.35 * 100) / 100;
 
-      ['Small (S)', 'Medium (M)', 'Large (L)', 'Extra Large (XL)'].forEach((size) => {
+      ['Small (S)', 'Medium (M)', 'Large (L)', 'Extra Large (XL)'].forEach((size, idx) => {
         variants.push({
-          skuId: `${productId}-${size.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
-          skuCode: `${productId}-${size.split(' ')[0]}`,
+          skuId: `${productId}-${size.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+          skuCode: generateVariantSku(productId, size, idx),
           price: gbpPrice,
           originalPrice: Math.round(gbpPrice * 1.35 * 100) / 100,
           currency: 'GBP',
@@ -306,29 +540,103 @@ export async function scrapeAliExpressProduct(productId: string): Promise<AliExp
         });
       });
     } else {
-      // Intelligent fallback variants with realistic British pet pricing tiers
-      const sizeTiers = [
-        { name: 'Small (S)', price: 19.99, orig: 27.99 },
-        { name: 'Medium (M)', price: 24.99, orig: 34.99 },
-        { name: 'Large (L)', price: 29.99, orig: 41.99 },
-        { name: 'Extra Large (XL)', price: 34.99, orig: 48.99 }
-      ];
+      // Modern AliExpress uses CSR (Client Side Rendering) where prices aren't in raw static HTML.
+      // Use live Google Search Grounding via Gemini to fetch authentic GBP prices and actual variants.
+      const livePricing = await fetchLiveAliExpressPricingWithGemini(productId, title);
 
-      sizeTiers.forEach((tier) => {
-        variants.push({
-          skuId: `${productId}-${tier.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
-          skuCode: `${productId}-${tier.name.slice(0, 1)}`,
-          price: tier.price,
-          originalPrice: tier.orig,
-          currency: 'GBP',
-          stock: 25,
-          properties: [{ name: 'Size', value: tier.name }],
-          imageUrl: primaryImage
+      if (livePricing && livePricing.price > 0) {
+        minPrice = livePricing.price;
+        originalPrice = livePricing.originalPrice;
+
+        const liveVariants: Array<{ colour?: string; size?: string; name: string; price: number }> =
+          livePricing.variants.length > 0
+            ? livePricing.variants
+            : (livePricing.sizes.length > 0
+                ? livePricing.sizes.map((s) => ({ size: s, name: s, price: livePricing.price }))
+                : []);
+
+        if (liveVariants.length > 0) {
+          liveVariants.forEach((lv, idx) => {
+            const vPrice = lv.price || livePricing.price;
+            const skuCode = generateVariantSku(productId, lv.name, idx);
+            const skuId = `${productId}-${lv.name.toLowerCase().replace(/[^a-z0-9]/g, '-') || idx + 1}`;
+
+            // Parse properties: if multi-attribute like "Red / XS", split into Colour and Size
+            const props: Array<{ name: string; value: string }> = [];
+
+            if (lv.colour && lv.size) {
+              props.push({ name: 'Colour', value: lv.colour });
+              props.push({ name: 'Size', value: lv.size });
+            } else {
+              const optionParts = lv.name.split(/\s*[\/|,]\s*|\s+-\s+/).map((p) => p.trim()).filter(Boolean);
+              if (optionParts.length === 2) {
+                props.push({ name: 'Colour', value: optionParts[0] });
+                props.push({ name: 'Size', value: optionParts[1] });
+              } else if (optionParts.length > 2) {
+                props.push({ name: 'Colour', value: optionParts[0] });
+                props.push({ name: 'Size', value: optionParts.slice(1).join(' - ') });
+              } else {
+                props.push({ name: 'Size', value: lv.name });
+              }
+            }
+
+            variants.push({
+              skuId,
+              skuCode,
+              price: vPrice,
+              originalPrice: livePricing.originalPrice || Math.round(vPrice * 1.4 * 100) / 100,
+              currency: 'GBP',
+              stock: 30,
+              properties: props,
+              imageUrl: primaryImage
+            });
+          });
+
+          const dedupedVariants = ensureUniqueVariantSkus(variants);
+          variants.length = 0;
+          variants.push(...dedupedVariants);
+
+          const prices = variants.map((v) => v.price);
+          minPrice = Math.min(...prices);
+          maxPrice = Math.max(...prices);
+        } else {
+          variants.push({
+            skuId: `${productId}-std`,
+            skuCode: `${productId}-STD`,
+            price: livePricing.price,
+            originalPrice: livePricing.originalPrice || Math.round(livePricing.price * 1.4 * 100) / 100,
+            currency: 'GBP',
+            stock: 35,
+            properties: [{ name: 'Option', value: 'Standard' }],
+            imageUrl: primaryImage
+          });
+          maxPrice = livePricing.price;
+        }
+      } else {
+        // Fallback variants with realistic British pet pricing tiers if live pricing lookup is unavailable
+        const sizeTiers = [
+          { name: 'Small (S)', price: 19.99, orig: 27.99 },
+          { name: 'Medium (M)', price: 24.99, orig: 34.99 },
+          { name: 'Large (L)', price: 29.99, orig: 41.99 },
+          { name: 'Extra Large (XL)', price: 34.99, orig: 48.99 }
+        ];
+
+        sizeTiers.forEach((tier, idx) => {
+          variants.push({
+            skuId: `${productId}-${tier.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+            skuCode: generateVariantSku(productId, tier.name, idx),
+            price: tier.price,
+            originalPrice: tier.orig,
+            currency: 'GBP',
+            stock: 25,
+            properties: [{ name: 'Size', value: tier.name }],
+            imageUrl: primaryImage
+          });
         });
-      });
 
-      minPrice = 19.99;
-      maxPrice = 34.99;
+        minPrice = 19.99;
+        maxPrice = 34.99;
+      }
     }
 
     // Extract Description / Specs
@@ -357,17 +665,37 @@ export async function scrapeAliExpressProduct(productId: string): Promise<AliExp
       description = `Treat your beloved pet to this premium, high-quality accessory. Designed with everyday comfort, enduring durability, and effortless care in mind, it provides the perfect addition to your furbaby's daily routine. Loved by devoted pet parents across the UK.`;
     }
 
+    const uniqueColours = Array.from(
+      new Set(
+        variants
+          .map((v) => v.properties.find((p) => /colou?r/i.test(p.name))?.value)
+          .filter(Boolean) as string[]
+      )
+    );
+
+    const uniqueSizes = Array.from(
+      new Set(
+        variants
+          .map((v) => v.properties.find((p) => /size/i.test(p.name) || p.name === 'Option')?.value)
+          .filter(Boolean) as string[]
+      )
+    );
+
+    const propertiesObj: Record<string, string[]> = {};
+    if (uniqueColours.length > 0) propertiesObj.Colour = uniqueColours;
+    if (uniqueSizes.length > 0) propertiesObj.Size = uniqueSizes;
+    if (Object.keys(propertiesObj).length === 0) propertiesObj.Option = ['Standard'];
+
     return {
       productId,
       title: title || 'Premium Pet Product',
       description: description,
       images: cleanedImages.length > 0 ? cleanedImages : ['/Logo.jpg'],
       variants,
-      properties: {
-        Size: ['Small (S)', 'Medium (M)', 'Large (L)', 'Extra Large (XL)']
-      },
+      properties: propertiesObj,
       priceMin: minPrice,
       priceMax: maxPrice,
+      originalPrice,
       currency: 'GBP',
       sourceUrl: itemUrl
     };
@@ -405,25 +733,42 @@ export async function fetchAliExpressProduct(urlOrId: string): Promise<AliExpres
         const rawImages: string[] = (resp.product_small_image_urls?.string || []).concat(resp.product_main_image_url ? [resp.product_main_image_url] : []);
         const uniqueImages = Array.from(new Set(rawImages)).filter(Boolean);
 
-        const variants: AliExpressVariant[] = (resp.aeop_ae_product_s_k_us?.aeop_ae_product_sku || []).map((sku: any, idx: number) => {
+        const rawVariants: AliExpressVariant[] = (resp.aeop_ae_product_s_k_us?.aeop_ae_product_sku || []).map((sku: any, idx: number) => {
           const rawPrice = Number(sku.offer_sale_price || sku.sku_price || 19.99);
           const gbpPrice = Math.round(rawPrice * 0.82 * 100) / 100;
+          const properties = (sku.aeop_s_k_u_property?.aeop_sku_property || []).map((p: any) => ({
+            name: p.sku_property_name || 'Option',
+            value: p.property_value_definition_name || p.sku_property_value || 'Default',
+            imageUrl: p.sku_image
+          }));
+
+          const sizeVal = properties.find((p: any) => /size/i.test(p.name))?.value;
+          const optionNames = properties.map((p: any) => p.value).join(' / ');
+
+          let baseSku = sku.sku_code?.trim();
+          if (!baseSku) {
+            baseSku = generateVariantSku(productId, optionNames || `Option-${idx + 1}`, idx);
+          } else if (sizeVal) {
+            // If supplier provided an SKU like 1005003079767433-RED, ensure the sizing is in the SKU!
+            const cleanSize = sizeVal.replace(/[\(\)\[\]\{\}]/g, '').trim().split(/[\/\-|,]/).pop()?.trim().toUpperCase();
+            if (cleanSize && !baseSku.toUpperCase().endsWith(`-${cleanSize}`) && !baseSku.toUpperCase().includes(`-${cleanSize}-`)) {
+              baseSku = `${baseSku}-${cleanSize}`;
+            }
+          }
+
           return {
             skuId: String(sku.id || `${productId}-${idx + 1}`),
-            skuCode: sku.sku_code || `SKU-${idx + 1}`,
+            skuCode: baseSku.toUpperCase(),
             price: gbpPrice,
             originalPrice: Math.round(gbpPrice * 1.35 * 100) / 100,
             currency: 'GBP',
             stock: Number(sku.ipm_sku_stock || 50),
-            properties: (sku.aeop_s_k_u_property?.aeop_sku_property || []).map((p: any) => ({
-              name: p.sku_property_name || 'Option',
-              value: p.property_value_definition_name || p.sku_property_value || 'Default',
-              imageUrl: p.sku_image
-            })),
+            properties,
             imageUrl: uniqueImages[0] || '/Logo.jpg'
           };
         });
 
+        const variants = ensureUniqueVariantSkus(rawVariants);
         const prices = variants.map((v) => v.price);
         return {
           productId,

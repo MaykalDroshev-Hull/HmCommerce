@@ -29,6 +29,8 @@ export interface Product {
   Variants?: any[]; // Product variants from database (alternative naming)
   Images?: any[]; // Product images from database (alternative naming)
   productid?: string; // Product ID from database (alternative naming)
+  sku?: string;
+  skucode?: string;
 }
 
 export const initialProducts: Product[] = [
