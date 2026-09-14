@@ -62,11 +62,14 @@ export default function PayPalButtons({
     containerRef.current.innerHTML = '';
 
     const buttonConfig: any = {
+      fundingSource: window.paypal.FUNDING?.PAYPAL || 'paypal',
       style: {
         shape: 'rect',
         color: 'gold',
-        layout: 'vertical',
+        layout: 'horizontal',
         label: 'paypal',
+        height: 48,
+        tagline: false,
       },
 
       async createOrder() {
@@ -176,8 +179,7 @@ export default function PayPalButtons({
       },
     };
 
-    // On Product Page, strictly render ONLY PayPal (no Pay Later or debit/credit cards)
-    if (mode === 'product' && window.paypal.FUNDING?.PAYPAL) {
+    if (window.paypal.FUNDING?.PAYPAL) {
       buttonConfig.fundingSource = window.paypal.FUNDING.PAYPAL;
     }
 

@@ -10,14 +10,13 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { translations } from '@/lib/translations';
-import { ShoppingCart, Heart, ShoppingBag } from 'lucide-react';
+import { ShoppingCart, Heart } from 'lucide-react';
 import { isAwaitingRestock } from '@/lib/product-availability';
 import { normalizeProductImages } from '@/lib/product-images';
 import {
   getProductCardPricing,
 } from '@/lib/product-promo';
 import {
-  getProductCardStockDisplay,
   productHasAnyVariantInStock,
 } from '@/lib/variant-stock';
 
@@ -129,8 +128,6 @@ export default function ProductCard({ product, isFavorited: initialIsFavorited }
   const productTitle = `${product.brand} ${product.model}`.trim();
   const categoryLabel = getCategoryLabel();
   const showNewBadge = product.isfeatured;
-  const stockUnit = product.category === 'shoes' ? t.pairs : t.pcs;
-  const stockDisplay = getProductCardStockDisplay(product, language, stockUnit);
   const canPurchase = product.visible && productHasAnyVariantInStock(product) && !showOutOfStockOverlay;
 
   return (
@@ -148,7 +145,7 @@ export default function ProductCard({ product, isFavorited: initialIsFavorited }
           {showOutOfStockOverlay && (
             <div className="absolute inset-0 z-10 flex items-center justify-center p-3 bg-white/80 backdrop-blur-xs pointer-events-none">
               <div className="text-center px-3 py-2 bg-white/95 rounded-lg border border-neutral-200 shadow-xs">
-                <ShoppingBag size={18} className="mx-auto mb-1 text-neutral-800" strokeWidth={1.5} />
+                <ShoppingCart size={18} className="mx-auto mb-1 text-neutral-800" strokeWidth={1.5} />
                 <p className="text-xs font-semibold text-neutral-900 leading-tight">
                   {t.outOfStockTitle || 'Sold Out'}
                 </p>
@@ -196,14 +193,10 @@ export default function ProductCard({ product, isFavorited: initialIsFavorited }
             </p>
           )}
 
-          <h3 className="text-xs sm:text-sm font-semibold text-neutral-950 leading-snug line-clamp-2 mb-1 group-hover:text-neutral-700 transition-colors">
+          <h3 className="text-xs sm:text-sm font-semibold text-neutral-950 leading-snug line-clamp-2 mb-2 group-hover:text-neutral-700 transition-colors">
             {productTitle}
             {product.color ? ` - ${product.color}` : ''}
           </h3>
-
-          <p className="text-[11px] text-neutral-600 mb-2">
-            In Stock: <span className="font-medium text-neutral-900">{stockDisplay}</span>
-          </p>
 
           <div className="mt-auto pt-2 border-t border-neutral-100">
             <div className="flex items-baseline gap-2">

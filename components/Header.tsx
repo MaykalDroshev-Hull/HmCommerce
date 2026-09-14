@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Menu, X, Search, User as UserIcon, ShoppingBag, Globe } from 'lucide-react';
+import { Menu, X, Search, User as UserIcon, ShoppingCart, Globe } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
@@ -281,16 +281,6 @@ export default function Header({ isAdmin = false, setIsAdmin }: HeaderProps) {
                 />
               </div>
 
-              {/* UK / GBP Region Indicator */}
-              <Link
-                href="/support"
-                className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-neutral-700 hover:text-neutral-950 px-2.5 py-1 rounded-full bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 transition-colors"
-                title="United Kingdom (GBP) · Free Delivery Info"
-              >
-                <Globe size={13} className="text-neutral-500" />
-                <span>United Kingdom (GBP)</span>
-              </Link>
-
               {/* User Profile */}
               <Link
                 href={isAuthenticated && user ? '/user/dashboard' : '/user'}
@@ -300,14 +290,14 @@ export default function Header({ isAdmin = false, setIsAdmin }: HeaderProps) {
                 <UserIcon size={24} className="md:w-5 md:h-5" strokeWidth={1.9} />
               </Link>
 
-              {/* Shopping Bag */}
+              {/* Shopping Cart */}
               <button
                 type="button"
                 onClick={openCart}
                 className="relative p-2 text-neutral-900 hover:text-neutral-700 active:scale-95 transition-all"
-                aria-label="Shopping Bag"
+                aria-label="Shopping Cart"
               >
-                <ShoppingBag size={24} className="md:w-5 md:h-5" strokeWidth={1.9} />
+                <ShoppingCart size={24} className="md:w-5 md:h-5" strokeWidth={1.9} />
                 {totalItems > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 bg-[#D31336] text-white text-[10px] font-bold rounded-full h-4 min-w-4 px-1 flex items-center justify-center shadow-2xs">
                     {totalItems > 99 ? '99+' : totalItems}

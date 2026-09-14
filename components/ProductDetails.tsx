@@ -6,7 +6,7 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ShoppingBag, Heart, Share2, ChevronDown, ChevronUp, Truck, Check, Info, X, Star } from 'lucide-react';
+import { Heart, Share2, ChevronDown, ChevronUp, Truck, Check, Info, X, Star } from 'lucide-react';
 import KlarnaWidget from './KlarnaWidget';
 import QuickLoginModal from './QuickLoginModal';
 import { PaymentBadgesRow } from './PaymentIcons';

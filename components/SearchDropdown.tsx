@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Product } from '@/lib/data';
 import { searchSite, SearchCategoryItem, SearchPageItem } from '@/lib/siteSearch';
-import { ShoppingBag, Tag, FileText, ArrowRight, CornerDownLeft, Sparkles } from 'lucide-react';
+import { ShoppingCart, Tag, FileText, ArrowRight, CornerDownLeft, Sparkles } from 'lucide-react';
 
 interface SearchDropdownProps {
   query: string;
@@ -167,7 +167,7 @@ export default function SearchDropdown({
             <div className="p-3 sm:p-4">
               <div className="flex items-center justify-between mb-2 px-1">
                 <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-neutral-400">
-                  <ShoppingBag size={12} className="text-neutral-500" />
+                  <ShoppingCart size={12} className="text-neutral-500" />
                   <span>Products ({results.products.length})</span>
                 </div>
                 {results.products.length > 4 && (

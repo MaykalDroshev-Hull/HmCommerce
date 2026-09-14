@@ -396,23 +396,20 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ isOpen, onClose, produc
                           );
                           const optionStatus = getOptionStockStatus(optionQty);
                           const isOut = optionStatus === 'out_of_stock';
-                          const isLow = optionStatus === 'low_stock';
 
                           return (
                     <button
                             key={value}
                             type="button"
                             onClick={() => handleOptionChange(propertyName, value as string)}
-                            className="py-2.5 px-2 border rounded-xl text-xs font-medium transition flex flex-col items-center"
+                            className="py-2.5 px-2 border rounded-xl text-xs font-medium transition flex flex-col items-center justify-center min-h-[44px]"
                             style={{
                               borderColor:
                                 selectedOptions[propertyName] === value
                                   ? theme.colors.primary
                                   : isOut
                                     ? '#fecaca'
-                                    : isLow
-                                      ? '#fcd34d'
-                                      : theme.colors.border,
+                                    : theme.colors.border,
                               backgroundColor:
                                 selectedOptions[propertyName] === value
                                   ? theme.colors.secondary
@@ -422,19 +419,13 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ isOpen, onClose, produc
                                   ? theme.colors.text
                                   : isOut
                                     ? '#dc2626'
-                                    : isLow
-                                      ? '#b45309'
-                                      : theme.colors.text,
+                                    : theme.colors.text,
                             }}
                           >
                             <span>{value}</span>
-                            {optionStatus !== 'untracked' && (
-                              <span className="text-[10px] mt-0.5 font-normal">
-                                {isOut
-                                  ? t.outOfStockForOption
-                                  : isLow
-                                    ? t.lowStockForOption.replace('{n}', String(optionQty))
-                                    : `${optionQty}`}
+                            {isOut && (
+                              <span className="text-[10px] mt-0.5 font-normal text-red-500">
+                                {t.outOfStockForOption}
                               </span>
                             )}
                     </button>
@@ -488,15 +479,16 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ isOpen, onClose, produc
                   <Plus size={16} />
                 </button>
               </div>
-              <p className="text-xs mt-2" style={{ color: theme.colors.textSecondary }}>
-                {t.availableItems}: {currentQuantity} {t.pcs}
-                {isLowStock && (
-                  <span className="text-amber-600 font-medium ml-1">({t.lowStock})</span>
-                )}
-                {isOutOfStock && (
-                  <span className="text-red-600 font-medium ml-1">({t.outOfStock})</span>
-                )}
-              </p>
+              {(isLowStock || isOutOfStock) && (
+                <p className="text-xs mt-2" style={{ color: theme.colors.textSecondary }}>
+                  {isLowStock && (
+                    <span className="text-amber-600 font-medium">({t.lowStock})</span>
+                  )}
+                  {isOutOfStock && (
+                    <span className="text-red-600 font-medium">({t.outOfStock})</span>
+                  )}
+                </p>
+              )}
               {errors.quantity && (
                 <p className="text-red-500 text-sm mt-1">{errors.quantity}</p>
               )}

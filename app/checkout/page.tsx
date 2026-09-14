@@ -888,7 +888,7 @@ function CheckoutContent() {
                     )}
                   </button>
 
-                  <div className="h-12 flex items-center justify-center overflow-hidden rounded-xl">
+                  <div className="h-12 w-full flex items-center justify-center overflow-hidden rounded-xl">
                     <PayPalButtons
                       mode="checkout"
                       checkoutData={{
