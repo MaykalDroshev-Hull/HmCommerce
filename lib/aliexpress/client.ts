@@ -90,7 +90,7 @@ export async function callAliExpressApi(
  */
 export function extractProductId(urlOrId: string): string | null {
   const clean = urlOrId.trim();
-  if (/^\d+$/.test(clean)) {
+  if (/^\d{8,18}$/.test(clean)) {
     return clean;
   }
 
@@ -107,6 +107,114 @@ export function extractProductId(urlOrId: string): string | null {
   }
 
   return null;
+}
+
+/**
+ * Asynchronously resolves AliExpress inputs (numeric IDs, desktop URLs, or mobile/short links like a.aliexpress.com/_...)
+ * to a canonical numeric Product ID and resolved product URL.
+ */
+export async function resolveAliExpressProductId(urlOrId: string): Promise<{ productId: string; resolvedUrl: string }> {
+  const clean = urlOrId.trim();
+  if (!clean) {
+    throw new Error('Please enter a valid AliExpress Product URL or Product ID');
+  }
+
+  // 1. Synchronous check: if numeric ID or standard desktop link
+  const directId = extractProductId(clean);
+  if (directId) {
+    return {
+      productId: directId,
+      resolvedUrl: /^\d+$/.test(clean) ? `https://www.aliexpress.com/item/${directId}.html` : clean
+    };
+  }
+
+  // 2. Extract URL from potential pasted mobile share text (e.g. "Look what I found on AliExpress: £6.40 https://a.aliexpress.com/_...")
+  const urlMatch = clean.match(/https?:\/\/[^\s]+|(?:[a-zA-Z0-9-]+\.)?aliexpress\.com\/[^\s]+/i);
+  let currentUrl = urlMatch ? urlMatch[0] : clean;
+  if (!/^https?:\/\//i.test(currentUrl)) {
+    currentUrl = 'https://' + currentUrl;
+  }
+
+  // Follow redirect chain for mobile/shortened links (up to 5 hops)
+  for (let hop = 0; hop < 5; hop++) {
+    // Check if query params contain redirectUrl, dl_target_url, or itemId
+    try {
+      const parsed = new URL(currentUrl);
+      const redirectParam = parsed.searchParams.get('redirectUrl') || parsed.searchParams.get('dl_target_url');
+      if (redirectParam) {
+        const nestedId = extractProductId(redirectParam);
+        if (nestedId) {
+          return { productId: nestedId, resolvedUrl: redirectParam };
+        }
+      }
+      const itemIdParam = parsed.searchParams.get('itemId');
+      if (itemIdParam && /^\d+$/.test(itemIdParam)) {
+        return { productId: itemIdParam, resolvedUrl: currentUrl };
+      }
+    } catch {}
+
+    const directHopId = extractProductId(currentUrl);
+    if (directHopId) {
+      return { productId: directHopId, resolvedUrl: currentUrl };
+    }
+
+    try {
+      const res = await fetch(currentUrl, {
+        redirect: 'manual',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-GB,en;q=0.9'
+        }
+      });
+
+      const location = res.headers.get('location');
+      if (location) {
+        // Detect expired or dead link redirect
+        if (location.includes('best.aliexpress.com') || location.includes('/p/error/404.html')) {
+          throw new Error('This AliExpress mobile link appears to have expired or the item is no longer available on AliExpress.');
+        }
+
+        const locId = extractProductId(location);
+        if (locId) {
+          return { productId: locId, resolvedUrl: location };
+        }
+
+        const locUrl = new URL(location, currentUrl);
+        const redirectParam = locUrl.searchParams.get('redirectUrl') || locUrl.searchParams.get('dl_target_url');
+        if (redirectParam) {
+          const nestedId = extractProductId(redirectParam);
+          if (nestedId) {
+            return { productId: nestedId, resolvedUrl: redirectParam };
+          }
+        }
+        currentUrl = locUrl.href;
+      } else {
+        // Reached terminal 200 response
+        if (currentUrl.includes('best.aliexpress.com') || currentUrl.includes('/p/error/404.html')) {
+          throw new Error('This AliExpress mobile link appears to have expired or the item is no longer available on AliExpress.');
+        }
+
+        const html = await res.text();
+        const canonicalMatch = html.match(/<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i);
+        if (canonicalMatch && canonicalMatch[1]) {
+          const canId = extractProductId(canonicalMatch[1]);
+          if (canId) {
+            return { productId: canId, resolvedUrl: canonicalMatch[1] };
+          }
+        }
+        break;
+      }
+    } catch (fetchErr: any) {
+      if (fetchErr.message && fetchErr.message.includes('expired')) {
+        throw fetchErr;
+      }
+      logger.warn(`Error resolving AliExpress redirect for ${currentUrl}:`, fetchErr);
+      break;
+    }
+  }
+
+  throw new Error('Could not identify a valid AliExpress Product ID from this link. Please verify the URL or try using the desktop link.');
 }
 
 /**
@@ -223,7 +331,8 @@ export async function fetchLiveAliExpressPricingWithGemini(
   currency: string;
   colours: string[];
   sizes: string[];
-  variants: Array<{ colour?: string; size?: string; name: string; price: number }>;
+  outOfStockSizes: string[];
+  variants: Array<{ colour?: string; size?: string; name: string; price: number; inStock?: boolean; stock?: number }>;
 } | null> {
   try {
     const apiKey = await getGeminiApiKey();
@@ -232,28 +341,35 @@ export async function fetchLiveAliExpressPricingWithGemini(
       return null;
     }
 
-    const prompt = `Find all available colours, sizes, options, current live price (in GBP £), and original/compare-at price for AliExpress product ID ${productId}.
+    const prompt = `Find the current live discounted UK sale price (in GBP £), compare-at price, all colours, and all sizes/options for AliExpress product ID ${productId}.
 AliExpress URL: https://www.aliexpress.com/item/${productId}.html
 ${title ? `Product Title: ${title}` : ''}
 
-CRITICAL RULES:
-1. Extract ALL available colours (e.g. "Pink", "Blue", "Black", "Red", "Grey", etc.).
-2. Extract ALL available sizes/options (e.g. "XS", "S", "M", "L", "XL", "XXL", or dimension tiers).
-3. If the product has both colours and sizes, generate the variants for all colour + size combinations (e.g. "Pink / XS", "Blue / M", "Black / L").
-4. Find the current live discounted UK sale price in British Pounds (GBP £) and original/compare-at price.
-5. Output strictly valid JSON ONLY, with NO markdown formatting, NO backticks:
+CRITICAL RULES FOR SIZES AND INVENTORY AVAILABILITY:
+1. Extract ALL sizes that this product is manufactured in, from the option buttons AND the sizing table (e.g. "XS", "S", "M", "L", "XL", "XXL", etc.).
+2. ACCURATELY IDENTIFY OUT-OF-STOCK OR MISSING SIZES:
+   - Check the product option buttons on AliExpress to see which sizes are CURRENTLY SELECTABLE / IN STOCK vs which sizes are OUT OF STOCK / DASHED / GREYED OUT / CROSSED OUT / MISSING (for example, if XS and XL have dashed borders or cannot be purchased).
+   - In "outOfStockSizes", list all sizes that are out of stock, greyed out, or unselectable on AliExpress (e.g. ["XS", "XL"]).
+   - For every variant in "variants", set:
+     - "inStock": true and "stock": 35 (if selectable and available)
+     - "inStock": false and "stock": 0 (if out of stock, greyed out, dashed, or missing)
+3. Include ALL manufactured sizes in the "variants" list (even if out of stock, include them with inStock: false and stock: 0) so the store can add them as disabled/sold out.
+4. Output strictly valid JSON ONLY, with NO markdown formatting, NO backticks:
 {
   "price": number,
   "originalPrice": number,
   "currency": "GBP",
   "colours": string[],
   "sizes": string[],
+  "outOfStockSizes": string[],
   "variants": [
     {
       "colour": string,
       "size": string,
       "name": string,
-      "price": number
+      "price": number,
+      "inStock": boolean,
+      "stock": number
     }
   ]
 }`;
@@ -297,27 +413,41 @@ CRITICAL RULES:
 
     const rawColours = Array.isArray(parsed.colours) ? parsed.colours.map(String).filter(Boolean) : [];
     const rawSizes = Array.isArray(parsed.sizes) ? parsed.sizes.map(String).filter(Boolean) : [];
+    const outOfStockSizes = Array.isArray(parsed.outOfStockSizes)
+      ? parsed.outOfStockSizes.map((s: any) => String(s).trim().toUpperCase())
+      : [];
 
-    let parsedVariants: Array<{ colour?: string; size?: string; name: string; price: number }> = [];
+    let parsedVariants: Array<{ colour?: string; size?: string; name: string; price: number; inStock?: boolean; stock?: number }> = [];
 
     if (Array.isArray(parsed.variants) && parsed.variants.length > 0) {
-      parsedVariants = parsed.variants.map((v: any) => ({
-        colour: v.colour ? String(v.colour) : undefined,
-        size: v.size ? String(v.size) : undefined,
-        name: String(v.name || (v.colour && v.size ? `${v.colour} / ${v.size}` : v.colour || v.size || 'Standard')),
-        price: Number(v.price) || Number(parsed.price)
-      }));
+      parsedVariants = parsed.variants.map((v: any) => {
+        const sizeStr = v.size ? String(v.size) : undefined;
+        const cleanSizeUpper = sizeStr ? sizeStr.trim().toUpperCase() : '';
+        const isOos = v.inStock === false || v.stock === 0 || outOfStockSizes.includes(cleanSizeUpper);
+        return {
+          colour: v.colour ? String(v.colour) : undefined,
+          size: sizeStr,
+          name: String(v.name || (v.colour && v.size ? `${v.colour} / ${v.size}` : v.colour || v.size || 'Standard')),
+          price: Number(v.price) || Number(parsed.price),
+          inStock: !isOos,
+          stock: isOos ? 0 : (typeof v.stock === 'number' && v.stock > 0 ? v.stock : 35)
+        };
+      });
     }
 
     // If colours and sizes exist but combinations weren't populated in variants array, generate Cartesian product
     if (parsedVariants.length === 0 && rawColours.length > 0 && rawSizes.length > 0) {
       rawColours.forEach((c: string) => {
         rawSizes.forEach((s: string) => {
+          const cleanSizeUpper = s.trim().toUpperCase();
+          const isOos = outOfStockSizes.includes(cleanSizeUpper);
           parsedVariants.push({
             colour: c,
             size: s,
             name: `${c} / ${s}`,
-            price: Number(parsed.price)
+            price: Number(parsed.price),
+            inStock: !isOos,
+            stock: isOos ? 0 : 35
           });
         });
       });
@@ -326,16 +456,52 @@ CRITICAL RULES:
         parsedVariants.push({
           colour: c,
           name: c,
-          price: Number(parsed.price)
+          price: Number(parsed.price),
+          inStock: true,
+          stock: 35
         });
       });
     } else if (parsedVariants.length === 0 && rawSizes.length > 0) {
       rawSizes.forEach((s: string) => {
+        const cleanSizeUpper = s.trim().toUpperCase();
+        const isOos = outOfStockSizes.includes(cleanSizeUpper);
         parsedVariants.push({
           size: s,
           name: s,
-          price: Number(parsed.price)
+          price: Number(parsed.price),
+          inStock: !isOos,
+          stock: isOos ? 0 : 35
         });
+      });
+    }
+
+    // If any size from rawSizes is missing from parsedVariants, add it as a variant with stock: 0!
+    if (rawSizes.length > 0) {
+      rawSizes.forEach((s: string) => {
+        const cleanSizeUpper = s.trim().toUpperCase();
+        const exists = parsedVariants.some((pv) => pv.size?.trim().toUpperCase() === cleanSizeUpper);
+        if (!exists) {
+          if (rawColours.length > 0) {
+            rawColours.forEach((c: string) => {
+              parsedVariants.push({
+                colour: c,
+                size: s,
+                name: `${c} / ${s}`,
+                price: Number(parsed.price),
+                inStock: false,
+                stock: 0
+              });
+            });
+          } else {
+            parsedVariants.push({
+              size: s,
+              name: s,
+              price: Number(parsed.price),
+              inStock: false,
+              stock: 0
+            });
+          }
+        }
       });
     }
 
@@ -345,6 +511,7 @@ CRITICAL RULES:
       currency: parsed.currency || 'GBP',
       colours: rawColours,
       sizes: rawSizes,
+      outOfStockSizes,
       variants: parsedVariants
     };
   } catch (err) {
@@ -439,12 +606,12 @@ export async function scrapeAliExpressProduct(productId: string): Promise<AliExp
     const rawImages: string[] = [];
 
     // A. DCData imagePathList (Current AliExpress Architecture)
-    if (Array.isArray(dcData?.imagePathList)) {
+    if (Array.isArray(dcData?.imagePathList) && dcData.imagePathList.length > 0) {
       rawImages.push(...dcData.imagePathList);
     }
 
     // B. runParams imageModule
-    if (Array.isArray(runParams?.data?.imageModule?.imagePathList)) {
+    if (Array.isArray(runParams?.data?.imageModule?.imagePathList) && runParams.data.imageModule.imagePathList.length > 0) {
       rawImages.push(...runParams.data.imageModule.imagePathList);
     }
 
@@ -454,37 +621,47 @@ export async function scrapeAliExpressProduct(productId: string): Promise<AliExp
       rawImages.push(...ldImgs);
     }
 
-    // D. og:image
-    const ogImgMatch = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i);
-    if (ogImgMatch && ogImgMatch[1]) {
-      rawImages.push(ogImgMatch[1]);
+    // D. Only fallback to regex across full HTML if no structured gallery images were found
+    if (rawImages.length === 0) {
+      const ogImgMatch = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i);
+      if (ogImgMatch && ogImgMatch[1]) {
+        rawImages.push(ogImgMatch[1]);
+      }
+
+      // Regex search across full HTML for media CDN images (aliexpress-media.com and alicdn.com)
+      const imgMatches = html.matchAll(/https?:\/\/[a-zA-Z0-9_.-]+\.(?:aliexpress-media|alicdn)\.com\/kf\/[a-zA-Z0-9_.-]+(?:\/[^"'\s<>]+)?\.(?:jpg|png|webp|jpeg)/gi);
+      for (const m of imgMatches) {
+        rawImages.push(m[0]);
+      }
     }
 
-    // E. Regex search across full HTML for media CDN images (aliexpress-media.com and alicdn.com)
-    const imgMatches = html.matchAll(/https?:\/\/[a-zA-Z0-9_.-]+\.(?:aliexpress-media|alicdn)\.com\/kf\/[a-zA-Z0-9_.-]+(?:\/[^"'\s<>]+)?\.(?:jpg|png|webp|jpeg)/gi);
-    for (const m of imgMatches) {
-      rawImages.push(m[0]);
-    }
+    // Clean, validate and deduplicate image URLs by unique asset key (e.g. /kf/S...)
+    const seenAssetKeys = new Set<string>();
+    const cleanedImages: string[] = [];
 
-    // Clean, validate and deduplicate image URLs
-    const cleanedImages = Array.from(
-      new Set(
-        rawImages
-          .map((url) => {
-            let u = url.trim();
-            if (u.startsWith('//')) u = 'https:' + u;
-            // Remove thumbnail suffixes (e.g. _80x80.jpg, _Q90.jpg)
-            u = u.replace(/_[0-9]+x[0-9]+.*$/i, '');
-            return u.split('?')[0];
-          })
-          .filter((url) => {
-            if (!url.startsWith('http')) return false;
-            // Exclude error icons, 404 assets or system images
-            if (url.includes('error') || url.includes('p_404') || url.includes('icon') || url.includes('S19538f0e')) return false;
-            return true;
-          })
-      )
-    ).slice(0, 10);
+    for (const url of rawImages) {
+      let u = url.trim();
+      if (u.startsWith('//')) u = 'https:' + u;
+      // Remove thumbnail/dimension suffixes (e.g. _80x80.jpg, _Q90.jpg)
+      u = u.replace(/_[0-9]+x[0-9]+.*$/i, '');
+      u = u.split('?')[0];
+
+      if (!u.startsWith('http')) continue;
+      if (u.includes('error') || u.includes('p_404') || u.includes('icon') || u.includes('S19538f0e')) continue;
+
+      // Extract unique media asset key (e.g. /kf/S5ada36ecd6284052972aa02bf53e5c64i)
+      const assetMatch = u.match(/\/kf\/([a-zA-Z0-9_-]+)/i);
+      const assetKey = assetMatch ? assetMatch[1].toLowerCase() : u.toLowerCase();
+
+      if (!seenAssetKeys.has(assetKey)) {
+        seenAssetKeys.add(assetKey);
+        // Normalize URL to clean direct format without SEO slug if it had one
+        const cleanUrl = assetMatch
+          ? u.replace(/\/kf\/[a-zA-Z0-9_-]+(?:\/[^"'\s<>]+)?\.(jpg|png|webp|jpeg)/i, `/kf/${assetMatch[1]}.$1`)
+          : u;
+        cleanedImages.push(cleanUrl);
+      }
+    }
 
     const primaryImage = cleanedImages[0] || '/Logo.jpg';
 
@@ -548,11 +725,17 @@ export async function scrapeAliExpressProduct(productId: string): Promise<AliExp
         minPrice = livePricing.price;
         originalPrice = livePricing.originalPrice;
 
-        const liveVariants: Array<{ colour?: string; size?: string; name: string; price: number }> =
+        const liveVariants: Array<{ colour?: string; size?: string; name: string; price: number; inStock?: boolean; stock?: number }> =
           livePricing.variants.length > 0
             ? livePricing.variants
             : (livePricing.sizes.length > 0
-                ? livePricing.sizes.map((s) => ({ size: s, name: s, price: livePricing.price }))
+                ? livePricing.sizes.map((s) => ({
+                    size: s,
+                    name: s,
+                    price: livePricing.price,
+                    inStock: !livePricing.outOfStockSizes?.includes(s.trim().toUpperCase()),
+                    stock: livePricing.outOfStockSizes?.includes(s.trim().toUpperCase()) ? 0 : 35
+                  }))
                 : []);
 
         if (liveVariants.length > 0) {
@@ -580,13 +763,21 @@ export async function scrapeAliExpressProduct(productId: string): Promise<AliExp
               }
             }
 
+            const sizeVal = props.find((p) => /size/i.test(p.name))?.value;
+            const cleanSizeUpper = sizeVal ? sizeVal.trim().toUpperCase() : '';
+            const isOos =
+              lv.inStock === false ||
+              lv.stock === 0 ||
+              (cleanSizeUpper && livePricing.outOfStockSizes?.includes(cleanSizeUpper));
+            const finalStock = isOos ? 0 : (typeof lv.stock === 'number' ? lv.stock : 35);
+
             variants.push({
               skuId,
               skuCode,
               price: vPrice,
               originalPrice: livePricing.originalPrice || Math.round(vPrice * 1.4 * 100) / 100,
               currency: 'GBP',
-              stock: 30,
+              stock: finalStock,
               properties: props,
               imageUrl: primaryImage
             });
@@ -709,10 +900,9 @@ export async function scrapeAliExpressProduct(productId: string): Promise<AliExp
  * Fetch product details from AliExpress API with automatic fallback to scraper
  */
 export async function fetchAliExpressProduct(urlOrId: string): Promise<AliExpressProductDetails | null> {
-  const productId = extractProductId(urlOrId);
-  if (!productId) {
-    throw new Error('Invalid AliExpress URL or Product ID');
-  }
+  const resolved = await resolveAliExpressProductId(urlOrId);
+  const productId = resolved.productId;
+  const canonicalUrl = resolved.resolvedUrl || `https://www.aliexpress.com/item/${productId}.html`;
 
   // 1. Try official API if token is available
   const accessToken = await getStoredAliExpressToken();
@@ -750,21 +940,21 @@ export async function fetchAliExpressProduct(urlOrId: string): Promise<AliExpres
             baseSku = generateVariantSku(productId, optionNames || `Option-${idx + 1}`, idx);
           } else if (sizeVal) {
             // If supplier provided an SKU like 1005003079767433-RED, ensure the sizing is in the SKU!
-            const cleanSize = sizeVal.replace(/[\(\)\[\]\{\}]/g, '').trim().split(/[\/\-|,]/).pop()?.trim().toUpperCase();
-            if (cleanSize && !baseSku.toUpperCase().endsWith(`-${cleanSize}`) && !baseSku.toUpperCase().includes(`-${cleanSize}-`)) {
+            const cleanSize = extractCleanSizeCode(sizeVal);
+            if (cleanSize && !baseSku.includes(cleanSize)) {
               baseSku = `${baseSku}-${cleanSize}`;
             }
           }
 
           return {
-            skuId: String(sku.id || `${productId}-${idx + 1}`),
-            skuCode: baseSku.toUpperCase(),
+            skuId: String(sku.sku_id || `${productId}-${idx + 1}`),
+            skuCode: baseSku,
             price: gbpPrice,
-            originalPrice: Math.round(gbpPrice * 1.35 * 100) / 100,
+            originalPrice: sku.sku_price ? Math.round(Number(sku.sku_price) * 0.82 * 100) / 100 : undefined,
             currency: 'GBP',
-            stock: Number(sku.ipm_sku_stock || 50),
+            stock: Number(sku.ipm_sku_stock || 99),
             properties,
-            imageUrl: uniqueImages[0] || '/Logo.jpg'
+            imageUrl: sku.sku_image || uniqueImages[0] || '/Logo.jpg'
           };
         });
 
@@ -780,7 +970,7 @@ export async function fetchAliExpressProduct(urlOrId: string): Promise<AliExpres
           priceMin: prices.length > 0 ? Math.min(...prices) : 19.99,
           priceMax: prices.length > 0 ? Math.max(...prices) : 29.99,
           currency: 'GBP',
-          sourceUrl: `https://www.aliexpress.com/item/${productId}.html`
+          sourceUrl: canonicalUrl
         };
       }
     } catch (apiErr) {
@@ -789,7 +979,11 @@ export async function fetchAliExpressProduct(urlOrId: string): Promise<AliExpres
   }
 
   // 2. Fallback to resilient parser
-  return await scrapeAliExpressProduct(productId);
+  const product = await scrapeAliExpressProduct(productId);
+  if (product && canonicalUrl) {
+    product.sourceUrl = canonicalUrl;
+  }
+  return product;
 }
 
 /**

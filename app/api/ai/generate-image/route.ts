@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   synthesizeStudioPrompt,
   generateWithImagen3,
+  generateDirectMultimodalImage,
   uploadGeneratedImageToStorage,
-  SceneOptions
+  SceneOptions,
+  DirectGenerationOptions
 } from '@/lib/gemini/image-studio';
 import { getGeminiApiKey } from '@/lib/gemini/copywriter';
 import { logger } from '@/lib/logger';
@@ -13,7 +15,7 @@ export const runtime = 'nodejs';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const action = body.action || 'generate'; // 'synthesize-prompt' | 'generate' | 'upload-manual'
+    const action = body.action || 'generate'; // 'synthesize-prompt' | 'generate' | 'upload-manual' | 'generate-direct'
 
     const apiKey = (await getGeminiApiKey()) || process.env.GEMINI_API_KEY;
     if (!apiKey && action !== 'upload-manual') {
@@ -108,6 +110,52 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         imageUrl: permanentUrl
+      });
+    }
+
+    // MODE 4: Direct Multimodal Image Generation (Feeds image directly into Gemini)
+    if (action === 'generate-direct') {
+      const {
+        sourceImageUrl,
+        imageType = 'product', // 'product' | 'size_guide'
+        productTitle,
+        breed,
+        scenePreset,
+        customInstructions,
+        logoVariant = 'black',
+        aspectRatio = '1:1'
+      } = body;
+
+      if (!sourceImageUrl) {
+        return NextResponse.json({ success: false, error: 'Source image URL is required' }, { status: 400 });
+      }
+
+      const options: DirectGenerationOptions = {
+        sourceImageUrl,
+        imageType,
+        productTitle,
+        breed,
+        scenePreset,
+        customInstructions,
+        logoVariant,
+        aspectRatio
+      };
+
+      const result = await generateDirectMultimodalImage(options, apiKey!);
+
+      if (!result.success) {
+        return NextResponse.json({
+          success: false,
+          error: result.error,
+          requiresBilling: result.requiresBilling,
+          promptUsed: result.promptUsed
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        imageUrl: result.imageUrl,
+        promptUsed: result.promptUsed
       });
     }
 

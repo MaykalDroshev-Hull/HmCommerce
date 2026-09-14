@@ -12,6 +12,7 @@ interface ProductStickyBannerProps {
   selectedSize?: string;
   onAddToCart: () => void;
   isAdding?: boolean;
+  isOutOfStock?: boolean;
 }
 
 export default function ProductStickyBanner({
@@ -24,6 +25,7 @@ export default function ProductStickyBanner({
   selectedSize,
   onAddToCart,
   isAdding = false,
+  isOutOfStock = false,
 }: ProductStickyBannerProps) {
   if (!isVisible) return null;
 
@@ -67,10 +69,14 @@ export default function ProductStickyBanner({
             <button
               type="button"
               onClick={onAddToCart}
-              disabled={isAdding}
-              className="px-6 py-2.5 bg-[#D31336] hover:bg-[#B70F2D] text-white text-xs font-bold uppercase tracking-wider rounded transition-colors duration-200 disabled:opacity-50 shadow-sm active:scale-[0.98]"
+              disabled={isAdding || isOutOfStock}
+              className={`px-6 py-2.5 text-xs font-bold uppercase tracking-wider rounded transition-colors duration-200 shadow-sm ${
+                isOutOfStock
+                  ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed border border-neutral-300'
+                  : 'bg-[#D31336] hover:bg-[#B70F2D] text-white active:scale-[0.98] disabled:opacity-50'
+              }`}
             >
-              {isAdding ? 'Adding...' : `ADD TO BAG - ${currencySymbol}${price.toFixed(2)}`}
+              {isAdding ? 'Adding...' : isOutOfStock ? 'OUT OF STOCK' : `ADD TO BAG - ${currencySymbol}${price.toFixed(2)}`}
             </button>
           </div>
         </div>
@@ -85,10 +91,14 @@ export default function ProductStickyBanner({
           <button
             type="button"
             onClick={onAddToCart}
-            disabled={isAdding}
-            className="w-full py-3.5 bg-[#D31336] hover:bg-[#B70F2D] text-white text-sm font-bold uppercase tracking-wider rounded transition-colors duration-200 disabled:opacity-50 shadow active:scale-[0.99] text-center"
+            disabled={isAdding || isOutOfStock}
+            className={`w-full py-3.5 text-sm font-bold uppercase tracking-wider rounded transition-colors duration-200 shadow text-center ${
+              isOutOfStock
+                ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed border border-neutral-300'
+                : 'bg-[#D31336] hover:bg-[#B70F2D] text-white active:scale-[0.99] disabled:opacity-50'
+            }`}
           >
-            {isAdding ? 'ADDING...' : `ADD TO BAG - ${currencySymbol}${price.toFixed(2)}`}
+            {isAdding ? 'ADDING...' : isOutOfStock ? 'OUT OF STOCK' : `ADD TO BAG - ${currencySymbol}${price.toFixed(2)}`}
           </button>
         </div>
       </aside>

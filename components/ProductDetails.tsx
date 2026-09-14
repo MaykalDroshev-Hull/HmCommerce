@@ -15,12 +15,13 @@ import { getVariantEffectivePrice } from '@/lib/product-promo';
 import { useStoreSettings } from '@/context/StoreSettingsContext';
 import { parseShippingSettings } from '@/lib/shipping-rules';
 import { getColourHex } from '@/lib/colours';
+import { getOptionStockQuantity, isSizePropertyKey } from '@/lib/variant-stock';
 
 interface ProductDetailsProps {
   product: Product;
   onVariantChange?: (images: string[] | string | undefined) => void;
   onAddToCartTrigger?: () => void;
-  onOptionChangeCallback?: (colour: string, colourHex: string, size: string, price?: number) => void;
+  onOptionChangeCallback?: (colour: string, colourHex: string, size: string, price?: number, isOutOfStock?: boolean) => void;
   buyButtonRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
@@ -33,6 +34,7 @@ interface Variant {
   promotionalprice?: number | null;
   compareatprice?: number | null;
   quantity: number;
+  trackquantity?: boolean | null;
   isvisible: boolean;
   ProductVariantPropertyvalues?: Array<{
     propertyid: string;
@@ -218,10 +220,16 @@ export default function ProductDetails({
       setAvailableOptions(optionsMap);
       setPropertyNameMap(nameMap);
 
-      // Default selections: pick first option for each property
+      // Default selections: pick first option for each property (prefer in-stock for size)
       const initial: Record<string, string> = {};
       Object.entries(optionsMap).forEach(([k, set]) => {
-        initial[k] = Array.from(set)[0];
+        const arr = Array.from(set);
+        if (isSizePropertyKey(k)) {
+          const inStockSize = arr.find((sz) => getOptionStockQuantity(visible, initial, k, sz) > 0);
+          initial[k] = inStockSize || arr[0];
+        } else {
+          initial[k] = arr[0];
+        }
       });
       setSelectedOptions(initial);
 
@@ -340,11 +348,18 @@ export default function ProductDetails({
 
   const selectedColourHex = getColourHex(selectedColour);
 
+  const isCurrentVariantOutOfStock = useMemo(() => {
+    if (!selectedVariant) return false;
+    if (selectedVariant.trackquantity === false || selectedVariant.trackquantity === null) return false;
+    return Number(selectedVariant.quantity || 0) <= 0;
+  }, [selectedVariant]);
+
   useEffect(() => {
-    onOptionChangeCallback?.(selectedColour, selectedColourHex, selectedSize, effectivePricing.sale);
-  }, [selectedColour, selectedColourHex, selectedSize, effectivePricing.sale, onOptionChangeCallback]);
+    onOptionChangeCallback?.(selectedColour, selectedColourHex, selectedSize, effectivePricing.sale, isCurrentVariantOutOfStock);
+  }, [selectedColour, selectedColourHex, selectedSize, effectivePricing.sale, isCurrentVariantOutOfStock, onOptionChangeCallback]);
 
   const handleAddToCart = () => {
+    if (isCurrentVariantOutOfStock) return;
     const cartProps: Record<string, string> = {};
     Object.entries(selectedOptions).forEach(([k, v]) => {
       const displayName = propertyNameMap[k] || k;
@@ -501,8 +516,13 @@ export default function ProductDetails({
       {/* Size Selector */}
       <div className="space-y-2.5 pt-2">
         <div className="flex items-center justify-between text-xs">
-          <span className="font-bold uppercase tracking-wider text-neutral-900">
-            Size : <span className="font-normal text-neutral-700">{selectedSize}</span>
+          <span className="font-bold uppercase tracking-wider text-neutral-900 flex items-center gap-2">
+            <span>Size : <span className="font-normal text-neutral-700">{selectedSize}</span></span>
+            {isCurrentVariantOutOfStock && (
+              <span className="text-[10px] font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-200">
+                Out of stock
+              </span>
+            )}
           </span>
           <button
             type="button"
@@ -516,19 +536,31 @@ export default function ProductDetails({
         <div className="grid grid-cols-5 gap-2">
           {Array.from(sizeOptions).map((sz) => {
             const isSelected = selectedSize.toLowerCase() === sz.toLowerCase();
+            const sizeQty = getOptionStockQuantity(variants, selectedOptions, 'size', sz);
+            const isOutOfStock = sizeQty <= 0;
+
             return (
               <button
                 key={sz}
                 type="button"
                 onClick={() => handleOptionSelect('size', sz)}
-                className={`py-3 px-2 text-center text-xs font-bold uppercase rounded border transition-all ${
-                  isSelected
+                className={`py-3 px-2 text-center text-xs font-bold uppercase rounded border transition-all relative overflow-hidden ${
+                  isSelected && !isOutOfStock
                     ? 'bg-neutral-900 text-white border-neutral-900 shadow-sm'
-                    : 'bg-white text-neutral-900 border-neutral-300 hover:border-neutral-900'
+                    : isSelected && isOutOfStock
+                      ? 'bg-neutral-100 text-neutral-500 border-neutral-900 ring-1 ring-neutral-900'
+                      : isOutOfStock
+                        ? 'bg-neutral-50/70 text-neutral-400 border-dashed border-neutral-300 hover:border-neutral-400'
+                        : 'bg-white text-neutral-900 border-neutral-300 hover:border-neutral-900'
                 }`}
-                aria-label={`Select size ${sz}`}
+                aria-label={`Select size ${sz}${isOutOfStock ? ' (Out of stock)' : ''}`}
               >
-                {sz}
+                <span className={isOutOfStock ? 'line-through opacity-70' : ''}>{sz}</span>
+                {isOutOfStock && (
+                  <span className="block text-[8px] font-medium tracking-normal text-neutral-400 leading-none mt-0.5">
+                    Sold out
+                  </span>
+                )}
               </button>
             );
           })}
@@ -556,9 +588,14 @@ export default function ProductDetails({
           ref={activeBuyButtonRef as any}
           type="button"
           onClick={handleAddToCart}
-          className="w-full py-4 px-6 bg-[#D31336] hover:bg-[#B70F2D] text-white text-sm font-bold uppercase tracking-wider rounded transition-colors shadow-sm active:scale-[0.99] text-center"
+          disabled={isCurrentVariantOutOfStock}
+          className={`w-full py-4 px-6 text-sm font-bold uppercase tracking-wider rounded transition-colors shadow-sm text-center ${
+            isCurrentVariantOutOfStock
+              ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed border border-neutral-300'
+              : 'bg-[#D31336] hover:bg-[#B70F2D] text-white active:scale-[0.99]'
+          }`}
         >
-          ADD TO BAG - £{currentPrice.toFixed(2)}
+          {isCurrentVariantOutOfStock ? 'OUT OF STOCK' : `ADD TO BAG - £${currentPrice.toFixed(2)}`}
         </button>
       </div>
 

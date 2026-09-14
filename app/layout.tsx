@@ -72,6 +72,9 @@ export const metadata: Metadata = {
     icon: '/favicon.ico',
     apple: '/apple-touch-icon.png',
   },
+  verification: {
+    google: '1lFdIrHGePXRiFeERfHwem6QqgG6CtoJHI6Ft679drQ',
+  },
 }
 
 const jsonLd = {
@@ -100,6 +103,9 @@ export default function RootLayout({
 
   return (
     <html lang="en-GB" suppressHydrationWarning>
+      <head>
+        <meta name="google-site-verification" content="1lFdIrHGePXRiFeERfHwem6QqgG6CtoJHI6Ft679drQ" />
+      </head>
       <body className={`${serifDisplay.variable} ${inter.variable} antialiased`}>
         {/* In body to avoid head injection from browser extensions; valid for schema.org */}
         <script

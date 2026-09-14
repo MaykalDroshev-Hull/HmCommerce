@@ -36,6 +36,7 @@ export default function ProductView({ product }: ProductViewProps) {
   const [selectedColourHex, setSelectedColourHex] = useState('#4A4D50');
   const [selectedSize, setSelectedSize] = useState('XS');
   const [activePrice, setActivePrice] = useState<number>(() => Number(product?.price || 36.00));
+  const [isOutOfStock, setIsOutOfStock] = useState(false);
 
   // Related products state
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
@@ -102,13 +103,14 @@ export default function ProductView({ product }: ProductViewProps) {
   }, []);
 
   // Option change callback from ProductDetails
-  const handleOptionChange = (col: string, hex: string, sz: string, price?: number) => {
+  const handleOptionChange = (col: string, hex: string, sz: string, price?: number, outOfStock?: boolean) => {
     setSelectedColour(col);
     setSelectedColourHex(hex);
     setSelectedSize(sz);
     if (typeof price === 'number' && !Number.isNaN(price)) {
       setActivePrice(price);
     }
+    setIsOutOfStock(!!outOfStock);
   };
 
   // Scroll observer to trigger sticky banners
@@ -172,6 +174,7 @@ export default function ProductView({ product }: ProductViewProps) {
         selectedColour={selectedColour}
         selectedColourHex={selectedColourHex}
         selectedSize={selectedSize}
+        isOutOfStock={isOutOfStock}
         onAddToCart={handleStickyAddToCart}
       />
 

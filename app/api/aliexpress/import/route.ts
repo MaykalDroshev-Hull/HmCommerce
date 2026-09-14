@@ -150,7 +150,11 @@ export async function POST(request: NextRequest) {
         price: vPrice,
         compare_at_price: vCompareAt,
         promotional_price: vCompareAt && vCompareAt > vPrice ? vPrice : null,
-        quantity: v.quantity || 30,
+        quantity: typeof v.quantity === 'number'
+          ? v.quantity
+          : typeof (v as any).stock === 'number'
+            ? (v as any).stock
+            : 30,
         trackquantity: true,
         isvisible: true,
         aliexpress_sku_id: v.skuId ? String(v.skuId) : null

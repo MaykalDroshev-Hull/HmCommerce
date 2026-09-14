@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { createServerClient } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
@@ -7,6 +9,17 @@ export interface SceneOptions {
   breed?: string;
   scenePreset?: 'clean_studio' | 'dynamic_action' | 'british_home' | 'outdoor_park' | 'custom';
   customInstructions?: string;
+}
+
+export interface DirectGenerationOptions {
+  sourceImageUrl: string;
+  imageType: 'product' | 'size_guide';
+  productTitle?: string;
+  breed?: string;
+  scenePreset?: 'clean_studio' | 'dynamic_action' | 'british_home' | 'outdoor_park' | 'custom';
+  customInstructions?: string;
+  logoVariant?: 'black' | 'white';
+  aspectRatio?: '1:1' | '3:4' | '4:3' | '16:9';
 }
 
 export interface StudioPromptResult {
@@ -149,9 +162,66 @@ export async function generateWithImagen3(
   apiKey: string,
   aspectRatio: '1:1' | '3:4' | '4:3' | '16:9' = '1:1'
 ): Promise<{ success: boolean; base64Data?: string; mimeType?: string; error?: string; requiresBilling?: boolean }> {
-  const models = ['gemini-3.1-flash-image', 'gemini-2.5-flash-image', 'gemini-3-pro-image'];
+  // Strategy 1: Google Imagen 3 Dedicated predict endpoint
+  const imagenModels = ['imagen-3.0-generate-002', 'imagen-3.0-generate-001'];
+  for (const model of imagenModels) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:predict?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            instances: [{ prompt }],
+            parameters: {
+              sampleCount: 1,
+              aspectRatio
+            }
+          })
+        }
+      );
 
-  for (const model of models) {
+      const result = await response.json();
+
+      if (!response.ok) {
+        const errorMsg = result?.error?.message || response.statusText;
+        const isQuotaOrBilling =
+          response.status === 429 ||
+          response.status === 403 ||
+          errorMsg.includes('quota') ||
+          errorMsg.includes('RESOURCE_EXHAUSTED') ||
+          errorMsg.includes('free_tier_requests') ||
+          errorMsg.includes('billing');
+
+        if (isQuotaOrBilling) {
+          return {
+            success: false,
+            error: errorMsg,
+            requiresBilling: true
+          };
+        }
+        continue;
+      }
+
+      if (result.predictions && result.predictions[0]) {
+        const pred = result.predictions[0];
+        const base64Data = pred.bytesBase64Encoded || pred.data;
+        if (base64Data) {
+          return {
+            success: true,
+            base64Data,
+            mimeType: pred.mimeType || 'image/jpeg'
+          };
+        }
+      }
+    } catch (err: any) {
+      logger.warn(`Error generating with Imagen model ${model}:`, err);
+    }
+  }
+
+  // Strategy 2: Gemini multimodal models with image output modality
+  const geminiModels = ['gemini-2.0-flash-exp', 'gemini-3.1-flash-image', 'gemini-2.5-flash-image'];
+  for (const model of geminiModels) {
     try {
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
@@ -163,7 +233,10 @@ export async function generateWithImagen3(
               {
                 parts: [{ text: prompt }]
               }
-            ]
+            ],
+            generationConfig: {
+              responseModalities: ['IMAGE', 'TEXT']
+            }
           })
         }
       );
@@ -202,13 +275,13 @@ export async function generateWithImagen3(
         }
       }
     } catch (err: any) {
-      logger.warn(`Error generating with model ${model}:`, err);
+      logger.warn(`Error generating with Gemini image model ${model}:`, err);
     }
   }
 
   return {
     success: false,
-    error: 'Image generation requires a Google Cloud project with billing or trial credits enabled.'
+    error: 'Image generation requires a Google Cloud project with Imagen 3 or Gemini image capabilities enabled.'
   };
 }
 
@@ -239,4 +312,205 @@ export async function uploadGeneratedImageToStorage(
 
   const { data: urlData } = supabase.storage.from('products').getPublicUrl(data.path);
   return urlData.publicUrl;
+}
+
+/**
+ * Loads the official Meow Bark brand logo as base64 for size guide chart generation
+ */
+export async function getBrandLogoBase64(variant: 'black' | 'white' = 'black'): Promise<{ data: string; mimeType: string } | null> {
+  try {
+    const filename = variant === 'white' ? 'White-logo.png' : 'Black Logo.png';
+    const filePath = path.join(process.cwd(), 'public', filename);
+    const fileBuffer = await fs.promises.readFile(filePath);
+    return {
+      data: fileBuffer.toString('base64'),
+      mimeType: 'image/png'
+    };
+  } catch (err) {
+    logger.warn(`Could not load brand logo from disk (${variant}):`, err);
+    return null;
+  }
+}
+
+/**
+ * Generates or transforms an image directly via Gemini Multimodal Image Generation
+ * by feeding the source image bytes directly into the model along with editorial guidance.
+ */
+export async function generateDirectMultimodalImage(
+  options: DirectGenerationOptions,
+  apiKey: string
+): Promise<{ success: boolean; imageUrl?: string; base64Data?: string; mimeType?: string; promptUsed?: string; error?: string; requiresBilling?: boolean }> {
+  try {
+    // 1. Fetch source image and encode to Base64
+    const imgRes = await fetch(options.sourceImageUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Accept': 'image/webp,image/*,*/*'
+      }
+    });
+
+    if (!imgRes.ok) {
+      return { success: false, error: `Failed to download source image (HTTP ${imgRes.status})` };
+    }
+
+    const arrayBuf = await imgRes.arrayBuffer();
+    const sourceBase64 = Buffer.from(arrayBuf).toString('base64');
+    const sourceMime = (imgRes.headers.get('content-type') || 'image/jpeg').includes('png') ? 'image/png' : 'image/jpeg';
+
+    const parts: any[] = [];
+    let promptText = '';
+
+    if (options.imageType === 'size_guide') {
+      promptText = `You are an elite commercial graphic designer for the British pet brand "Meow Bark".
+You are provided with two images:
+1. An original supplier pet sizing chart image.
+2. The official "Meow Bark" brand logo.
+
+TASK:
+Re-create and transform this sizing chart directly into a clean, minimalist, high-end British editorial sizing guide image:
+- BRANDING: Feature the provided "Meow Bark" logo prominently at the top center or top left of the graphic.
+- ACCURACY: Meticulously preserve every single measurement number, size letter (XS, S, M, L, XL, XXL, etc.), chest girth (cm/in), back length (cm/in), and weight range from the source chart.
+- CLEAN EDITORIAL DESIGN: Clean monochrome/neutral palette, crisp modern typography (Inter/Helvetica style), generous whitespace, refined thin borders, and an intuitive layout.
+- ZERO CLUTTER: Remove all foreign watermark characters, Asian script, seller logos, and low-res artifacts.
+${options.customInstructions ? `Additional guidance: ${options.customInstructions}` : ''}
+Produce a finished, ultra-sharp, high-resolution commercial sizing graphic ready for a premium UK e-commerce store.`;
+
+      parts.push({ text: promptText });
+      parts.push({
+        inline_data: {
+          mime_type: sourceMime,
+          data: sourceBase64
+        }
+      });
+
+      // Attach logo
+      const logo = await getBrandLogoBase64(options.logoVariant || 'black');
+      if (logo) {
+        parts.push({
+          inline_data: {
+            mime_type: logo.mimeType,
+            data: logo.data
+          }
+        });
+      }
+    } else {
+      let presetGuidance = '';
+      switch (options.scenePreset) {
+        case 'dynamic_action':
+          presetGuidance = 'Dramatic high-energy action pose: the pet is in an energetic, playful motion, showing off the apparel.';
+          break;
+        case 'british_home':
+          presetGuidance = 'Warm, cozy British country home living room, natural morning sunlight streaming through windows, herringbone oak flooring, tasteful minimalist English decor.';
+          break;
+        case 'outdoor_park':
+          presetGuidance = 'Lush British countryside autumn park, crisp morning golden hour sunlight, scattered colorful fall leaves, soft background bokeh.';
+          break;
+        case 'clean_studio':
+        case 'custom':
+        default:
+          presetGuidance = options.customInstructions || 'Clean luxury commercial editorial studio photography, seamless neutral/white studio backdrop, soft floor contact shadows, high-end 85mm commercial portrait lighting.';
+          break;
+      }
+
+      const breed = options.breed && options.breed !== 'Original Breed' ? options.breed : 'purebred model dog or cat matching the costume';
+
+      promptText = `You are an elite commercial product photographer for luxury British pet brand "Meow Bark".
+You are provided with a source product image showing a pet apparel/costume/accessory item.
+
+TASK:
+Re-imagine this product directly into a high-end commercial editorial photograph:
+1. PRODUCT FIDELITY: Retain the EXACT costume/apparel design, plush fabric texture, colors, stripes/patterns, hood elements, and construction shown in the input image. Do NOT alter the product itself.
+2. PET MODEL: Model the apparel on a clean, healthy, adorable ${breed}.
+3. SETTING & LIGHTING: ${presetGuidance}
+4. COMMERCIAL AESTHETIC: Hasselblad 100MP clarity, 85mm portrait lens, f/8 sharpness, soft natural commercial lighting, elegant British pet lifestyle magazine quality.
+5. ZERO ARTIFACTS: Absolutely zero text, watermarks, stamps, or logos. Looks like a genuine studio photoshoot.
+${options.customInstructions ? `Additional guidance: ${options.customInstructions}` : ''}`;
+
+      parts.push({ text: promptText });
+      parts.push({
+        inline_data: {
+          mime_type: sourceMime,
+          data: sourceBase64
+        }
+      });
+    }
+
+    const models = ['gemini-2.0-flash-exp', 'gemini-3.1-flash-image', 'gemini-2.5-flash-image', 'gemini-3-pro-image'];
+
+    for (const model of models) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts }],
+              generationConfig: {
+                responseModalities: ['IMAGE', 'TEXT']
+              }
+            })
+          }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          const errorMsg = result?.error?.message || response.statusText;
+          const isQuotaOrBilling =
+            response.status === 429 ||
+            response.status === 403 ||
+            errorMsg.includes('quota') ||
+            errorMsg.includes('RESOURCE_EXHAUSTED') ||
+            errorMsg.includes('free_tier_requests') ||
+            errorMsg.includes('billing');
+
+          if (isQuotaOrBilling) {
+            return {
+              success: false,
+              error: errorMsg,
+              requiresBilling: true,
+              promptUsed: promptText
+            };
+          }
+          continue;
+        }
+
+        const resParts = result?.candidates?.[0]?.content?.parts || [];
+        for (const part of resParts) {
+          const imgObj = part.inlineData || part.inline_data;
+          if (imgObj && imgObj.data) {
+            const mimeType = imgObj.mimeType || imgObj.mime_type || 'image/jpeg';
+            const permanentUrl = await uploadGeneratedImageToStorage(
+              imgObj.data,
+              mimeType,
+              options.imageType === 'size_guide' ? 'size-guide' : 'ai-studio'
+            );
+
+            return {
+              success: true,
+              imageUrl: permanentUrl,
+              base64Data: imgObj.data,
+              mimeType,
+              promptUsed: promptText
+            };
+          }
+        }
+      } catch (err: any) {
+        logger.warn(`Error generating direct multimodal with model ${model}:`, err);
+      }
+    }
+
+    return {
+      success: false,
+      error: 'Direct multimodal generation requires a Google Cloud project with image generation permissions enabled.',
+      promptUsed: promptText
+    };
+  } catch (err: any) {
+    logger.error('Error in generateDirectMultimodalImage:', err);
+    return {
+      success: false,
+      error: err.message || 'Failed to generate direct multimodal image'
+    };
+  }
 }

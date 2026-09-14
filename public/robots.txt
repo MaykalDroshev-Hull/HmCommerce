@@ -1,7 +1,10 @@
 User-agent: *
 Allow: /
 
-# Block admin area from indexing
+# Allow Google Shopping product feed
+Allow: /api/feeds/google-shopping
+
+# Block admin and private areas from indexing
 Disallow: /admin/
 Disallow: /api/
 Disallow: /checkout/

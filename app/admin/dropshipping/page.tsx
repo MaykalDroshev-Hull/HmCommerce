@@ -28,7 +28,8 @@ import {
   Camera,
   Zap,
   Home,
-  Trees
+  Trees,
+  Ruler
 } from 'lucide-react';
 import { AliExpressProductDetails, AliExpressVariant } from '@/lib/aliexpress/types';
 import { extractCleanSizeCode } from '@/lib/aliexpress/client';
@@ -36,6 +37,16 @@ import { extractCleanSizeCode } from '@/lib/aliexpress/client';
 interface ProductType {
   producttypeid: string;
   name: string;
+}
+
+interface StudioQueueItem {
+  id: string;
+  sourceUrl: string;
+  imageType: 'product' | 'size_guide';
+  logoVariant: 'black' | 'white';
+  status: 'idle' | 'generating' | 'completed' | 'error';
+  generatedUrl?: string;
+  error?: string;
 }
 
 export default function DropshippingPage() {
@@ -68,6 +79,9 @@ export default function DropshippingPage() {
   // AI Studio Image Generation State
   const [isStudioOpen, setIsStudioOpen] = useState(false);
   const [studioSourceImage, setStudioSourceImage] = useState<string>('');
+  const [studioQueue, setStudioQueue] = useState<StudioQueueItem[]>([]);
+  const [activeQueueIndex, setActiveQueueIndex] = useState<number>(0);
+  const [isBatchGenerating, setIsBatchGenerating] = useState(false);
   const [studioBreed, setStudioBreed] = useState<string>('Labrador Retriever');
   const [studioPreset, setStudioPreset] = useState<'clean_studio' | 'dynamic_action' | 'british_home' | 'outdoor_park' | 'custom'>('clean_studio');
   const [studioCustomPrompt, setStudioCustomPrompt] = useState<string>('');
@@ -377,15 +391,208 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
   };
 
   // Open AI Studio Modal
-  const openImageStudioModal = (imgUrl?: string) => {
-    const target = imgUrl || primaryImageUrl || stagedProduct?.images?.[0] || '';
-    setStudioSourceImage(target);
+  const openImageStudioModal = (focusedImgUrl?: string) => {
     setStudioError(null);
     setStudioRequiresBilling(false);
     setSynthesizedAnalysis(null);
     setSynthesizedPrompt(null);
     setGeneratedImageUrl(null);
+
+    // Get selected images from staging
+    const imagesToQueue = selectedImageUrls.length > 0
+      ? selectedImageUrls
+      : (stagedProduct?.images || []).slice(0, 4);
+
+    const activeUrl = focusedImgUrl || primaryImageUrl || imagesToQueue[0] || '';
+
+    // If focused image is not in queue, ensure it's included
+    const fullList = focusedImgUrl && !imagesToQueue.includes(focusedImgUrl)
+      ? [focusedImgUrl, ...imagesToQueue]
+      : imagesToQueue;
+
+    const queue: StudioQueueItem[] = fullList.map((url, i) => {
+      const isLikelySizeGuide = /size|chart|measur|guide|dimension|table/i.test(url) || (i === 1 && fullList.length > 2);
+      return {
+        id: `img-${i}-${Date.now()}`,
+        sourceUrl: url,
+        imageType: isLikelySizeGuide ? 'size_guide' : 'product',
+        logoVariant: 'black',
+        status: 'idle'
+      };
+    });
+
+    setStudioQueue(queue);
+    const focusedIdx = queue.findIndex((q) => q.sourceUrl === activeUrl);
+    const validIdx = focusedIdx >= 0 ? focusedIdx : 0;
+    setActiveQueueIndex(validIdx);
+    setStudioSourceImage(activeUrl);
     setIsStudioOpen(true);
+  };
+
+  // Generate a single queue item directly with Gemini multimodal
+  const handleGenerateDirectItem = async (index: number) => {
+    const item = studioQueue[index];
+    if (!item) return;
+
+    try {
+      setStudioQueue((prev) => {
+        const next = [...prev];
+        next[index] = { ...next[index], status: 'generating', error: undefined };
+        return next;
+      });
+      setStudioError(null);
+      setStudioRequiresBilling(false);
+
+      const res = await fetch('/api/ai/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'generate-direct',
+          sourceImageUrl: item.sourceUrl,
+          imageType: item.imageType,
+          productTitle: customTitle || stagedProduct?.title || 'Pet Costume',
+          breed: studioBreed,
+          scenePreset: studioPreset,
+          customInstructions: studioCustomPrompt,
+          logoVariant: item.logoVariant
+        })
+      });
+
+      const data = await res.json();
+      if (data.success && data.imageUrl) {
+        setStudioQueue((prev) => {
+          const next = [...prev];
+          next[index] = {
+            ...next[index],
+            status: 'completed',
+            generatedUrl: data.imageUrl
+          };
+          return next;
+        });
+        if (index === activeQueueIndex) {
+          setGeneratedImageUrl(data.imageUrl);
+        }
+      } else {
+        if (data.requiresBilling) {
+          setStudioRequiresBilling(true);
+        }
+        setStudioQueue((prev) => {
+          const next = [...prev];
+          next[index] = {
+            ...next[index],
+            status: 'error',
+            error: data.error || 'Generation failed'
+          };
+          return next;
+        });
+        setStudioError(data.error || 'Image generation failed');
+      }
+    } catch (err: any) {
+      setStudioQueue((prev) => {
+        const next = [...prev];
+        next[index] = {
+          ...next[index],
+          status: 'error',
+          error: err.message || 'Network error'
+        };
+        return next;
+      });
+      setStudioError(err.message || 'Network error');
+    }
+  };
+
+  // Generate ALL queued images simultaneously
+  const handleGenerateAllQueued = async () => {
+    try {
+      setIsBatchGenerating(true);
+      setStudioError(null);
+      setStudioRequiresBilling(false);
+
+      await Promise.allSettled(
+        studioQueue.map((_, idx) => handleGenerateDirectItem(idx))
+      );
+    } finally {
+      setIsBatchGenerating(false);
+    }
+  };
+
+  // 1-Click Replace Single Generated Image in Gallery
+  const handleReplaceImageInGallery = (originalUrl: string, newUrl: string) => {
+    setSelectedImageUrls((prev) => prev.map((u) => (u === originalUrl ? newUrl : u)));
+    if (primaryImageUrl === originalUrl) {
+      setPrimaryImageUrl(newUrl);
+    }
+    if (stagedProduct) {
+      setStagedProduct({
+        ...stagedProduct,
+        images: stagedProduct.images.map((u) => (u === originalUrl ? newUrl : u))
+      });
+    }
+  };
+
+  // 1-Click Replace ALL Completed Images in Gallery
+  const handleApplyAllCompleted = () => {
+    const completed = studioQueue.filter((q) => q.status === 'completed' && q.generatedUrl);
+    if (completed.length === 0) return;
+
+    let updatedSelected = [...selectedImageUrls];
+    let updatedStaged = stagedProduct ? [...stagedProduct.images] : [];
+    let updatedPrimary = primaryImageUrl;
+
+    completed.forEach((item) => {
+      if (item.generatedUrl) {
+        updatedSelected = updatedSelected.map((u) => (u === item.sourceUrl ? item.generatedUrl! : u));
+        updatedStaged = updatedStaged.map((u) => (u === item.sourceUrl ? item.generatedUrl! : u));
+        if (updatedPrimary === item.sourceUrl) {
+          updatedPrimary = item.generatedUrl;
+        }
+      }
+    });
+
+    setSelectedImageUrls(updatedSelected);
+    setPrimaryImageUrl(updatedPrimary);
+    if (stagedProduct) {
+      setStagedProduct({
+        ...stagedProduct,
+        images: updatedStaged
+      });
+    }
+    setIsStudioOpen(false);
+  };
+
+  // Select active queue item
+  const handleSelectQueueIndex = (idx: number) => {
+    setActiveQueueIndex(idx);
+    const item = studioQueue[idx];
+    if (item) {
+      setStudioSourceImage(item.sourceUrl);
+      setGeneratedImageUrl(item.generatedUrl || null);
+      setStudioError(item.error || null);
+      setSynthesizedPrompt(null);
+      setSynthesizedAnalysis(null);
+    }
+  };
+
+  // Toggle item type (product vs size_guide)
+  const handleToggleQueueItemType = (idx: number, newType: 'product' | 'size_guide') => {
+    setStudioQueue((prev) => {
+      const next = [...prev];
+      if (next[idx]) {
+        next[idx] = { ...next[idx], imageType: newType };
+      }
+      return next;
+    });
+  };
+
+  // Toggle logo variant for size guide
+  const handleToggleQueueItemLogo = (idx: number, variant: 'black' | 'white') => {
+    setStudioQueue((prev) => {
+      const next = [...prev];
+      if (next[idx]) {
+        next[idx] = { ...next[idx], logoVariant: variant };
+      }
+      return next;
+    });
   };
 
   // Synthesize Studio Prompt with Gemini 3.6 Flash
@@ -617,7 +824,7 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
             sku: variantSku,
             price: v.customPrice || sellPriceNum,
             compareAtPrice: comparePriceNum,
-            quantity: v.stock || 40,
+            quantity: typeof v.stock === 'number' ? v.stock : 40,
             size: sizeVal || undefined,
             colour: colourVal || undefined,
             imageUrl: v.imageUrl || orderedImages[0]
@@ -812,10 +1019,10 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
             {/* Input Bar */}
             <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-6 shadow-sm">
               <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-500 mb-1">
-                Import by URL or Product ID
+                Import by URL, Mobile Link, or Product ID
               </h2>
               <p className="text-xs text-neutral-600 mb-3 sm:mb-4">
-                Enter any AliExpress product URL or item ID to pull product details, images, sizes, and specs into your customizable staging editor.
+                Enter any AliExpress product URL, mobile share link (e.g. a.aliexpress.com/_...), or item ID to pull product details, images, sizes, and specs into your customizable staging editor.
               </p>
 
               <form onSubmit={handleFetch} className="flex flex-col sm:flex-row gap-2.5 sm:gap-3">
@@ -824,7 +1031,7 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                     type="text"
                     value={urlOrId}
                     onChange={(e) => setUrlOrId(e.target.value)}
-                    placeholder="e.g. https://www.aliexpress.com/item/1005006247926174.html or 1005006247926174"
+                    placeholder="e.g. 1005006247926174, desktop link, or mobile link (a.aliexpress.com/_...)"
                     className="w-full px-4 py-3 sm:py-2.5 text-base sm:text-sm border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900 bg-neutral-50/50"
                   />
                 </div>
@@ -1014,11 +1221,11 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                     </div>
                     <button
                       type="button"
-                      onClick={() => openImageStudioModal(primaryImageUrl || stagedProduct.images?.[0])}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 text-xs font-bold bg-neutral-900 hover:bg-black text-white rounded-lg transition-colors shadow-sm self-start sm:self-auto touch-manipulation min-h-[38px]"
+                      onClick={() => openImageStudioModal()}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 sm:py-1.5 text-xs font-bold bg-neutral-900 hover:bg-black text-white rounded-lg transition-colors shadow-sm self-start sm:self-auto touch-manipulation min-h-[38px]"
                     >
                       <Sparkles size={13} className="text-amber-400" />
-                      <span>AI Studio: Re-imagine Scene</span>
+                      <span>AI Studio: Re-imagine Selected ({selectedImageUrls.length > 0 ? selectedImageUrls.length : (stagedProduct.images?.length || 0)})</span>
                     </button>
                   </div>
 
@@ -1370,8 +1577,14 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                                       className="w-20 px-2 py-1 text-xs border border-neutral-300 rounded"
                                     />
                                   </td>
-                                  <td className="py-2.5 px-3 text-neutral-700">
-                                    {variant.stock || 40}
+                                  <td className="py-2.5 px-3">
+                                    {variant.stock === 0 ? (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                        0 (Out of stock on AliExpress - disabled on website)
+                                      </span>
+                                    ) : (
+                                      <span className="text-neutral-700 font-medium">{variant.stock ?? 35}</span>
+                                    )}
                                   </td>
                                 </tr>
                               );
@@ -1748,460 +1961,635 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
         )}
 
         {/* ========================================================= */}
-        {/* AI STUDIO DIRECTOR & IMAGE RE-IMAGINER MODAL               */}
+        {/* AI STUDIO MULTI-IMAGE DIRECT RE-IMAGINER MODAL              */}
         {/* ========================================================= */}
-        {isStudioOpen && (
-          <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex flex-col justify-end sm:justify-center p-0 sm:p-4 overflow-hidden">
-            <div className="bg-white rounded-t-2xl sm:rounded-2xl max-w-4xl w-full shadow-2xl border-t sm:border border-neutral-200 overflow-hidden flex flex-col h-[94vh] sm:h-auto sm:max-h-[90vh] mx-auto">
-              {/* Modal Header */}
-              <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-neutral-800 flex items-center justify-between bg-neutral-950 text-white shrink-0">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-neutral-800 flex items-center justify-center text-amber-400 shrink-0">
-                    <Sparkles size={16} />
+        {isStudioOpen && (() => {
+          const activeItem = studioQueue[activeQueueIndex] || studioQueue[0];
+          const completedCount = studioQueue.filter((q) => q.status === 'completed' && q.generatedUrl).length;
+
+          return (
+            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col justify-end sm:justify-center p-0 sm:p-4 overflow-hidden">
+              <div className="bg-white rounded-t-2xl sm:rounded-2xl max-w-5xl w-full shadow-2xl border-t sm:border border-neutral-200 overflow-hidden flex flex-col h-[95vh] sm:h-[90vh] mx-auto">
+                {/* Modal Header */}
+                <div className="px-4 sm:px-6 py-3.5 border-b border-neutral-800 flex items-center justify-between bg-neutral-950 text-white shrink-0">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-neutral-800 flex items-center justify-center text-amber-400 shrink-0">
+                      <Sparkles size={16} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold tracking-tight truncate">
+                          AI Studio: Direct Multimodal Re-imaginer
+                        </h3>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-neutral-800 text-neutral-300 border border-neutral-700">
+                          {studioQueue.length} Images Queued
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-neutral-400 truncate">
+                        Feeds source photos &amp; brand logo directly into Gemini multimodal vision for editorial studio shots &amp; branded sizing charts
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-bold tracking-tight truncate">AI Studio Director & Scene Re-imaginer</h3>
-                    <p className="text-[11px] text-neutral-400 truncate">
-                      Deconstruct AliExpress products, switch pet breeds, and generate editorial studio photography
-                    </p>
+
+                  <div className="flex items-center gap-2">
+                    {completedCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleApplyAllCompleted}
+                        className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
+                      >
+                        <CheckCircle2 size={13} />
+                        <span>Apply All Completed ({completedCount}) to Store</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setIsStudioOpen(false)}
+                      className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center shrink-0"
+                    >
+                      <X size={18} />
+                    </button>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsStudioOpen(false)}
-                  className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors touch-manipulation min-w-[40px] min-h-[40px] flex items-center justify-center shrink-0"
-                >
-                  <X size={18} />
-                </button>
-              </div>
 
-              {/* Modal Body */}
-              <div className="p-4 sm:p-6 overflow-y-auto flex-1 grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
-                {/* Left Column: Controls (5 cols) */}
-                <div className="lg:col-span-5 space-y-4">
-                  {/* Source Image Selector */}
-                  <div className="space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-600">
-                        Source Product Image
-                      </label>
-                      <span className="text-[10px] text-neutral-400 font-medium">
-                        Vision Analysis Source
-                      </span>
-                    </div>
-
-                    {/* Active Source Card */}
-                    <div className="flex items-center gap-3 p-2.5 bg-neutral-50 rounded-xl border border-neutral-200">
-                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-neutral-200 shrink-0 border border-neutral-300">
-                        {studioSourceImage ? (
-                          <img
-                            src={studioSourceImage}
-                            alt="Source"
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.currentTarget as HTMLImageElement).src = '/Logo.jpg';
-                            }}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-neutral-400">
-                            <ImageIcon size={20} />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-neutral-900 text-white">
-                            Active Source
-                          </span>
-                          {studioSourceImage === primaryImageUrl && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                              Catalog Primary
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-xs font-semibold text-neutral-800 block truncate">
-                          {customTitle || stagedProduct?.title || 'Selected AliExpress Image'}
-                        </span>
-                        <span className="text-[10px] text-neutral-500 block truncate">
-                          Deconstructs textures, materials & costume parts
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Thumbnail Switcher (All Available Photos) */}
-                    {stagedProduct?.images && stagedProduct.images.length > 0 && (
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
-                            Tap to switch photo ({stagedProduct.images.length} available):
-                          </span>
-                        </div>
-                        <div className="flex gap-2 overflow-x-auto pb-1.5 pt-0.5 -mx-1 px-1 scrollbar-thin snap-x">
-                          {stagedProduct.images.map((imgUrl, i) => {
-                            const isCurrent = studioSourceImage === imgUrl;
-                            return (
-                              <button
-                                key={i}
-                                type="button"
-                                onClick={() => {
-                                  setStudioSourceImage(imgUrl);
-                                  setSynthesizedPrompt(null);
-                                  setSynthesizedAnalysis(null);
-                                  setGeneratedImageUrl(null);
-                                }}
-                                title={`Use Image #${i + 1} as AI Studio source`}
-                                className={`relative shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden border-2 transition-all snap-start touch-manipulation ${
-                                  isCurrent
-                                    ? 'border-neutral-950 ring-2 ring-neutral-950/20 shadow-md scale-105'
-                                    : 'border-neutral-200 hover:border-neutral-400 opacity-60 hover:opacity-100'
-                                }`}
-                              >
-                                <img
-                                  src={imgUrl}
-                                  alt={`Thumb ${i + 1}`}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    (e.currentTarget as HTMLImageElement).src = '/Logo.jpg';
-                                  }}
-                                />
-                                {isCurrent && (
-                                  <span className="absolute inset-0 bg-neutral-950/35 flex items-center justify-center">
-                                    <Check size={14} className="text-white drop-shadow font-bold" />
-                                  </span>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Breed Selection */}
-                  <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-600 block mb-1.5">
-                      Target Pet Breed
-                    </label>
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {[
-                        'Labrador Retriever',
-                        'Golden Retriever',
-                        'French Bulldog',
-                        'Cockapoo',
-                        'Dachshund',
-                        'Poodle',
-                        'Original Breed'
-                      ].map((breed) => (
-                        <button
-                          key={breed}
-                          type="button"
-                          onClick={() => {
-                            setStudioBreed(breed);
-                            setSynthesizedPrompt(null);
-                            setSynthesizedAnalysis(null);
-                            setGeneratedImageUrl(null);
-                          }}
-                          className={`px-3 py-1.5 text-xs rounded-full border transition-all font-medium touch-manipulation min-h-[32px] ${
-                            studioBreed === breed
-                              ? 'bg-neutral-950 text-white border-neutral-950 shadow-sm'
-                              : 'bg-white text-neutral-600 border-neutral-200 hover:border-neutral-300 active:bg-neutral-50'
-                          }`}
-                        >
-                          {breed}
-                        </button>
-                      ))}
-                    </div>
-                    <input
-                      type="text"
-                      value={studioBreed}
-                      onChange={(e) => {
-                        setStudioBreed(e.target.value);
-                        setSynthesizedPrompt(null);
-                        setSynthesizedAnalysis(null);
-                        setGeneratedImageUrl(null);
-                      }}
-                      placeholder="Or enter custom breed (e.g. Jack Russell)"
-                      className="w-full px-3 py-2 text-base sm:text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-900"
-                    />
-                  </div>
-
-                  {/* Scene & Pose Presets (Clean Monochrome Icons, Zero Emojis) */}
-                  <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-600 block mb-1.5">
-                      Scene & Pose Style
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { id: 'clean_studio', label: 'Clean Studio', desc: 'White backdrop, soft 85mm light', icon: Camera },
-                        { id: 'dynamic_action', label: 'Dynamic Action', desc: 'Rearing stallion pose, motion', icon: Zap },
-                        { id: 'british_home', label: 'British Home', desc: 'Warm oak floor, morning sun', icon: Home },
-                        { id: 'outdoor_park', label: 'Autumn Park', desc: 'English garden, golden hour', icon: Trees }
-                      ].map((preset) => {
-                        const IconComponent = preset.icon;
-                        const isSelected = studioPreset === preset.id;
+                {/* Queue Strip & Simultaneous Action Bar */}
+                <div className="bg-neutral-100/90 px-4 sm:px-6 py-2.5 border-b border-neutral-200 shrink-0 flex items-center justify-between gap-3 overflow-x-auto">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 shrink-0 hidden md:inline">
+                      Selected Queue ({studioQueue.length}):
+                    </span>
+                    <div className="flex items-center gap-2 overflow-x-auto py-0.5 scrollbar-thin">
+                      {studioQueue.map((item, idx) => {
+                        const isActive = idx === activeQueueIndex;
                         return (
                           <button
-                            key={preset.id}
+                            key={item.id}
                             type="button"
-                            onClick={() => {
-                              setStudioPreset(preset.id as any);
-                              setSynthesizedPrompt(null);
-                              setSynthesizedAnalysis(null);
-                              setGeneratedImageUrl(null);
-                            }}
-                            className={`p-2.5 sm:p-3 rounded-xl border text-left transition-all touch-manipulation flex flex-col justify-between min-h-[64px] ${
-                              isSelected
-                                ? 'border-neutral-950 bg-neutral-950 text-white shadow-sm'
-                                : 'border-neutral-200 bg-white hover:border-neutral-300 text-neutral-800 active:bg-neutral-50'
+                            onClick={() => handleSelectQueueIndex(idx)}
+                            className={`relative shrink-0 w-11 h-11 sm:w-12 sm:h-12 rounded-lg overflow-hidden border-2 transition-all touch-manipulation group ${
+                              isActive
+                                ? 'border-neutral-950 ring-2 ring-neutral-950/20 shadow-md scale-105'
+                                : 'border-neutral-300 hover:border-neutral-400 opacity-75 hover:opacity-100'
                             }`}
                           >
-                            <div className="flex items-center gap-1.5 mb-1">
-                              <IconComponent size={13} className={isSelected ? 'text-amber-400' : 'text-neutral-600'} />
-                              <span className="text-xs font-bold block truncate">{preset.label}</span>
-                            </div>
-                            <span className={`text-[10px] block leading-tight ${isSelected ? 'text-neutral-300' : 'text-neutral-500'}`}>
-                              {preset.desc}
-                            </span>
+                            <img
+                              src={item.generatedUrl || item.sourceUrl}
+                              alt={`Queue ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src = '/Logo.jpg';
+                              }}
+                            />
+                            {item.status === 'generating' && (
+                              <span className="absolute inset-0 bg-neutral-950/60 flex items-center justify-center">
+                                <RefreshCw size={13} className="text-amber-400 animate-spin" />
+                              </span>
+                            )}
+                            {item.status === 'completed' && (
+                              <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-sm">
+                                <Check size={9} className="stroke-[3]" />
+                              </span>
+                            )}
+                            {item.status === 'error' && (
+                              <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-red-500 text-white flex items-center justify-center shadow-sm">
+                                <AlertCircle size={9} />
+                              </span>
+                            )}
+                            {item.imageType === 'size_guide' && (
+                              <span className="absolute bottom-0 inset-x-0 bg-neutral-950/80 text-[8px] text-amber-300 font-bold uppercase text-center py-0.2 truncate leading-tight">
+                                Size
+                              </span>
+                            )}
                           </button>
                         );
                       })}
                     </div>
                   </div>
 
-                  {/* Custom Directions */}
-                  <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-600 block mb-1.5">
-                      Custom Instructions (Optional)
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={studioCustomPrompt}
-                      onChange={(e) => {
-                        setStudioCustomPrompt(e.target.value);
-                        setSynthesizedPrompt(null);
-                        setSynthesizedAnalysis(null);
-                        setGeneratedImageUrl(null);
-                      }}
-                      placeholder="Optional: e.g. playful head tilt, soft golden hour rim lighting, cozy blanket details"
-                      className="w-full px-3 py-2 text-base sm:text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-900"
-                    />
-                  </div>
-
-                  {/* Primary Trigger Buttons */}
-                  <div className="pt-2 flex flex-col gap-2">
+                  {/* Batch Simultaneous Action Button */}
+                  <div className="shrink-0 flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={handleSynthesizePrompt}
-                      disabled={isSynthesizingPrompt || isGeneratingImage}
-                      className="w-full py-3 px-4 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 touch-manipulation min-h-[44px] active:scale-[0.99]"
+                      onClick={handleGenerateAllQueued}
+                      disabled={isBatchGenerating || studioQueue.some((q) => q.status === 'generating')}
+                      className="px-3.5 py-2 bg-neutral-950 hover:bg-black text-white text-xs font-bold rounded-lg transition-all shadow-sm flex items-center gap-1.5 touch-manipulation disabled:opacity-50"
                     >
-                      {isSynthesizingPrompt ? (
+                      {isBatchGenerating ? (
                         <>
-                          <RefreshCw size={13} className="animate-spin" />
-                          <span>Analyzing with Gemini Vision...</span>
+                          <RefreshCw size={13} className="animate-spin text-amber-400" />
+                          <span>Re-imagining All ({studioQueue.filter((q) => q.status === 'generating').length} active)...</span>
                         </>
                       ) : (
                         <>
-                          <Wand2 size={13} />
-                          <span>1. Synthesize Studio Prompt</span>
-                        </>
-                      )}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={handleGenerateImagen}
-                      disabled={isGeneratingImage || isSynthesizingPrompt}
-                      className="w-full py-3.5 px-4 bg-neutral-950 hover:bg-black text-white text-xs sm:text-sm font-bold rounded-xl transition-all shadow-md flex items-center justify-center gap-2 touch-manipulation min-h-[48px] active:scale-[0.99]"
-                    >
-                      {isGeneratingImage ? (
-                        <>
-                          <RefreshCw size={15} className="animate-spin text-amber-400" />
-                          <span>Generating with Google Imagen 3...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles size={15} className="text-amber-400" />
-                          <span>2. 1-Click Generate (Google Imagen 3)</span>
+                          <Sparkles size={13} className="text-amber-400" />
+                          <span>Re-imagine All ({studioQueue.length}) Directly</span>
                         </>
                       )}
                     </button>
                   </div>
                 </div>
 
-                {/* Right Column: AI Output & Live Preview (7 cols) */}
-                <div className="lg:col-span-7 bg-neutral-50 rounded-2xl p-4 sm:p-5 border border-neutral-200 flex flex-col min-h-[360px] justify-between space-y-4">
-                  {/* Status / Output Section */}
-                  <div className="space-y-4 flex-1">
-                    {/* Error Banner */}
-                    {studioError && (
-                      <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-start gap-2">
-                        <AlertCircle size={15} className="shrink-0 mt-0.5 text-red-500" />
-                        <div className="flex-1">
-                          <span className="font-semibold block">Notice:</span>
-                          <span className="text-[11px] leading-relaxed block mt-0.5">{studioError}</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Google Cloud Billing Guidance when required */}
-                    {studioRequiresBilling && (
-                      <div className="p-4 bg-amber-50/80 border border-amber-200 rounded-xl space-y-2.5">
-                        <div className="flex items-center gap-2 text-amber-800">
-                          <Sparkles size={14} className="text-amber-600 shrink-0" />
-                          <span className="text-xs font-bold">Google Cloud Billing Activation Needed for 1-Click API</span>
-                        </div>
-                        <p className="text-[11px] text-amber-700 leading-relaxed">
-                          Google Imagen 3 API has a free tier quota of 0 requests until a Google Cloud project with billing is linked to the API key.
-                        </p>
-                        <div className="flex flex-wrap items-center gap-2 pt-1">
-                          <a
-                            href="https://console.cloud.google.com/billing"
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 px-3 py-2 bg-neutral-900 hover:bg-black text-white text-[11px] font-semibold rounded-lg shadow-sm touch-manipulation"
-                          >
-                            <span>Open Google Cloud Billing</span>
-                            <ExternalLink size={10} />
-                          </a>
-                          <span className="text-[11px] text-amber-600 font-medium">
-                            Or copy the prompt below into your free Gemini chat!
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Generated Image Result */}
-                    {generatedImageUrl ? (
-                      <div className="space-y-3">
-                        <div className="aspect-square max-h-[280px] sm:max-h-[320px] w-full mx-auto rounded-xl overflow-hidden border-2 border-neutral-950 shadow-lg bg-neutral-900 relative group">
-                          <img
-                            src={generatedImageUrl}
-                            alt="AI Studio Generated"
-                            className="w-full h-full object-cover"
-                          />
-                          <span className="absolute top-2 right-2 px-2 py-0.5 text-[10px] font-bold bg-neutral-950/80 backdrop-blur-sm text-emerald-400 border border-emerald-400/30 rounded">
-                            Imagen 3 Commercial
-                          </span>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleApplyGeneratedImage(true)}
-                            className="flex-1 py-3 px-4 bg-neutral-950 hover:bg-black text-white text-xs font-bold rounded-xl transition-all shadow flex items-center justify-center gap-1.5 touch-manipulation min-h-[44px] active:scale-[0.99]"
-                          >
-                            <CheckCircle2 size={14} className="text-emerald-400" />
-                            <span>Set as Primary Photo</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleApplyGeneratedImage(false)}
-                            className="py-3 px-4 bg-white hover:bg-neutral-100 border border-neutral-300 text-neutral-800 text-xs font-semibold rounded-xl transition-colors touch-manipulation min-h-[44px]"
-                          >
-                            Add to Gallery
-                          </button>
-                        </div>
-                      </div>
-                    ) : isGeneratingImage ? (
-                      <div className="h-56 sm:h-64 flex flex-col items-center justify-center text-center p-6 space-y-3">
-                        <RefreshCw size={28} className="animate-spin text-neutral-900" />
-                        <div>
-                          <span className="text-xs font-bold text-neutral-800 block">
-                            Creating High-Resolution Studio Shot
-                          </span>
-                          <span className="text-[11px] text-neutral-500 block mt-1">
-                            Deconstructing textures, applying {studioBreed}, and rendering 85mm studio lighting...
-                          </span>
-                        </div>
-                      </div>
-                    ) : null}
-
-                    {/* Synthesized Prompt Card */}
-                    {synthesizedPrompt && (
-                      <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-neutral-200 space-y-2.5 shadow-sm">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-700 flex items-center gap-1.5 truncate">
-                            <Sparkles size={12} className="text-amber-500 shrink-0" />
-                            <span className="truncate">Synthesized Commercial Prompt</span>
-                          </span>
-                          <button
-                            type="button"
-                            onClick={handleCopyPrompt}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-lg transition-colors touch-manipulation shrink-0"
-                          >
-                            {hasCopiedPrompt ? (
-                              <>
-                                <Check size={12} className="text-emerald-600" />
-                                <span className="text-emerald-700">Copied!</span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy size={12} />
-                                <span>Copy for Gemini Chat</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-
-                        {synthesizedAnalysis && (
-                          <p className="text-[11px] text-neutral-500 italic bg-neutral-50 p-2 rounded-lg border border-neutral-100">
-                            &quot;{synthesizedAnalysis}&quot;
-                          </p>
-                        )}
-
-                        <div className="p-2.5 bg-neutral-900 text-neutral-100 rounded-lg text-xs font-mono leading-relaxed max-h-32 sm:max-h-36 overflow-y-auto select-all">
-                          {synthesizedPrompt}
-                        </div>
-                      </div>
-                    )}
-
-                    {!synthesizedPrompt && !generatedImageUrl && !isGeneratingImage && (
-                      <div className="h-48 sm:h-64 flex flex-col items-center justify-center text-center p-4 sm:p-6 space-y-2 border-2 border-dashed border-neutral-200 rounded-xl">
-                        <Camera size={32} className="text-neutral-300" />
-                        <span className="text-xs font-bold text-neutral-700">
-                          Ready to Re-imagine This Product
+                {/* Modal Body */}
+                <div className="p-4 sm:p-6 overflow-y-auto flex-1 grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
+                  {/* Left Column: Active Image Controls (5 cols) */}
+                  <div className="lg:col-span-5 space-y-4">
+                    {/* Active Image Mode Box */}
+                    <div className="bg-neutral-50 rounded-xl p-3 border border-neutral-200 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-600">
+                          Active Item #{activeQueueIndex + 1} of {studioQueue.length}
                         </span>
-                        <p className="text-[11px] text-neutral-400 max-w-sm">
-                          Select your desired breed ({studioBreed}) and style, then tap &quot;Synthesize Studio Prompt&quot; or &quot;1-Click Generate&quot; to begin.
-                        </p>
+                        <span
+                          className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
+                            activeItem?.status === 'completed'
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                              : activeItem?.status === 'generating'
+                                ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                                : activeItem?.status === 'error'
+                                  ? 'bg-red-100 text-red-800 border border-red-200'
+                                  : 'bg-neutral-200 text-neutral-700'
+                          }`}
+                        >
+                          {activeItem?.status || 'idle'}
+                        </span>
                       </div>
+
+                      {/* Multimodal Generation Mode Toggle */}
+                      <div>
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 block mb-1.5">
+                          Multimodal Generation Mode:
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleQueueItemType(activeQueueIndex, 'product')}
+                            className={`p-2.5 rounded-lg border text-left transition-all flex items-center gap-2 ${
+                              activeItem?.imageType === 'product'
+                                ? 'bg-neutral-950 text-white border-neutral-950 shadow-sm'
+                                : 'bg-white text-neutral-700 border-neutral-200 hover:border-neutral-300'
+                            }`}
+                          >
+                            <Camera size={14} className={activeItem?.imageType === 'product' ? 'text-amber-400' : 'text-neutral-500'} />
+                            <div>
+                              <span className="text-xs font-bold block">Product Photo</span>
+                              <span className={`text-[10px] block ${activeItem?.imageType === 'product' ? 'text-neutral-300' : 'text-neutral-400'}`}>
+                                Editorial photoshoot
+                              </span>
+                            </div>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleToggleQueueItemType(activeQueueIndex, 'size_guide')}
+                            className={`p-2.5 rounded-lg border text-left transition-all flex items-center gap-2 ${
+                              activeItem?.imageType === 'size_guide'
+                                ? 'bg-neutral-950 text-white border-neutral-950 shadow-sm'
+                                : 'bg-white text-neutral-700 border-neutral-200 hover:border-neutral-300'
+                            }`}
+                          >
+                            <Ruler size={14} className={activeItem?.imageType === 'size_guide' ? 'text-amber-400' : 'text-neutral-500'} />
+                            <div>
+                              <span className="text-xs font-bold block">Size Guide</span>
+                              <span className={`text-[10px] block ${activeItem?.imageType === 'size_guide' ? 'text-neutral-300' : 'text-neutral-400'}`}>
+                                With brand logo
+                              </span>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* If Size Guide: Brand Logo Variant Selector */}
+                      {activeItem?.imageType === 'size_guide' && (
+                        <div className="p-3 bg-white rounded-lg border border-neutral-200 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-700 flex items-center gap-1">
+                              <span>Brand Logo to Embed:</span>
+                            </label>
+                            <span className="text-[10px] text-neutral-400">Meow Bark Official</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleQueueItemLogo(activeQueueIndex, 'black')}
+                              className={`p-2 rounded-lg border text-xs font-semibold flex items-center gap-2 transition-all ${
+                                activeItem.logoVariant === 'black'
+                                  ? 'bg-neutral-950 text-white border-neutral-950'
+                                  : 'bg-white text-neutral-700 border-neutral-200 hover:border-neutral-300'
+                              }`}
+                            >
+                              <div className="w-5 h-5 rounded bg-white border border-neutral-300 p-0.5 flex items-center justify-center shrink-0">
+                                <img src="/Black Logo.png" alt="Black Logo" className="max-h-full object-contain" />
+                              </div>
+                              <span className="truncate">Black Logo (Light)</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleQueueItemLogo(activeQueueIndex, 'white')}
+                              className={`p-2 rounded-lg border text-xs font-semibold flex items-center gap-2 transition-all ${
+                                activeItem.logoVariant === 'white'
+                                  ? 'bg-neutral-950 text-white border-neutral-950'
+                                  : 'bg-white text-neutral-700 border-neutral-200 hover:border-neutral-300'
+                              }`}
+                            >
+                              <div className="w-5 h-5 rounded bg-neutral-900 border border-neutral-700 p-0.5 flex items-center justify-center shrink-0">
+                                <img src="/White-logo.png" alt="White Logo" className="max-h-full object-contain" />
+                              </div>
+                              <span className="truncate">White Logo (Dark)</span>
+                            </button>
+                          </div>
+                          <p className="text-[10px] text-neutral-500 leading-tight">
+                            Gemini will read measurement rows directly from this photo and embed our official Meow Bark logo into a clean UK editorial chart.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* If Product Photo: Breed Selection & Style Presets */}
+                    {activeItem?.imageType === 'product' && (
+                      <>
+                        {/* Breed Selection */}
+                        <div>
+                          <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-600 block mb-1.5">
+                            Target Pet Breed
+                          </label>
+                          <div className="flex flex-wrap gap-1.5 mb-2">
+                            {[
+                              'Labrador Retriever',
+                              'Golden Retriever',
+                              'French Bulldog',
+                              'Cockapoo',
+                              'Dachshund',
+                              'Poodle',
+                              'Original Breed'
+                            ].map((breed) => (
+                              <button
+                                key={breed}
+                                type="button"
+                                onClick={() => {
+                                  setStudioBreed(breed);
+                                  setSynthesizedPrompt(null);
+                                  setSynthesizedAnalysis(null);
+                                }}
+                                className={`px-2.5 py-1 text-xs rounded-full border transition-all font-medium touch-manipulation ${
+                                  studioBreed === breed
+                                    ? 'bg-neutral-950 text-white border-neutral-950 shadow-sm'
+                                    : 'bg-white text-neutral-600 border-neutral-200 hover:border-neutral-300'
+                                }`}
+                              >
+                                {breed}
+                              </button>
+                            ))}
+                          </div>
+                          <input
+                            type="text"
+                            value={studioBreed}
+                            onChange={(e) => {
+                              setStudioBreed(e.target.value);
+                              setSynthesizedPrompt(null);
+                              setSynthesizedAnalysis(null);
+                            }}
+                            placeholder="Or enter custom breed (e.g. Jack Russell)"
+                            className="w-full px-3 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                          />
+                        </div>
+
+                        {/* Scene Presets */}
+                        <div>
+                          <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-600 block mb-1.5">
+                            Scene &amp; Pose Style
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {[
+                              { id: 'clean_studio', label: 'Clean Studio', desc: 'White backdrop, soft 85mm light', icon: Camera },
+                              { id: 'dynamic_action', label: 'Dynamic Action', desc: 'Rearing stallion pose, motion', icon: Zap },
+                              { id: 'british_home', label: 'British Home', desc: 'Warm oak floor, morning sun', icon: Home },
+                              { id: 'outdoor_park', label: 'Autumn Park', desc: 'English garden, golden hour', icon: Trees }
+                            ].map((preset) => {
+                              const IconComponent = preset.icon;
+                              const isSelected = studioPreset === preset.id;
+                              return (
+                                <button
+                                  key={preset.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setStudioPreset(preset.id as any);
+                                    setSynthesizedPrompt(null);
+                                    setSynthesizedAnalysis(null);
+                                  }}
+                                  className={`p-2 rounded-xl border text-left transition-all touch-manipulation flex flex-col justify-between ${
+                                    isSelected
+                                      ? 'border-neutral-950 bg-neutral-950 text-white shadow-sm'
+                                      : 'border-neutral-200 bg-white hover:border-neutral-300 text-neutral-800'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-1.5 mb-0.5">
+                                    <IconComponent size={12} className={isSelected ? 'text-amber-400' : 'text-neutral-600'} />
+                                    <span className="text-xs font-bold block truncate">{preset.label}</span>
+                                  </div>
+                                  <span className={`text-[9px] block leading-tight ${isSelected ? 'text-neutral-300' : 'text-neutral-500'}`}>
+                                    {preset.desc}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </>
                     )}
+
+                    {/* Custom Directions */}
+                    <div>
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-600 block mb-1">
+                        Custom Instructions (Optional)
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={studioCustomPrompt}
+                        onChange={(e) => setStudioCustomPrompt(e.target.value)}
+                        placeholder={
+                          activeItem?.imageType === 'size_guide'
+                            ? 'e.g. Bold table borders, highlight chest girth in centimeters, clean white background'
+                            : 'e.g. Playful head tilt, soft golden hour rim lighting, cozy rug'
+                        }
+                        className="w-full px-3 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                      />
+                    </div>
+
+                    {/* Active Item Action Buttons */}
+                    <div className="pt-1 flex flex-col gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleGenerateDirectItem(activeQueueIndex)}
+                        disabled={activeItem?.status === 'generating' || isBatchGenerating}
+                        className="w-full py-3 px-4 bg-neutral-950 hover:bg-black text-white text-xs sm:text-sm font-bold rounded-xl transition-all shadow-md flex items-center justify-center gap-2 touch-manipulation disabled:opacity-50"
+                      >
+                        {activeItem?.status === 'generating' ? (
+                          <>
+                            <RefreshCw size={14} className="animate-spin text-amber-400" />
+                            <span>Feeding Directly to Gemini...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles size={14} className="text-amber-400" />
+                            <span>Re-imagine Active Image #{activeQueueIndex + 1} Directly</span>
+                          </>
+                        )}
+                      </button>
+
+                      {activeItem?.imageType === 'product' && (
+                        <button
+                          type="button"
+                          onClick={handleSynthesizePrompt}
+                          disabled={isSynthesizingPrompt || isGeneratingImage}
+                          className="w-full py-2 px-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 touch-manipulation"
+                        >
+                          {isSynthesizingPrompt ? (
+                            <>
+                              <RefreshCw size={12} className="animate-spin" />
+                              <span>Analyzing Prompt...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Wand2 size={12} />
+                              <span>Synthesize Prompt for Web Gemini Chat</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Manual Drop-In Upload Box (Use Gemini web generated image) */}
-                  <div className="pt-3 border-t border-neutral-200 shrink-0 pb-2 sm:pb-0">
-                    <label className="flex items-center justify-between p-3 bg-white border border-neutral-200 hover:border-neutral-300 rounded-xl cursor-pointer transition-colors group touch-manipulation min-h-[50px]">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-neutral-100 group-hover:bg-neutral-200 flex items-center justify-center text-neutral-600 transition-colors shrink-0">
-                          <UploadCloud size={16} />
+                  {/* Right Column: AI Output & Live Preview (7 cols) */}
+                  <div className="lg:col-span-7 bg-neutral-50 rounded-2xl p-4 sm:p-5 border border-neutral-200 flex flex-col justify-between space-y-4">
+                    <div className="space-y-3 flex-1">
+                      {/* Error Banner */}
+                      {studioError && (
+                        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-start gap-2">
+                          <AlertCircle size={15} className="shrink-0 mt-0.5 text-red-500" />
+                          <div className="flex-1">
+                            <span className="font-semibold block">Notice:</span>
+                            <span className="text-[11px] leading-relaxed block mt-0.5">{studioError}</span>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <span className="text-xs font-bold text-neutral-800 block truncate">
-                            {isUploadingManual ? 'Uploading to Store...' : 'Upload Image from Gemini Chat'}
-                          </span>
-                          <span className="text-[10px] text-neutral-500 block truncate">
-                            Generated in your gemini.google.com chat? Click to upload here
-                          </span>
+                      )}
+
+                      {/* Google Cloud Billing Guidance when required */}
+                      {studioRequiresBilling && (
+                        <div className="p-3.5 bg-amber-50/90 border border-amber-200 rounded-xl space-y-2">
+                          <div className="flex items-center gap-2 text-amber-800">
+                            <Sparkles size={14} className="text-amber-600 shrink-0" />
+                            <span className="text-xs font-bold">Google Cloud Project Activation Needed for Direct API</span>
+                          </div>
+                          <p className="text-[11px] text-amber-700 leading-relaxed">
+                            Google Generative AI image generation requires a Google Cloud project with billing/quota enabled on your API key.
+                          </p>
+                          <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                            <a
+                              href="https://console.cloud.google.com/billing"
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-neutral-900 hover:bg-black text-white text-[11px] font-semibold rounded-lg shadow-sm"
+                            >
+                              <span>Open Google Cloud Billing</span>
+                              <ExternalLink size={10} />
+                            </a>
+                            <span className="text-[11px] text-amber-700">
+                              Or upload images generated in your free gemini.google.com chat below!
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Side-by-side: Source vs Result */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* Source Image */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+                              Source Image #{activeQueueIndex + 1}
+                            </span>
+                            <span className="text-[9px] text-neutral-400 font-medium">Direct Input</span>
+                          </div>
+                          <div className="aspect-square w-full rounded-xl overflow-hidden border border-neutral-300 bg-white relative flex items-center justify-center">
+                            <img
+                              src={activeItem?.sourceUrl || studioSourceImage}
+                              alt="Source preview"
+                              className="w-full h-full object-contain p-1"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src = '/Logo.jpg';
+                              }}
+                            />
+                            {activeItem?.imageType === 'size_guide' && (
+                              <div className="absolute top-2 left-2 bg-neutral-900/80 backdrop-blur-sm text-white px-2 py-0.5 rounded text-[9px] font-bold flex items-center gap-1">
+                                <Ruler size={10} className="text-amber-400" />
+                                <span>Supplier Sizing</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Gemini Re-imagined Image */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-900">
+                              Gemini Multimodal Result
+                            </span>
+                            {activeItem?.status === 'completed' && (
+                              <span className="text-[9px] font-bold text-emerald-600 flex items-center gap-0.5">
+                                <CheckCircle2 size={10} />
+                                <span>Ready</span>
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="aspect-square w-full rounded-xl overflow-hidden border-2 border-neutral-900 bg-neutral-900 relative flex items-center justify-center">
+                            {activeItem?.generatedUrl ? (
+                              <>
+                                <img
+                                  src={activeItem.generatedUrl}
+                                  alt="Gemini Re-imagined"
+                                  className="w-full h-full object-cover"
+                                />
+                                <span className="absolute top-2 right-2 px-2 py-0.5 text-[9px] font-bold bg-neutral-950/80 backdrop-blur-sm text-emerald-400 border border-emerald-400/30 rounded">
+                                  Gemini Editorial
+                                </span>
+                              </>
+                            ) : activeItem?.status === 'generating' ? (
+                              <div className="p-4 text-center space-y-2 text-white">
+                                <RefreshCw size={24} className="animate-spin text-amber-400 mx-auto" />
+                                <span className="text-xs font-bold block">Transforming Directly...</span>
+                                <span className="text-[10px] text-neutral-300 block max-w-xs leading-relaxed">
+                                  {activeItem?.imageType === 'size_guide'
+                                    ? 'Re-creating sizing chart with Meow Bark brand logo...'
+                                    : `Applying ${studioBreed} model and 85mm British studio lighting...`}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="p-4 text-center space-y-2 text-neutral-400">
+                                <Sparkles size={24} className="text-neutral-500 mx-auto" />
+                                <span className="text-xs font-bold text-neutral-200 block">
+                                  No Generated Image Yet
+                                </span>
+                                <span className="text-[10px] text-neutral-400 block max-w-xs leading-tight">
+                                  Tap &quot;Re-imagine Active Image&quot; or &quot;Re-imagine All&quot; to generate directly with Gemini.
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleManualUpload}
-                        disabled={isUploadingManual}
-                        className="hidden"
-                      />
-                      <span className="text-[11px] font-semibold text-neutral-900 px-3 py-1.5 bg-neutral-100 group-hover:bg-neutral-200 rounded-lg transition-colors shrink-0">
-                        Browse
-                      </span>
-                    </label>
+
+                      {/* Post-Generation Actions for Active Item */}
+                      {activeItem?.generatedUrl && (
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => handleReplaceImageInGallery(activeItem.sourceUrl, activeItem.generatedUrl!)}
+                            className="py-2 px-3 bg-neutral-950 hover:bg-black text-white text-xs font-bold rounded-lg transition-all shadow flex items-center justify-center gap-1.5 touch-manipulation"
+                          >
+                            <CheckCircle2 size={13} className="text-emerald-400" />
+                            <span>Replace in Gallery</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPrimaryImageUrl(activeItem.generatedUrl!);
+                              handleReplaceImageInGallery(activeItem.sourceUrl, activeItem.generatedUrl!);
+                            }}
+                            className="py-2 px-3 bg-white hover:bg-neutral-100 border border-neutral-300 text-neutral-800 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1 touch-manipulation"
+                          >
+                            <span>Set as Primary</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedImageUrls((prev) => [activeItem.generatedUrl!, ...prev]);
+                              if (stagedProduct) {
+                                setStagedProduct({
+                                  ...stagedProduct,
+                                  images: [activeItem.generatedUrl!, ...stagedProduct.images]
+                                });
+                              }
+                            }}
+                            className="py-2 px-3 bg-white hover:bg-neutral-100 border border-neutral-300 text-neutral-800 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1 touch-manipulation"
+                          >
+                            <span>Add as New Photo</span>
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Synthesized Prompt Card if available */}
+                      {synthesizedPrompt && (
+                        <div className="bg-white p-3 rounded-xl border border-neutral-200 space-y-2 shadow-sm">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-700 flex items-center gap-1.5 truncate">
+                              <Sparkles size={12} className="text-amber-500 shrink-0" />
+                              <span className="truncate">Synthesized Prompt for Gemini Chat</span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={handleCopyPrompt}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-lg transition-colors touch-manipulation shrink-0"
+                            >
+                              {hasCopiedPrompt ? (
+                                <>
+                                  <Check size={12} className="text-emerald-600" />
+                                  <span className="text-emerald-700">Copied!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy size={12} />
+                                  <span>Copy</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                          {synthesizedAnalysis && (
+                            <p className="text-[10px] text-neutral-500 italic bg-neutral-50 p-2 rounded-lg border border-neutral-100">
+                              &quot;{synthesizedAnalysis}&quot;
+                            </p>
+                          )}
+                          <div className="p-2 bg-neutral-900 text-neutral-100 rounded-lg text-[11px] font-mono leading-relaxed max-h-24 overflow-y-auto select-all">
+                            {synthesizedPrompt}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Manual Drop-In Upload Box */}
+                    <div className="pt-2 border-t border-neutral-200 shrink-0">
+                      <label className="flex items-center justify-between p-2.5 bg-white border border-neutral-200 hover:border-neutral-300 rounded-xl cursor-pointer transition-colors group touch-manipulation">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-7 h-7 rounded-lg bg-neutral-100 group-hover:bg-neutral-200 flex items-center justify-center text-neutral-600 transition-colors shrink-0">
+                            <UploadCloud size={15} />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-xs font-bold text-neutral-800 block truncate">
+                              {isUploadingManual ? 'Uploading to Store...' : 'Upload Image from Gemini Chat'}
+                            </span>
+                            <span className="text-[10px] text-neutral-500 block truncate">
+                              Generated via gemini.google.com? Click to upload and attach directly
+                            </span>
+                          </div>
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleManualUpload}
+                          disabled={isUploadingManual}
+                          className="hidden"
+                        />
+                        <span className="text-[11px] font-semibold text-neutral-900 px-2.5 py-1 bg-neutral-100 group-hover:bg-neutral-200 rounded-lg transition-colors shrink-0">
+                          Browse
+                        </span>
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
       </div>
     </AdminLayout>

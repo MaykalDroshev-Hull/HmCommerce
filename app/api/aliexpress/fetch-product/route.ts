@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
         success: false,
         error: error.message || 'Failed to fetch product from AliExpress'
       },
-      { status: 500 }
+      { status: 400 }
     );
   }
 }

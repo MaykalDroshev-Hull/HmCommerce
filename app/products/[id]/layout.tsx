@@ -11,7 +11,21 @@ async function fetchProduct(id: string) {
 
     const { data: product, error } = await supabase
       .from('products')
-      .select('productid, name, description')
+      .select(`
+        productid,
+        name,
+        description,
+        sku,
+        product_variants (
+          productvariantid,
+          sku,
+          price,
+          compare_at_price,
+          quantity,
+          trackquantity,
+          isvisible
+        )
+      `)
       .eq('productid', id)
       .neq('isdeleted', true)
       .eq('isdisabled', false)
@@ -27,16 +41,58 @@ async function fetchProduct(id: string) {
       .eq('productid', id)
       .is('productvariantid', null)
       .order('sortorder', { ascending: true })
-      .limit(1);
+      .limit(6);
 
     const nameParts = product.name?.split(' ') || [];
-    const brand = nameParts[0] || '';
+    const brand = nameParts[0] || 'MB-Paws';
+
+    const variants = (product.product_variants || []).filter((v: any) => v.isvisible !== false);
+    const validPrices = variants
+      .map((v: any) => Number(v.price))
+      .filter((p: number) => !isNaN(p) && p > 0);
+    const minPrice = validPrices.length > 0 ? Math.min(...validPrices) : 19.99;
+    const hasStock = variants.length === 0 || variants.some((v: any) => v.trackquantity === false || Number(v.quantity) > 0);
+
+    const canonical = `${SITE_URL}/products/${id}`;
+    const rawImages = (images ?? []).map((img) => img.imageurl).filter(Boolean);
+    const firstImage = rawImages[0] || OG_IMAGE;
+
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: product.name,
+      description: product.description || `${product.name} | Premium pet care essentials from MB-Paws.`,
+      brand: {
+        '@type': 'Brand',
+        name: brand,
+      },
+      image: rawImages.length > 0 ? rawImages : [OG_IMAGE],
+      sku: product.sku || id,
+      url: canonical,
+      offers: {
+        '@type': 'Offer',
+        priceCurrency: 'GBP',
+        price: minPrice.toFixed(2),
+        availability: hasStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        itemCondition: 'https://schema.org/NewCondition',
+        url: canonical,
+        seller: {
+          '@type': 'Organization',
+          name: 'MB-Paws',
+        },
+      },
+    };
 
     return {
       name: product.name,
       description: product.description,
       brand,
-      images: (images ?? []).map((img) => img.imageurl).filter(Boolean),
+      sku: product.sku || id,
+      minPrice,
+      hasStock,
+      images: rawImages,
+      ogImage: firstImage,
+      jsonLd,
     };
   } catch {
     return null;
@@ -60,39 +116,26 @@ export async function generateMetadata(
   const brand: string = product.brand || 'MB-Paws';
   const description: string =
     product.description ||
-    `${brand ? `${brand} – ` : ''}${name} | Premium Lifestyle from MB-Paws`;
+    `${brand ? `${brand} – ` : ''}${name} | Premium Pet Care Essentials from MB-Paws`;
 
-  const rawImages: unknown = product.images;
-  const firstImage: string | null =
-    Array.isArray(rawImages) && rawImages.length > 0
-      ? (rawImages[0] as string)
-      : null;
-  const ogImage = firstImage || OG_IMAGE;
-
-  const title = brand ? `${brand} ${name}` : name;
+  const ogImage = product.ogImage;
+  const title = brand && !name.toLowerCase().startsWith(brand.toLowerCase()) ? `${brand} ${name}` : name;
   const canonical = `${SITE_URL}/products/${id}`;
-
-  const productJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name,
-    description,
-    brand: brand ? { '@type': 'Brand', name: brand } : undefined,
-    image: ogImage,
-    url: canonical,
-    offers: {
-      '@type': 'Offer',
-      priceCurrency: 'GBP',
-      availability: 'https://schema.org/InStock',
-      url: canonical,
-      seller: { '@type': 'Organization', name: 'MB-Paws' },
-    },
-  };
 
   return {
     title,
     description,
     alternates: { canonical },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
     openGraph: {
       type: 'website',
       locale: 'en_GB',
@@ -102,19 +145,34 @@ export async function generateMetadata(
       siteName: 'MB-Paws',
       images: [{ url: ogImage, alt: title }],
     },
-
     twitter: {
       card: 'summary_large_image',
       title,
       description,
       images: [ogImage],
     },
-    other: {
-      'script:ld+json': JSON.stringify(productJsonLd),
-    },
   };
 }
 
-export default function ProductLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+export default async function ProductLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const product = await fetchProduct(id);
+
+  return (
+    <>
+      {product?.jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(product.jsonLd) }}
+        />
+      )}
+      {children}
+    </>
+  );
 }
