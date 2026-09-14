@@ -16,7 +16,7 @@ Allow: /for-her/
 Allow: /for-him/
 Allow: /accessories/
 Allow: /size-guide/
+Allow: /returns
 Allow: /about/
 
 Sitemap: https://mb-paws.co.uk/sitemap.xml
-

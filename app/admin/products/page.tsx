@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Edit2, Trash2, X, Image as ImageIcon, ChevronDown, Upload, Eye, EyeOff, PackageX, PackageCheck } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, ChevronDown, Upload, Eye, EyeOff, PackageX, PackageCheck, FileSpreadsheet } from 'lucide-react';
 import { ProductType, Property } from '@/lib/types/product-types';
 import AdminLayout from '../components/AdminLayout';
 import AdminModal from '../components/AdminModal';
@@ -158,6 +158,31 @@ export default function ProductsPage() {
   const [showBulkDeleteCompleteAnimation, setShowBulkDeleteCompleteAnimation] = useState(false);
   const [selectedRelatedProductIds, setSelectedRelatedProductIds] = useState<string[]>([]);
   const [relatedSearchQuery, setRelatedSearchQuery] = useState('');
+  const [isExportingGoogle, setIsExportingGoogle] = useState(false);
+
+  const handleExportGoogleMerchant = async () => {
+    try {
+      setIsExportingGoogle(true);
+      const res = await fetch('/api/admin/export/google-merchant');
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || 'Export failed');
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Google_Merchant_Center_Feed_MB_Paws_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      alert(err.message || 'Failed to export Google Merchant Center feed');
+    } finally {
+      setIsExportingGoogle(false);
+    }
+  };
 
   // Filter state
   const [selectedProductTypeFilter, setSelectedProductTypeFilter] = useState<string>('all');
@@ -1315,6 +1340,18 @@ export default function ProductsPage() {
                 disabled: selectedCount === 0,
                 title: selectedCount > 0 ? undefined : ('Select items first'),
               })}
+              <button
+                type="button"
+                onClick={handleExportGoogleMerchant}
+                disabled={isExportingGoogle}
+                title="Export all products to Google Merchant Center Excel feed (.xlsx)"
+                className="inline-flex shrink-0 items-center gap-2 rounded-md border border-emerald-600 bg-emerald-50 px-2.5 py-1.5 text-xs sm:text-sm font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors shadow-sm disabled:opacity-50 touch-manipulation cursor-pointer"
+              >
+                <FileSpreadsheet className="h-4 w-4 shrink-0 text-emerald-600" />
+                <span className="whitespace-nowrap">
+                  {isExportingGoogle ? 'Exporting...' : 'Export Google Feed (.xlsx)'}
+                </span>
+              </button>
               {headerActionButton({
                 label: t.addProduct || 'Add item',
                 variant: 'solid-violet',

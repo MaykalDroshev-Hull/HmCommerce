@@ -29,7 +29,8 @@ import {
   Zap,
   Home,
   Trees,
-  Ruler
+  Ruler,
+  FileSpreadsheet
 } from 'lucide-react';
 import { AliExpressProductDetails, AliExpressVariant } from '@/lib/aliexpress/types';
 import { extractCleanSizeCode } from '@/lib/aliexpress/client';
@@ -114,6 +115,31 @@ export default function DropshippingPage() {
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [fulfillingOrderId, setFulfillingOrderId] = useState<string | null>(null);
   const [orderActionMessage, setOrderActionMessage] = useState<string | null>(null);
+  const [isExportingGoogle, setIsExportingGoogle] = useState(false);
+
+  const handleExportGoogleMerchant = async () => {
+    try {
+      setIsExportingGoogle(true);
+      const res = await fetch('/api/admin/export/google-merchant');
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || 'Export failed');
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Google_Merchant_Center_Feed_MB_Paws_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      alert(err.message || 'Failed to export Google Merchant Center feed');
+    } finally {
+      setIsExportingGoogle(false);
+    }
+  };
 
   // Load product types on mount
   useEffect(() => {
@@ -941,37 +967,50 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
             </h1>
           </div>
 
-          {/* Tab navigation */}
-          <div className="flex items-center bg-neutral-100 p-1 rounded-lg w-full sm:w-auto overflow-x-auto no-scrollbar shrink-0">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Tab navigation */}
+            <div className="flex items-center bg-neutral-100 p-1 rounded-lg w-full sm:w-auto overflow-x-auto no-scrollbar shrink-0">
+              <button
+                onClick={() => setActiveTab('import')}
+                className={`flex-1 sm:flex-initial px-3.5 py-2 sm:py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap text-center touch-manipulation ${
+                  activeTab === 'import'
+                    ? 'bg-white text-neutral-900 shadow-sm'
+                    : 'text-neutral-600 hover:text-neutral-900'
+                }`}
+              >
+                Product Importer
+              </button>
+              <button
+                onClick={() => setActiveTab('orders')}
+                className={`flex-1 sm:flex-initial px-3.5 py-2 sm:py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap text-center touch-manipulation ${
+                  activeTab === 'orders'
+                    ? 'bg-white text-neutral-900 shadow-sm'
+                    : 'text-neutral-600 hover:text-neutral-900'
+                }`}
+              >
+                Order Fulfillment
+              </button>
+              <button
+                onClick={() => setActiveTab('settings')}
+                className={`flex-1 sm:flex-initial px-3.5 py-2 sm:py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap text-center touch-manipulation ${
+                  activeTab === 'settings'
+                    ? 'bg-white text-neutral-900 shadow-sm'
+                    : 'text-neutral-600 hover:text-neutral-900'
+                }`}
+              >
+                Settings & API
+              </button>
+            </div>
+
+            {/* Export Google Merchant Sheet */}
             <button
-              onClick={() => setActiveTab('import')}
-              className={`flex-1 sm:flex-initial px-3.5 py-2 sm:py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap text-center touch-manipulation ${
-                activeTab === 'import'
-                  ? 'bg-white text-neutral-900 shadow-sm'
-                  : 'text-neutral-600 hover:text-neutral-900'
-              }`}
+              onClick={handleExportGoogleMerchant}
+              disabled={isExportingGoogle}
+              title="Download products formatted for Google Merchant Center (.xlsx)"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-300 shadow-sm transition-colors cursor-pointer disabled:opacity-50"
             >
-              Product Importer
-            </button>
-            <button
-              onClick={() => setActiveTab('orders')}
-              className={`flex-1 sm:flex-initial px-3.5 py-2 sm:py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap text-center touch-manipulation ${
-                activeTab === 'orders'
-                  ? 'bg-white text-neutral-900 shadow-sm'
-                  : 'text-neutral-600 hover:text-neutral-900'
-              }`}
-            >
-              Order Fulfillment
-            </button>
-            <button
-              onClick={() => setActiveTab('settings')}
-              className={`flex-1 sm:flex-initial px-3.5 py-2 sm:py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap text-center touch-manipulation ${
-                activeTab === 'settings'
-                  ? 'bg-white text-neutral-900 shadow-sm'
-                  : 'text-neutral-600 hover:text-neutral-900'
-              }`}
-            >
-              Settings & API
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+              <span>{isExportingGoogle ? 'Exporting...' : 'Export Google Feed (.xlsx)'}</span>
             </button>
           </div>
         </div>

@@ -293,6 +293,11 @@ export default function Footer() {
                       FAQ
                     </Link>
                   </li>
+                  <li>
+                    <Link href="/returns" className="hover:text-white transition-colors">
+                      Returns &amp; Exchanges
+                    </Link>
+                  </li>
                 </ul>
               </div>
 
@@ -348,6 +353,10 @@ export default function Footer() {
                 <span>•</span>
                 <Link href="/terms-of-service" className="hover:text-white transition-colors">
                   Terms of Service
+                </Link>
+                <span>•</span>
+                <Link href="/returns" className="hover:text-white transition-colors">
+                  Returns &amp; Refunds
                 </Link>
               </div>
             </div>
