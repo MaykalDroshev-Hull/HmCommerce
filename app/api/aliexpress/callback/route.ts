@@ -20,10 +20,11 @@ export async function GET(request: NextRequest) {
 
   try {
     const tokenResult = await exchangeCodeForToken(code);
-    if (tokenResult) {
+    if (tokenResult && !('error' in tokenResult)) {
       return NextResponse.redirect(`${origin}/admin/dropshipping?status=connected`);
     } else {
-      return NextResponse.redirect(`${origin}/admin/dropshipping?error=token_exchange_failed`);
+      const errorMsg = (tokenResult as any)?.error || 'token_exchange_failed';
+      return NextResponse.redirect(`${origin}/admin/dropshipping?error=${encodeURIComponent(errorMsg)}`);
     }
   } catch (err: any) {
     logger.error('Error during AliExpress OAuth callback:', err);

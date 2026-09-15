@@ -4,7 +4,7 @@ import { logger } from '@/lib/logger';
 
 export const ALIEXPRESS_CONFIG = {
   appKey: process.env.ALIEXPRESS_APP_KEY || '546324',
-  appSecret: process.env.ALIEXPRESS_APP_SECRET || '0wUdqT6XZKduDfjqxixtIsqToOSvyXz',
+  appSecret: process.env.ALIEXPRESS_APP_SECRET || '0wUdsjT6XZXduDftjexIc9Jq1oOSvyXc',
   redirectUri: process.env.ALIEXPRESS_REDIRECT_URI || 'https://mb-paws.co.uk/api/aliexpress/callback',
   authUrl: 'https://api-sg.aliexpress.com/oauth/authorize',
   tokenUrl: 'https://api-sg.aliexpress.com/rest',
@@ -115,11 +115,12 @@ export async function exchangeCodeForToken(code: string, customRedirectUri?: str
       };
     }
 
+    const errMsg = rawData.message || rawData.msg || rawData.sub_msg || rawData.code || 'token_exchange_failed';
     logger.error('Failed to exchange AliExpress code for token:', rawData);
-    return null;
-  } catch (error) {
+    return { error: String(errMsg) } as any;
+  } catch (error: any) {
     logger.error('Error exchanging AliExpress token:', error);
-    return null;
+    return { error: error.message || 'token_exchange_exception' } as any;
   }
 }
 
