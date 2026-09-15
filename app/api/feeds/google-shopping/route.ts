@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
+import { getVariantEffectivePrice } from '@/lib/product-promo';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://mb-paws.co.uk';
 
@@ -24,12 +25,14 @@ export async function GET() {
         name,
         description,
         sku,
+        promodiscountpercent,
         updatedat,
         product_variants (
           productvariantid,
           sku,
           price,
           compare_at_price,
+          promotional_price,
           quantity,
           trackquantity,
           isvisible
@@ -68,13 +71,16 @@ export async function GET() {
       // If variants exist, output each variant item or the primary product item
       if (variants.length > 0) {
         variants.forEach((variant: any) => {
-          const priceNum = Number(variant.price);
-          if (isNaN(priceNum) || priceNum <= 0) return;
+          const pricing = getVariantEffectivePrice(variant, product);
+          if (pricing.sale <= 0) return;
 
           const inStock = variant.trackquantity === false || Number(variant.quantity) > 0;
           const availability = inStock ? 'in_stock' : 'out_of_stock';
           const link = `${SITE_URL}/products/${product.productid}`;
           const itemId = variant.sku || variant.productvariantid || product.productid;
+          const salePriceTag = pricing.promoActive && pricing.sale < pricing.original
+            ? `\n      <g:sale_price>${pricing.sale.toFixed(2)} GBP</g:sale_price>`
+            : '';
 
           itemsXml.push(`
     <item>
@@ -87,7 +93,7 @@ export async function GET() {
       ${additionalImages.map((img: string) => `<g:additional_image_link>${escapeXml(img)}</g:additional_image_link>`).join('\n      ')}
       <g:condition>new</g:condition>
       <g:availability>${availability}</g:availability>
-      <g:price>${priceNum.toFixed(2)} GBP</g:price>
+      <g:price>${pricing.original.toFixed(2)} GBP</g:price>${salePriceTag}
       <g:brand>${escapeXml(brand)}</g:brand>
       <g:identifier_exists>no</g:identifier_exists>
       <g:shipping>

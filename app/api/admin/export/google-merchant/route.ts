@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import * as xlsx from 'xlsx';
 import templateJson from '@/lib/google-merchant-template.json';
+import { getVariantEffectivePrice } from '@/lib/product-promo';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://mb-paws.co.uk';
 
@@ -23,6 +24,7 @@ export async function GET() {
         description,
         sku,
         isdisabled,
+        promodiscountpercent,
         updatedat,
         product_variants (
           productvariantid,
@@ -104,11 +106,12 @@ export async function GET() {
 
       if (variants.length > 0) {
         variants.forEach((v: any) => {
-          const priceNum = Number(v.price) || 19.99;
-          const promoNum = v.promotional_price ? Number(v.promotional_price) : null;
+          const pricing = getVariantEffectivePrice(v, product);
           const inStock = v.trackquantity === false || Number(v.quantity) > 0;
           const availability = inStock ? 'in_stock' : 'out_of_stock';
           const variantProps = variantPropsMap[v.productvariantid] || {};
+          const originalPriceStr = `${pricing.original.toFixed(2)} GBP`;
+          const salePriceStr = pricing.promoActive && pricing.sale < pricing.original ? `${pricing.sale.toFixed(2)} GBP` : '';
 
           // 40 columns matching templateJson.headers
           const row = [
@@ -121,8 +124,8 @@ export async function GET() {
             productLink,                                                // link
             '',                                                         // mobile_link
             mainImage,                                                  // image_link
-            `${priceNum.toFixed(2)} GBP`,                               // price
-            promoNum ? `${promoNum.toFixed(2)} GBP` : '',               // sale_price
+            originalPriceStr,                                           // price
+            salePriceStr,                                               // sale_price
             '',                                                         // sale_price_effective_date
             'no',                                                       // identifier_exists
             '',                                                         // gtin

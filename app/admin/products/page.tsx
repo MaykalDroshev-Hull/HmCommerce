@@ -15,6 +15,7 @@ import CompleteAnimation from '@/components/CompleteAnimation';
 import { adminAuthHeaders } from '@/lib/admin-auth-headers';
 import { MAX_PRODUCT_IMAGES } from '@/lib/product-images';
 import AiImageStudioModal from '@/components/AiImageStudioModal';
+import { getProductCardPricing, getVariantEffectivePrice } from '@/lib/product-promo';
 
 // Select All Checkbox Component for Variant Characteristics
 function VariantSelectAllCheckbox({
@@ -869,20 +870,11 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
       if (result.success && result.product) {
         const fullProduct = result.product;
         
-        const promoPercent =
-          fullProduct.promodiscountpercent != null && Number(fullProduct.promodiscountpercent) > 0
-            ? Number(fullProduct.promodiscountpercent)
-            : null;
-
         const allProductVariants = fullProduct.Variants || fullProduct.variants || [];
-        const firstVariantWithPrice = allProductVariants.find((v: any) => Number(v.price) > 0);
-        const originalPriceVal = firstVariantWithPrice ? Number(firstVariantWithPrice.price) : (fullProduct.price ? Number(fullProduct.price) : 0);
-        let sellPriceVal = '';
-        if (promoPercent != null && originalPriceVal > 0) {
-          sellPriceVal = (Math.round(originalPriceVal * (1 - promoPercent / 100) * 100) / 100).toFixed(2);
-        } else if (firstVariantWithPrice?.promotional_price != null && Number(firstVariantWithPrice.promotional_price) > 0) {
-          sellPriceVal = Number(firstVariantWithPrice.promotional_price).toFixed(2);
-        }
+        const firstVariantWithPrice = allProductVariants.find((v: any) => Number(v.price) > 0) || allProductVariants[0];
+        const editPricing = firstVariantWithPrice
+          ? getVariantEffectivePrice(firstVariantWithPrice, fullProduct)
+          : getProductCardPricing(fullProduct);
 
         setFormData({
           name: fullProduct.name,
@@ -893,10 +885,12 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
           isfeatured: fullProduct.isfeatured || false,
           isdisabled: fullProduct.isdisabled === true,
           awaitingrestock: fullProduct.awaitingrestock === true,
-          hasPromo: promoPercent != null || (firstVariantWithPrice?.promotional_price != null && Number(firstVariantWithPrice.promotional_price) > 0),
-          promodiscountpercent: promoPercent != null ? String(promoPercent) : '',
-          promosellprice: sellPriceVal,
-          promooriginalprice: originalPriceVal > 0 ? originalPriceVal.toFixed(2) : '',
+          hasPromo: editPricing.promoActive,
+          promodiscountpercent: editPricing.promoActive && editPricing.promoPercent > 0 ? String(editPricing.promoPercent) : '',
+          promosellprice: editPricing.promoActive && editPricing.sale > 0 ? editPricing.sale.toFixed(2) : '',
+          promooriginalprice: editPricing.original > 0
+            ? editPricing.original.toFixed(2)
+            : (firstVariantWithPrice?.price ? Number(firstVariantWithPrice.price).toFixed(2) : ''),
           propertyvalues: {}
         });
 
@@ -1677,32 +1671,7 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                     </TableHeader>
                     <TableBody>
                       {currentProducts.map((product) => {
-                        const variantsList = product.variants || [];
-                        const hasVariantPromos = variantsList.some(
-                          (v: any) => v.promotional_price != null && Number(v.promotional_price) > 0 && Number(v.promotional_price) < Number(v.price)
-                        );
-                        const hasProductPromo = product.promodiscountpercent != null && Number(product.promodiscountpercent) > 0;
-                        const isPromoActive = hasProductPromo || hasVariantPromos;
-
-                        let originalPrice = Number(product.price) || 0;
-                        if (originalPrice === 0 && variantsList.length > 0) {
-                          originalPrice = Number(variantsList[0]?.price) || 0;
-                        }
-
-                        let salePrice = originalPrice;
-                        let discountPercent = 0;
-
-                        if (hasProductPromo) {
-                          discountPercent = Number(product.promodiscountpercent);
-                          salePrice = Math.round(originalPrice * (1 - discountPercent / 100) * 100) / 100;
-                        } else if (hasVariantPromos) {
-                          const promoVar = variantsList.find((v: any) => v.promotional_price != null && Number(v.promotional_price) > 0 && Number(v.promotional_price) < Number(v.price));
-                          if (promoVar) {
-                            originalPrice = Number(promoVar.price);
-                            salePrice = Number(promoVar.promotional_price);
-                            discountPercent = Math.round((1 - salePrice / originalPrice) * 100);
-                          }
-                        }
+                        const pricing = getProductCardPricing(product);
 
                         return (
                           <TableRow key={product.productid}>
@@ -1727,23 +1696,23 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                             </TableCell>
                             <TableCell align="center" columnId="shop" defaultWidth={180}>
                               <div className="flex flex-col items-center gap-1.5">
-                                {isPromoActive && originalPrice > 0 ? (
+                                {pricing.promoActive && pricing.original > pricing.sale ? (
                                   <div className="flex flex-col items-center leading-tight">
                                     <div className="flex items-baseline gap-1.5">
                                       <span className="text-sm font-bold text-rose-700">
-                                        £{salePrice.toFixed(2)}
+                                        £{pricing.sale.toFixed(2)}
                                       </span>
                                       <span className="text-xs text-gray-400 line-through">
-                                        £{originalPrice.toFixed(2)}
+                                        £{pricing.original.toFixed(2)}
                                       </span>
                                     </div>
                                     <span className="inline-flex items-center px-1.5 py-0.5 mt-0.5 rounded text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                                      SALE −{discountPercent}%
+                                      SALE −{pricing.promoPercent}%
                                     </span>
                                   </div>
-                                ) : originalPrice > 0 ? (
+                                ) : pricing.sale > 0 ? (
                                   <span className="text-xs font-semibold text-gray-800">
-                                    £{originalPrice.toFixed(2)}
+                                    £{pricing.sale.toFixed(2)}
                                   </span>
                                 ) : null}
 
@@ -1823,32 +1792,7 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
               </div>
               <div className="space-y-3">
               {currentProducts.map((product) => {
-                const variantsList = product.variants || [];
-                const hasVariantPromos = variantsList.some(
-                  (v: any) => v.promotional_price != null && Number(v.promotional_price) > 0 && Number(v.promotional_price) < Number(v.price)
-                );
-                const hasProductPromo = product.promodiscountpercent != null && Number(product.promodiscountpercent) > 0;
-                const isPromoActive = hasProductPromo || hasVariantPromos;
-
-                let originalPrice = Number(product.price) || 0;
-                if (originalPrice === 0 && variantsList.length > 0) {
-                  originalPrice = Number(variantsList[0]?.price) || 0;
-                }
-
-                let salePrice = originalPrice;
-                let discountPercent = 0;
-
-                if (hasProductPromo) {
-                  discountPercent = Number(product.promodiscountpercent);
-                  salePrice = Math.round(originalPrice * (1 - discountPercent / 100) * 100) / 100;
-                } else if (hasVariantPromos) {
-                  const promoVar = variantsList.find((v: any) => v.promotional_price != null && Number(v.promotional_price) > 0 && Number(v.promotional_price) < Number(v.price));
-                  if (promoVar) {
-                    originalPrice = Number(promoVar.price);
-                    salePrice = Number(promoVar.promotional_price);
-                    discountPercent = Math.round((1 - salePrice / originalPrice) * 100);
-                  }
-                }
+                const pricing = getProductCardPricing(product);
 
                 return (
                 <div key={product.productid} className="bg-white p-3 sm:p-4 rounded-lg shadow border">
@@ -1868,17 +1812,17 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                         <p>
                           <span className="font-medium">{t.productType}:</span> {productTypes.find(pt => pt.producttypeid === product.producttypeid)?.name || '-'}
                         </p>
-                        {isPromoActive && originalPrice > 0 ? (
+                        {pricing.promoActive && pricing.original > pricing.sale ? (
                           <div className="flex items-center gap-2 pt-0.5">
-                            <span className="font-bold text-rose-700">£{salePrice.toFixed(2)}</span>
-                            <span className="text-xs text-gray-400 line-through">£{originalPrice.toFixed(2)}</span>
+                            <span className="font-bold text-rose-700">£{pricing.sale.toFixed(2)}</span>
+                            <span className="text-xs text-gray-400 line-through">£{pricing.original.toFixed(2)}</span>
                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-rose-100 text-rose-800 border border-rose-200">
-                              SALE −{discountPercent}%
+                              SALE −{pricing.promoPercent}%
                             </span>
                           </div>
-                        ) : originalPrice > 0 ? (
+                        ) : pricing.sale > 0 ? (
                           <p>
-                            <span className="font-semibold text-gray-800">£{originalPrice.toFixed(2)}</span>
+                            <span className="font-semibold text-gray-800">£{pricing.sale.toFixed(2)}</span>
                           </p>
                         ) : null}
                         <p>
@@ -2353,14 +2297,18 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                         checked={formData.hasPromo}
                         onChange={(e) => {
                           const checked = e.target.checked;
-                          const originalVal =
-                            variants.find((v) => Number(v.price) > 0)?.price ||
-                            variants[0]?.price ||
-                            0;
-                          const percentVal = checked ? (formData.promodiscountpercent || '20') : '';
+                          const primaryVariant = variants.find((v) => Number(v.price) > 0) || variants[0];
+                          const variantEff = primaryVariant ? getVariantEffectivePrice(primaryVariant, null) : null;
+                          const originalVal = parseFloat(formData.promooriginalprice) ||
+                            (variantEff?.original && variantEff.original > 0
+                              ? variantEff.original
+                              : Number(primaryVariant?.price) || 0);
+                          const percentVal = checked ? (formData.promodiscountpercent || (variantEff?.promoPercent ? String(variantEff.promoPercent) : '20')) : '';
                           const percentNum = parseFloat(percentVal) || 20;
                           const sellVal = checked && originalVal > 0
-                            ? (Math.round(originalVal * (1 - percentNum / 100) * 100) / 100).toFixed(2)
+                            ? (variantEff?.promoActive && variantEff.sale > 0 && formData.promosellprice
+                                ? formData.promosellprice
+                                : (Math.round(originalVal * (1 - percentNum / 100) * 100) / 100).toFixed(2))
                             : '';
                           setFormData({
                             ...formData,
@@ -3438,7 +3386,7 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                                         {p.name}
                                       </p>
                                       <p className="text-[11px] text-gray-500">
-                                        £{Number(p.price || 0).toFixed(2)}
+                                        £{(getProductCardPricing(p).sale || Number(p.price || 0)).toFixed(2)}
                                       </p>
                                     </div>
                                   </label>
