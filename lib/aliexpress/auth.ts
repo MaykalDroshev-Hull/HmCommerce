@@ -2,10 +2,16 @@ import crypto from 'crypto';
 import { createServerClient } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
+const rawSecret = process.env.ALIEXPRESS_APP_SECRET?.trim();
+const verifiedSecret = '0wUdsjT6XZXduDftjexIc9Jq1oOSvyXc';
+const appSecret = (!rawSecret || rawSecret === '0wUdqT6XZKduDfjqxixtIsqToOSvyXz')
+  ? verifiedSecret
+  : rawSecret;
+
 export const ALIEXPRESS_CONFIG = {
-  appKey: process.env.ALIEXPRESS_APP_KEY || '546324',
-  appSecret: process.env.ALIEXPRESS_APP_SECRET || '0wUdsjT6XZXduDftjexIc9Jq1oOSvyXc',
-  redirectUri: process.env.ALIEXPRESS_REDIRECT_URI || 'https://mb-paws.co.uk/api/aliexpress/callback',
+  appKey: (process.env.ALIEXPRESS_APP_KEY || '546324').trim(),
+  appSecret: appSecret.trim(),
+  redirectUri: (process.env.ALIEXPRESS_REDIRECT_URI || 'https://mb-paws.co.uk/api/aliexpress/callback').trim(),
   authUrl: 'https://api-sg.aliexpress.com/oauth/authorize',
   tokenUrl: 'https://api-sg.aliexpress.com/rest',
   apiGateway: 'https://api-sg.aliexpress.com/rest'
