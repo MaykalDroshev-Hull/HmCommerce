@@ -90,8 +90,26 @@ export async function POST(
       );
     }
 
-    // Insert all properties at once
-    const insertData = propertyIds.map((pid: string) => ({
+    // Check existing assignments to avoid duplicate key conflicts
+    const { data: existingRecords } = await supabase
+      .from('product_type_properties')
+      .select('propertyid')
+      .eq('producttypeid', id)
+      .in('propertyid', propertyIds);
+
+    const existingPropIds = new Set((existingRecords || []).map((r: any) => r.propertyid));
+    const newPropertyIds = propertyIds.filter((pid: string) => !existingPropIds.has(pid));
+
+    if (newPropertyIds.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: 'Properties already assigned',
+        productTypeProperties: []
+      });
+    }
+
+    // Insert only newly assigned properties
+    const insertData = newPropertyIds.map((pid: string) => ({
       producttypeid: id,
       propertyid: pid
     }));

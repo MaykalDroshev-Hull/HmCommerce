@@ -552,13 +552,9 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
         pt.rfproducttypeid === formData.rfproducttypeid || !pt.rfproducttypeid
       );
       setFilteredProductTypes(filtered);
-      // Reset product type if current selection is not in filtered list
+      // Reset product type if current selection is not in filtered list (keep variants intact)
       if (formData.producttypeid && !filtered.find(pt => pt.producttypeid === formData.producttypeid)) {
-        setFormData({ ...formData, producttypeid: '' });
-        setProductTypeProperties([]);
-        setSelectedPropertyValues({});
-        setVariants([]);
-        setVariantDisplayValues({});
+        setFormData(prev => ({ ...prev, producttypeid: '' }));
       }
     } else {
       setFilteredProductTypes(productTypes);
@@ -1170,25 +1166,95 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
   const handleProductTypeChange = async (productTypeId: string) => {
     setFormData(prev => ({ ...prev, producttypeid: productTypeId }));
 
-    // Load properties for selected product type
-    if (productTypeId) {
-      const props = await loadPropertiesForProductType(productTypeId);
-      setProductTypeProperties(props);
-      const newPropertyValues: Record<string, string> = {};
-      props.forEach((prop: Property) => {
-        newPropertyValues[prop.propertyid] = formData.propertyvalues[prop.propertyid] || '';
+    if (!productTypeId) {
+      return;
+    }
+
+    try {
+      // 1. Fetch properties currently linked to this product type
+      let props = await loadPropertiesForProductType(productTypeId);
+
+      // 2. Identify all properties (characteristics) used by existing variants
+      const usedPropertyMap: Record<string, Set<string>> = {};
+      variants.forEach(variant => {
+        (variant.propertyvalues || []).forEach(pv => {
+          if (pv.propertyid) {
+            if (!usedPropertyMap[pv.propertyid]) {
+              usedPropertyMap[pv.propertyid] = new Set();
+            }
+            if (pv.value) {
+              usedPropertyMap[pv.propertyid].add(pv.value);
+            }
+          }
+        });
       });
-      setFormData(prev => ({ ...prev, propertyvalues: newPropertyValues }));
-      // Reset selected property values for variant generation
-      setSelectedPropertyValues({});
-      setVariants([]);
-      setNewPropertyValues({});
-    } else {
-      setProductTypeProperties([]);
-      setFormData(prev => ({ ...prev, propertyvalues: {} }));
-      setSelectedPropertyValues({});
-      setVariants([]);
-      setNewPropertyValues({});
+
+      const usedPropertyIds = Object.keys(usedPropertyMap);
+
+      // 3. Check if any characteristic link is missing from the newly selected product type
+      const existingPropIds = new Set(props.map(p => p.propertyid));
+      const missingPropertyIds = usedPropertyIds.filter(pid => !existingPropIds.has(pid));
+
+      // 4. "if characteristic link is missing just add it"
+      if (missingPropertyIds.length > 0) {
+        try {
+          const linkRes = await fetch(`/api/product-types/${productTypeId}/properties`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ propertyids: missingPropertyIds })
+          });
+          if (linkRes.ok) {
+            // Reload properties with values for the product type
+            props = await loadPropertiesForProductType(productTypeId);
+          }
+        } catch (linkError) {
+          console.error('Failed to link missing characteristic to product type:', linkError);
+        }
+
+        // Fallback: If any missing property wasn't returned from API, supplement from availableProperties
+        const currentPropIds = new Set(props.map(p => p.propertyid));
+        const missingFromAvailable = availableProperties.filter(
+          ap => usedPropertyIds.includes(ap.propertyid) && !currentPropIds.has(ap.propertyid)
+        );
+        if (missingFromAvailable.length > 0) {
+          props = [...props, ...missingFromAvailable];
+        }
+      }
+
+      setProductTypeProperties(props);
+
+      // 5. Update formData.propertyvalues without clearing existing values
+      setFormData(prev => {
+        const nextPropertyValues: Record<string, string> = { ...prev.propertyvalues };
+        props.forEach((prop: Property) => {
+          if (nextPropertyValues[prop.propertyid] === undefined) {
+            nextPropertyValues[prop.propertyid] = '';
+          }
+        });
+        return { ...prev, propertyvalues: nextPropertyValues };
+      });
+
+      // 6. Retain and merge selected property values from existing variants and previous selections
+      setSelectedPropertyValues(prevSelected => {
+        const next: Record<string, string[]> = { ...prevSelected };
+
+        // Populate and select values for all properties used by variants
+        Object.entries(usedPropertyMap).forEach(([propId, valSet]) => {
+          const fromVariants = Array.from(valSet);
+          if (!next[propId]) {
+            next[propId] = fromVariants;
+          } else {
+            const merged = new Set([...next[propId], ...fromVariants]);
+            next[propId] = Array.from(merged);
+          }
+        });
+
+        return next;
+      });
+
+      // NOTE: Variants and their prices, stock, images, and barcodes are completely PRESERVED!
+    } catch (err) {
+      console.error('Error changing product type:', err);
     }
   };
 
@@ -2055,15 +2121,14 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                       value={formData.rfproducttypeid}
                       onChange={(e) => {
                         const newRfProductTypeId = parseInt(e.target.value);
-                        setFormData({ 
-                          ...formData, 
+                        const stillBelongs = productTypes.some(
+                          pt => pt.producttypeid === formData.producttypeid && (pt.rfproducttypeid === newRfProductTypeId || !pt.rfproducttypeid)
+                        );
+                        setFormData(prev => ({ 
+                          ...prev, 
                           rfproducttypeid: newRfProductTypeId,
-                          producttypeid: '' // Reset product type when main category changes
-                        });
-                        setProductTypeProperties([]);
-                        setSelectedPropertyValues({});
-                        setVariants([]);
-        setVariantDisplayValues({});
+                          producttypeid: stillBelongs ? prev.producttypeid : ''
+                        }));
                       }}
                       className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
@@ -2703,8 +2768,8 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                                   <td className="px-3 py-2 text-xs">
                                     <div className="max-w-xs truncate font-medium text-gray-800">
                                       {variant.propertyvalues.map(pv => {
-                                        const prop = productTypeProperties.find(p => p.propertyid === pv.propertyid);
-                                        return `${prop?.name}: ${pv.value}`;
+                                        const prop = productTypeProperties.find(p => p.propertyid === pv.propertyid) || availableProperties.find(p => p.propertyid === pv.propertyid);
+                                        return `${prop?.name || 'Option'}: ${pv.value}`;
                                       }).join(', ')}
                                     </div>
                                   </td>
@@ -3019,8 +3084,8 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                                 <div className="min-w-0 flex-1">
                                   <p className="text-xs font-medium text-gray-700 mb-1">
                                     {variant.propertyvalues.map(pv => {
-                                      const prop = productTypeProperties.find(p => p.propertyid === pv.propertyid);
-                                      return `${prop?.name}: ${pv.value}`;
+                                      const prop = productTypeProperties.find(p => p.propertyid === pv.propertyid) || availableProperties.find(p => p.propertyid === pv.propertyid);
+                                      return `${prop?.name || 'Option'}: ${pv.value}`;
                                     }).join(', ')}
                                   </p>
                                 </div>
