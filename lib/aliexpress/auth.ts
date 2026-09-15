@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { createServerClient } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
@@ -5,8 +6,8 @@ export const ALIEXPRESS_CONFIG = {
   appKey: process.env.ALIEXPRESS_APP_KEY || '546324',
   appSecret: process.env.ALIEXPRESS_APP_SECRET || '0wUdqT6XZKduDfjqxixtIsqToOSvyXz',
   redirectUri: process.env.ALIEXPRESS_REDIRECT_URI || 'https://mb-paws.co.uk/api/aliexpress/callback',
-  authUrl: 'https://oauth.aliexpress.com/authorize',
-  tokenUrl: 'https://oauth.aliexpress.com/token',
+  authUrl: 'https://api-sg.aliexpress.com/oauth/authorize',
+  tokenUrl: 'https://api-sg.aliexpress.com/rest',
   apiGateway: 'https://api-sg.aliexpress.com/rest'
 };
 
@@ -20,6 +21,7 @@ export function getAliExpressAuthUrl(customRedirectUri?: string): string {
     force_auth: 'true',
     redirect_uri: redirectUri,
     client_id: ALIEXPRESS_CONFIG.appKey,
+    sp: 'ae',
     view: 'web'
   });
 
@@ -37,51 +39,83 @@ export async function exchangeCodeForToken(code: string, customRedirectUri?: str
   userNick?: string;
 } | null> {
   try {
-    const redirectUri = customRedirectUri || ALIEXPRESS_CONFIG.redirectUri;
-    const bodyParams = new URLSearchParams({
-      grant_type: 'authorization_code',
-      code: code.trim(),
-      client_id: ALIEXPRESS_CONFIG.appKey,
-      client_secret: ALIEXPRESS_CONFIG.appSecret,
-      redirect_uri: redirectUri
+    const appKey = ALIEXPRESS_CONFIG.appKey;
+    const appSecret = ALIEXPRESS_CONFIG.appSecret;
+    const apiPath = '/auth/token/create';
+
+    const params: Record<string, string> = {
+      app_key: appKey,
+      timestamp: String(Date.now()),
+      sign_method: 'sha256',
+      code: code.trim()
+    };
+
+    // Sort alphabetically by ASCII key
+    const sortedKeys = Object.keys(params).sort();
+    let baseString = apiPath;
+    for (const key of sortedKeys) {
+      baseString += key + params[key];
+    }
+
+    const sign = crypto
+      .createHmac('sha256', appSecret)
+      .update(baseString)
+      .digest('hex')
+      .toUpperCase();
+
+    const queryParams = new URLSearchParams({
+      ...params,
+      sign
     });
 
-    const response = await fetch(ALIEXPRESS_CONFIG.tokenUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: bodyParams.toString()
+    const response = await fetch(`${ALIEXPRESS_CONFIG.apiGateway}${apiPath}?${queryParams.toString()}`, {
+      method: 'POST'
     });
 
-    const data = await response.json();
+    const rawData = await response.json();
+    logger.info('AliExpress token creation response:', rawData);
 
-    if (data.access_token) {
-      // Save tokens to store_settings in Supabase
+    // Some responses wrap data in gopResponseBody (JSON string)
+    let payload = rawData;
+    if (rawData.gopResponseBody) {
+      try {
+        payload = JSON.parse(rawData.gopResponseBody);
+      } catch (e) {
+        logger.warn('Could not parse gopResponseBody:', e);
+      }
+    }
+
+    const accessToken = payload.access_token || rawData.access_token;
+    const refreshToken = payload.refresh_token || rawData.refresh_token;
+    const expiresIn = payload.expires_in || rawData.expires_in;
+    const userId = payload.user_id || rawData.user_id;
+    const userNick = payload.user_nick || rawData.user_nick;
+
+    if (accessToken) {
       const supabase = createServerClient();
-      const expiresAt = data.expires_in
-        ? new Date(Date.now() + data.expires_in * 1000).toISOString()
+      const expiresAt = expiresIn
+        ? new Date(Date.now() + Number(expiresIn) * 1000).toISOString()
         : null;
 
       await supabase
         .from('store_settings')
         .update({
-          aliexpress_access_token: data.access_token,
-          aliexpress_refresh_token: data.refresh_token || null,
+          aliexpress_access_token: accessToken,
+          aliexpress_refresh_token: refreshToken || null,
           aliexpress_token_expires_at: expiresAt
         })
         .neq('storesettingsid', '00000000-0000-0000-0000-000000000000'); // update active settings row
 
       return {
-        accessToken: data.access_token,
-        refreshToken: data.refresh_token,
-        expiresIn: data.expires_in,
-        userId: data.user_id,
-        userNick: data.user_nick
+        accessToken,
+        refreshToken,
+        expiresIn: Number(expiresIn) || undefined,
+        userId: String(userId || ''),
+        userNick: String(userNick || '')
       };
     }
 
-    logger.error('Failed to exchange AliExpress code for token:', data);
+    logger.error('Failed to exchange AliExpress code for token:', rawData);
     return null;
   } catch (error) {
     logger.error('Error exchanging AliExpress token:', error);
