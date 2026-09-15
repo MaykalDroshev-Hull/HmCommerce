@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Edit2, Trash2, X, Image as ImageIcon, ChevronDown, Upload, Eye, EyeOff, PackageX, PackageCheck, FileSpreadsheet, Sparkles } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, ChevronDown, Upload, Eye, EyeOff, PackageX, PackageCheck, FileSpreadsheet, Sparkles, RefreshCw } from 'lucide-react';
 import { ProductType, Property } from '@/lib/types/product-types';
 import AdminLayout from '../components/AdminLayout';
 import AdminModal from '../components/AdminModal';
@@ -160,6 +160,117 @@ export default function ProductsPage() {
   const [selectedRelatedProductIds, setSelectedRelatedProductIds] = useState<string[]>([]);
   const [relatedSearchQuery, setRelatedSearchQuery] = useState('');
   const [isExportingGoogle, setIsExportingGoogle] = useState(false);
+
+  // AI Copywriting (Title & Description) State & Handlers
+  const [isSuggestingTitle, setIsSuggestingTitle] = useState(false);
+  const [titleBadge, setTitleBadge] = useState<string | null>(null);
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
+  const [descBadge, setDescBadge] = useState<string | null>(null);
+
+  // Cleaner function: Trims keyword spam into clean editorial product title
+  const cleanTitleForPetBrand = (rawTitle: string): string => {
+    const clean = rawTitle
+      .replace(/aliexpress|drop\s*shipping|wholesale|free\s*shipping|hot\s*sale|new\s*arrival|202\d|factory\s*price/gi, '')
+      .replace(/[\(\)\[\]\{\}]/g, '')
+      .replace(/,\s*,/g, ',')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const words = clean.split(' ').slice(0, 7).join(' ');
+    return words || 'Cosy Pet Product';
+  };
+
+  // Tone of Voice Enhancer fallback: Formats text into friendly, knowledgeable UK pet parent copy
+  const enhanceDescriptionForPetParents = (rawDesc: string, prodTitle: string): string => {
+    return `Give your beloved furbaby the ultimate in tail-wagging comfort and charm! Designed with pure pet happiness in mind, the ${prodTitle || 'item'} delivers the perfect blend of cozy warmth, effortless dressing, and delightful style for daily strolls, family gatherings, and photo-ready celebrations.
+
+Why Devoted Pet Parents Love It:
+• Exceptionally Soft & Gentle: Crafted from skin-friendly, breathable fabric that won't pinch, rub, or tug against delicate fur.
+• Fuss-Free Dressing: Engineered with quick, secure fastenings for a snug fit that stays comfortably in place through running and playful romps.
+• Safe & Lightweight: Designed for unrestricted movement so your four-legged companion can strut and play happily.
+
+Sizing & Fit Guide:
+We always recommend measuring your pet's neck and chest girth before ordering to ensure the most comfortable, tail-wagging fit. If in between sizes, we suggest choosing the larger size for maximum comfort.
+
+Care Instructions:
+Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the fabric irresistibly soft, clean, and vibrant.`;
+  };
+
+  // AI Title / Caption Suggestion Handler (Updates ONLY the Name/Caption)
+  const handleSuggestTitle = async () => {
+    const currentName = formData.name.trim() || editingProduct?.name || '';
+    if (!currentName) {
+      alert('Please enter a product title or keyword first to give Gemini AI context.');
+      return;
+    }
+    try {
+      setIsSuggestingTitle(true);
+      setTitleBadge(null);
+
+      const categoryName = productTypes.find((p) => p.producttypeid === formData.producttypeid)?.name || 'Pet Accessories';
+
+      const res = await fetch('/api/ai/generate-copy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: currentName,
+          rawDescription: formData.description,
+          category: categoryName,
+          target: 'title'
+        })
+      });
+
+      const data = await res.json();
+      if (data.success && data.title) {
+        setFormData(prev => ({ ...prev, name: data.title }));
+        setTitleBadge(data.isAi ? 'AI Suggested' : 'Cleaned Title');
+      }
+    } catch (err) {
+      console.error(err);
+      setFormData(prev => ({ ...prev, name: cleanTitleForPetBrand(prev.name) }));
+      setTitleBadge('Cleaned Title');
+    } finally {
+      setIsSuggestingTitle(false);
+    }
+  };
+
+  // AI Description Generation Handler (Updates ONLY the Description)
+  const handleGenerateDescription = async () => {
+    const currentName = formData.name.trim() || editingProduct?.name || '';
+    if (!currentName) {
+      alert('Please provide a product title or name first so Gemini AI knows what product it is describing.');
+      return;
+    }
+    try {
+      setIsGeneratingDescription(true);
+      setDescBadge(null);
+
+      const categoryName = productTypes.find((p) => p.producttypeid === formData.producttypeid)?.name || 'Pet Accessories';
+
+      const res = await fetch('/api/ai/generate-copy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: currentName,
+          rawDescription: formData.description,
+          category: categoryName,
+          target: 'description'
+        })
+      });
+
+      const data = await res.json();
+      if (data.success && data.description) {
+        setFormData(prev => ({ ...prev, description: data.description }));
+        setDescBadge(data.isAi ? `Written by Gemini AI (${data.modelUsed || 'Flash'})` : 'Formatted with British Pet Brand Persona');
+      }
+    } catch (err) {
+      console.error(err);
+      setFormData(prev => ({ ...prev, description: enhanceDescriptionForPetParents(prev.description, prev.name) }));
+      setDescBadge('Formatted with British Pet Brand Persona');
+    } finally {
+      setIsGeneratingDescription(false);
+    }
+  };
 
   // AI Image Studio State & Handlers
   const [isAiStudioOpen, setIsAiStudioOpen] = useState(false);
@@ -729,6 +840,8 @@ export default function ProductsPage() {
           setSelectedRelatedProductIds([]);
           setRelatedSearchQuery('');
           setValidationErrors({});
+          setTitleBadge(null);
+          setDescBadge(null);
           loadProducts();
         }, 1200);
       } else {
@@ -742,6 +855,8 @@ export default function ProductsPage() {
   const handleEdit = async (product: Product) => {
     setEditingProduct(product);
     setValidationErrors({});
+    setTitleBadge(null);
+    setDescBadge(null);
     
     // Fetch full product details including variants
     try {
@@ -1318,6 +1433,8 @@ export default function ProductsPage() {
     setSelectedRelatedProductIds([]);
     setRelatedSearchQuery('');
     setValidationErrors({});
+    setTitleBadge(null);
+    setDescBadge(null);
     setShowModal(true);
   };
 
@@ -1933,9 +2050,51 @@ export default function ProductsPage() {
               <form onSubmit={handleSubmit}>
                 <div className={`space-y-4 transition-all duration-300 ${showCompleteAnimation ? 'blur-sm pointer-events-none' : ''}`}>
                   <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      {t.productName}
-                    </label>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                          {t.productName || 'Product Title / Caption'}
+                        </label>
+                        {titleBadge && (
+                          <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                            {titleBadge}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleSuggestTitle}
+                          disabled={isSuggestingTitle}
+                          className="text-xs text-neutral-900 hover:text-black font-semibold flex items-center gap-1.5 px-2.5 py-1 bg-neutral-100 hover:bg-neutral-200 rounded-md transition-colors disabled:opacity-50"
+                          title="AI Suggest Title with Gemini"
+                        >
+                          {isSuggestingTitle ? (
+                            <>
+                              <RefreshCw className="w-3 h-3 animate-spin" />
+                              <span>Suggesting...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-3 h-3 text-amber-500" />
+                              <span>AI Suggest Title</span>
+                            </>
+                          )}
+                        </button>
+                        <span className="text-neutral-300">•</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, name: cleanTitleForPetBrand(prev.name) }));
+                            setTitleBadge('Clean Filtered');
+                          }}
+                          className="text-xs text-neutral-500 hover:text-neutral-800"
+                          title="Clean keyword spam and format title"
+                        >
+                          Clean Filter
+                        </button>
+                      </div>
+                    </div>
                     <input
                       type="text"
                       value={formData.name}
@@ -2003,16 +2162,48 @@ export default function ProductsPage() {
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      {'Description'}
-                    </label>
+                  <div className="space-y-1.5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700">
+                          {'Product Description (British Pet Parent Tone)'}
+                        </label>
+                        {descBadge && (
+                          <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                            {descBadge}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleGenerateDescription}
+                        disabled={isGeneratingDescription}
+                        className="text-xs text-neutral-900 hover:text-neutral-700 font-semibold flex items-center gap-1.5 px-3 py-1 bg-neutral-100 hover:bg-neutral-200 rounded-md transition-colors self-start sm:self-auto disabled:opacity-50"
+                        title="Generate British Pet Parent copy with Gemini AI"
+                      >
+                        {isGeneratingDescription ? (
+                          <>
+                            <RefreshCw className="w-3 h-3 animate-spin" />
+                            <span>Generating with Gemini AI...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-3 h-3 text-amber-500" />
+                            <span>Generate with Gemini AI</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                     <textarea
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      rows={3}
+                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-sans leading-relaxed"
+                      rows={8}
+                      placeholder="Enter description or click 'Generate with Gemini AI'..."
                     />
+                    <p className="text-[11px] text-gray-400">
+                      Formatted in conversational British English with warm, affectionate pet terminology (&apos;furbaby&apos;, &apos;pet parent&apos;, &apos;tail-wagging&apos;).
+                    </p>
                   </div>
                   <div>
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
