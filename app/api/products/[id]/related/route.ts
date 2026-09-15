@@ -35,7 +35,7 @@ export async function GET(
     const productsWithDetails = await Promise.all(
       (relatedProducts || []).map(async (rp: any) => {
         const product = rp.related_product;
-        if (!product || product.isdisabled) return null;
+        if (!product || product.isdisabled || product.isdeleted) return null;
 
         // Get variants
         const { data: variants } = await supabase
@@ -116,6 +116,7 @@ export async function GET(
       `)
       .neq('productid', id)
       .or('isdisabled.is.null,isdisabled.eq.false')
+      .neq('isdeleted', true)
       .limit(20);
 
     if (otherProducts && otherProducts.length > 0) {

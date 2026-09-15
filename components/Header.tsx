@@ -410,56 +410,7 @@ export default function Header({ isAdmin = false, setIsAdmin }: HeaderProps) {
                 </Link>
               ))}
 
-              {/* Quick Categories in Mobile Drawer */}
-              <div className="pt-4 pb-2">
-                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-neutral-400 mb-2.5">
-                  Browse by Pet &amp; Category
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  <Link
-                    href="/products?pet=dogs"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="px-3 py-2 text-xs font-medium text-neutral-700 hover:text-neutral-950 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200/80 rounded-lg transition-colors"
-                  >
-                    Dogs
-                  </Link>
-                  <Link
-                    href="/products?pet=cats"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="px-3 py-2 text-xs font-medium text-neutral-700 hover:text-neutral-950 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200/80 rounded-lg transition-colors"
-                  >
-                    Cats
-                  </Link>
-                  <Link
-                    href="/for-him"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="px-3 py-2 text-xs font-medium text-neutral-700 hover:text-neutral-950 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200/80 rounded-lg transition-colors"
-                  >
-                    Collars
-                  </Link>
-                  <Link
-                    href="/for-her"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="px-3 py-2 text-xs font-medium text-neutral-700 hover:text-neutral-950 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200/80 rounded-lg transition-colors"
-                  >
-                    Harnesses
-                  </Link>
-                  <Link
-                    href="/accessories"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="px-3 py-2 text-xs font-medium text-neutral-700 hover:text-neutral-950 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200/80 rounded-lg transition-colors"
-                  >
-                    Accessories
-                  </Link>
-                  <Link
-                    href="/products"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="px-3 py-2 text-xs font-medium text-neutral-950 bg-neutral-100 hover:bg-neutral-200/80 border border-neutral-300 rounded-lg transition-colors"
-                  >
-                    All Products
-                  </Link>
-                </div>
-              </div>
+
 
               <div className="pt-4 space-y-3">
                 <Link
@@ -471,14 +422,7 @@ export default function Header({ isAdmin = false, setIsAdmin }: HeaderProps) {
                   <span>{isAuthenticated ? 'My Account' : 'Sign In / Register'}</span>
                 </Link>
 
-                <Link
-                  href="/support"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-2 text-xs text-neutral-600 hover:text-neutral-950 pt-2 border-t border-neutral-100 transition-colors"
-                >
-                  <Globe size={14} className="text-neutral-500" />
-                  <span>United Kingdom (GBP) · Help &amp; Delivery</span>
-                </Link>
+
               </div>
             </nav>
           </div>

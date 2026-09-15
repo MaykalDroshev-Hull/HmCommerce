@@ -491,15 +491,7 @@ export default function Home() {
                 ))}
               </div>
 
-              {/* Mobile Right Arrow Peek Indicator */}
-              <button
-                type="button"
-                onClick={() => scrollCategories('right')}
-                className="sm:hidden absolute right-2 top-1/3 -translate-y-1/2 w-9 h-9 rounded-full bg-white/95 text-neutral-900 shadow-md flex items-center justify-center border border-neutral-200 z-10"
-                aria-label="Scroll right"
-              >
-                <ChevronRight size={16} />
-              </button>
+
             </div>
           </div>
         </section>
@@ -798,15 +790,7 @@ export default function Home() {
                 ))}
               </div>
 
-              {/* Mobile Right Arrow Peek Indicator */}
-              <button
-                type="button"
-                onClick={() => scrollStories('right')}
-                className="sm:hidden absolute right-2 top-1/3 -translate-y-1/2 w-9 h-9 rounded-full bg-white/95 text-neutral-900 shadow-md flex items-center justify-center border border-neutral-200 z-10"
-                aria-label="Scroll right"
-              >
-                <ChevronRight size={16} />
-              </button>
+
             </div>
           </div>
         </section>
@@ -823,7 +807,7 @@ export default function Home() {
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-500">
                 Verified Pet Parent Feedback
               </p>
-              <div className="flex items-center justify-center gap-2 text-neutral-950">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-neutral-950">
                 <div className="flex items-center gap-0.5">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star

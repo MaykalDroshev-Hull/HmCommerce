@@ -149,6 +149,16 @@ export default function Footer() {
                   FAQ
                 </Link>
               </li>
+              <li>
+                <Link href="/returns" className="hover:text-white transition-colors">
+                  Returns &amp; Exchanges
+                </Link>
+              </li>
+              <li>
+                <Link href="/support" className="hover:text-white transition-colors">
+                  Support
+                </Link>
+              </li>
             </ul>
           </div>
 
