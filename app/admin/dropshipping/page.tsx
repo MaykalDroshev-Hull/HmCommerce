@@ -30,10 +30,39 @@ import {
   Home,
   Trees,
   Ruler,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Link2,
+  ArrowLeftRight,
+  Layers
 } from 'lucide-react';
 import { AliExpressProductDetails, AliExpressVariant } from '@/lib/aliexpress/types';
 import { extractCleanSizeCode } from '@/lib/aliexpress/client';
+
+export interface LinkedProductVariant {
+  productVariantId: string;
+  sku: string;
+  price: number;
+  compareAtPrice: number | null;
+  quantity: number;
+  aliexpressSkuId: string | null;
+  isVisible: boolean;
+  size: string | null;
+  colour: string | null;
+}
+
+export interface LinkedProduct {
+  productId: string;
+  name: string;
+  sku: string;
+  description: string;
+  aliexpressProductId: string;
+  aliexpressProductUrl: string | null;
+  categoryName: string;
+  primaryImage: string | null;
+  totalStock: number;
+  variants: LinkedProductVariant[];
+  updatedAt: string;
+}
 
 interface ProductType {
   producttypeid: string;
@@ -51,7 +80,7 @@ interface StudioQueueItem {
 }
 
 export default function DropshippingPage() {
-  const [activeTab, setActiveTab] = useState<'import' | 'orders' | 'settings'>('import');
+  const [activeTab, setActiveTab] = useState<'import' | 'products' | 'orders' | 'settings'>('import');
 
   // Input state
   const [urlOrId, setUrlOrId] = useState('');
@@ -109,6 +138,22 @@ export default function DropshippingPage() {
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [titleBadge, setTitleBadge] = useState<string | null>(null);
   const [descBadge, setDescBadge] = useState<string | null>(null);
+
+  // Linked Products & Relink Supplier state
+  const [linkedProducts, setLinkedProducts] = useState<LinkedProduct[]>([]);
+  const [isLoadingLinkedProducts, setIsLoadingLinkedProducts] = useState(false);
+  const [linkedProductsSearch, setLinkedProductsSearch] = useState('');
+  const [syncingProductId, setSyncingProductId] = useState<string | null>(null);
+  const [syncFeedback, setSyncFeedback] = useState<{ productId: string; message: string; isError?: boolean } | null>(null);
+
+  // Relink Modal state
+  const [relinkModalProduct, setRelinkModalProduct] = useState<LinkedProduct | null>(null);
+  const [relinkNewUrl, setRelinkNewUrl] = useState('');
+  const [isFetchingRelinkPreview, setIsFetchingRelinkPreview] = useState(false);
+  const [relinkPreviewError, setRelinkPreviewError] = useState<string | null>(null);
+  const [relinkSupplierPreview, setRelinkSupplierPreview] = useState<AliExpressProductDetails | null>(null);
+  const [relinkAddNewVariants, setRelinkAddNewVariants] = useState(true);
+  const [isSubmittingRelink, setIsSubmittingRelink] = useState(false);
 
   // Orders state
   const [orders, setOrders] = useState<any[]>([]);
@@ -169,12 +214,140 @@ export default function DropshippingPage() {
     } catch {}
   };
 
-  // Load orders when switching to orders tab
+  // Load tab data
   useEffect(() => {
     if (activeTab === 'orders') {
       loadOrders();
+    } else if (activeTab === 'products') {
+      loadLinkedProducts();
     }
   }, [activeTab]);
+
+  const loadLinkedProducts = async () => {
+    try {
+      setIsLoadingLinkedProducts(true);
+      const res = await fetch('/api/aliexpress/linked-products');
+      const data = await res.json();
+      if (data.success) {
+        setLinkedProducts(data.products || []);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoadingLinkedProducts(false);
+    }
+  };
+
+  const handleQuickSyncStock = async (productId: string) => {
+    try {
+      setSyncingProductId(productId);
+      setSyncFeedback(null);
+      const res = await fetch('/api/aliexpress/sync-supplier', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, updateStock: true })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to sync stock');
+      }
+      setSyncFeedback({
+        productId,
+        message: `Successfully synced stock for ${data.matchedCount} variants from AliExpress.`
+      });
+      loadLinkedProducts();
+    } catch (err: any) {
+      setSyncFeedback({
+        productId,
+        message: err.message || 'Failed to sync stock',
+        isError: true
+      });
+    } finally {
+      setSyncingProductId(null);
+    }
+  };
+
+  const handleOpenRelinkModal = (product: LinkedProduct) => {
+    setRelinkModalProduct(product);
+    setRelinkNewUrl('');
+    setRelinkPreviewError(null);
+    setRelinkSupplierPreview(null);
+    setRelinkAddNewVariants(true);
+  };
+
+  const handleCloseRelinkModal = () => {
+    if (isSubmittingRelink) return;
+    setRelinkModalProduct(null);
+    setRelinkSupplierPreview(null);
+    setRelinkNewUrl('');
+    setRelinkPreviewError(null);
+  };
+
+  const handleFetchRelinkPreview = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!relinkNewUrl.trim()) return;
+
+    try {
+      setIsFetchingRelinkPreview(true);
+      setRelinkPreviewError(null);
+      setRelinkSupplierPreview(null);
+
+      const res = await fetch('/api/aliexpress/fetch-product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ urlOrId: relinkNewUrl.trim() })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.product) {
+        throw new Error(data.error || 'Could not fetch supplier listing');
+      }
+
+      setRelinkSupplierPreview(data.product);
+    } catch (err: any) {
+      setRelinkPreviewError(err.message || 'Failed to fetch supplier details');
+    } finally {
+      setIsFetchingRelinkPreview(false);
+    }
+  };
+
+  const handleSubmitRelink = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!relinkModalProduct || !relinkNewUrl.trim()) return;
+
+    try {
+      setIsSubmittingRelink(true);
+      setRelinkPreviewError(null);
+
+      const res = await fetch('/api/aliexpress/sync-supplier', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: relinkModalProduct.productId,
+          newUrlOrId: relinkNewUrl.trim(),
+          updateStock: true,
+          addNewVariants: relinkAddNewVariants
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to relink supplier');
+      }
+
+      setSyncFeedback({
+        productId: relinkModalProduct.productId,
+        message: `Supplier relinked to ${data.aliexpressProductId}! Updated ${data.matchedCount} variants${data.addedVariants?.length ? ` and added ${data.addedVariants.length} new sizes` : ''}.`
+      });
+
+      handleCloseRelinkModal();
+      loadLinkedProducts();
+    } catch (err: any) {
+      setRelinkPreviewError(err.message || 'Failed to relink supplier');
+    } finally {
+      setIsSubmittingRelink(false);
+    }
+  };
 
   const loadOrders = async () => {
     try {
@@ -981,6 +1154,16 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                 Product Importer
               </button>
               <button
+                onClick={() => setActiveTab('products')}
+                className={`flex-1 sm:flex-initial px-3.5 py-2 sm:py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap text-center touch-manipulation ${
+                  activeTab === 'products'
+                    ? 'bg-white text-neutral-900 shadow-sm'
+                    : 'text-neutral-600 hover:text-neutral-900'
+                }`}
+              >
+                Linked Products & Stock
+              </button>
+              <button
                 onClick={() => setActiveTab('orders')}
                 className={`flex-1 sm:flex-initial px-3.5 py-2 sm:py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap text-center touch-manipulation ${
                   activeTab === 'orders'
@@ -1673,7 +1856,279 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
         )}
 
         {/* ============================================================ */}
-        {/* TAB 2: ORDER FULFILLMENT & TRACKING                          */}
+        {/* TAB 2: LINKED PRODUCTS & LIVE STOCK MANAGEMENT              */}
+        {/* ============================================================ */}
+        {activeTab === 'products' && (
+          <div className="space-y-6">
+            {/* Header / Sub-nav bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-base font-bold text-neutral-900">
+                  Linked AliExpress Products & Live Stock
+                </h3>
+                <p className="text-xs text-neutral-500">
+                  Monitor supplier inventory, relink out-of-stock items to alternative listings, and synchronise variant quantities via official AliExpress API.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={loadLinkedProducts}
+                  disabled={isLoadingLinkedProducts}
+                  className="px-3.5 py-2 text-xs font-semibold border border-neutral-300 rounded-lg hover:bg-neutral-50 flex items-center gap-1.5 transition-colors"
+                >
+                  <RefreshCw size={13} className={isLoadingLinkedProducts ? 'animate-spin' : ''} />
+                  <span>Refresh List</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Global Sync Feedback Banner */}
+            {syncFeedback && (
+              <div
+                className={`p-3.5 text-xs rounded-xl flex items-center justify-between gap-3 border ${
+                  syncFeedback.isError
+                    ? 'bg-red-50 text-red-800 border-red-200'
+                    : 'bg-emerald-50 text-emerald-900 border-emerald-200'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  {syncFeedback.isError ? (
+                    <AlertCircle size={15} className="shrink-0 text-red-600" />
+                  ) : (
+                    <CheckCircle2 size={15} className="shrink-0 text-emerald-600" />
+                  )}
+                  <span>{syncFeedback.message}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSyncFeedback(null)}
+                  className="text-neutral-400 hover:text-neutral-600 shrink-0"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+
+            {/* Search and Filters */}
+            <div className="bg-white border border-neutral-200 rounded-xl p-3.5 sm:p-4 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="relative flex-1">
+                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+                <input
+                  type="text"
+                  value={linkedProductsSearch}
+                  onChange={(e) => setLinkedProductsSearch(e.target.value)}
+                  placeholder="Filter by product name, store SKU, or AliExpress item ID..."
+                  className="w-full pl-9 pr-4 py-2 text-xs border border-neutral-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-900 bg-neutral-50/40"
+                />
+              </div>
+              <div className="flex items-center gap-2 text-xs text-neutral-500 shrink-0 px-1">
+                <span>
+                  Showing{' '}
+                  <strong className="text-neutral-900 font-semibold">
+                    {
+                      linkedProducts.filter((p) => {
+                        if (!linkedProductsSearch.trim()) return true;
+                        const s = linkedProductsSearch.toLowerCase();
+                        return (
+                          p.name.toLowerCase().includes(s) ||
+                          p.sku.toLowerCase().includes(s) ||
+                          p.aliexpressProductId?.toLowerCase().includes(s)
+                        );
+                      }).length
+                    }
+                  </strong>{' '}
+                  of {linkedProducts.length} items
+                </span>
+              </div>
+            </div>
+
+            {/* Products List */}
+            {isLoadingLinkedProducts ? (
+              <div className="bg-white border border-neutral-200 rounded-xl p-16 text-center text-xs text-neutral-400 flex flex-col items-center justify-center gap-3">
+                <RefreshCw size={24} className="animate-spin text-neutral-400" />
+                <span>Loading linked products from catalog...</span>
+              </div>
+            ) : linkedProducts.length === 0 ? (
+              <div className="bg-white border border-neutral-200 rounded-xl p-12 text-center">
+                <Package size={36} className="mx-auto text-neutral-300 mb-3" />
+                <h4 className="text-sm font-bold text-neutral-800">No Linked AliExpress Products Found</h4>
+                <p className="text-xs text-neutral-500 mt-1 max-w-md mx-auto">
+                  Import products using the Product Importer tab to manage supplier links and sync live inventory.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {linkedProducts
+                  .filter((product) => {
+                    if (!linkedProductsSearch.trim()) return true;
+                    const s = linkedProductsSearch.toLowerCase();
+                    return (
+                      product.name.toLowerCase().includes(s) ||
+                      product.sku.toLowerCase().includes(s) ||
+                      product.aliexpressProductId?.toLowerCase().includes(s)
+                    );
+                  })
+                  .map((product) => {
+                    const isSyncing = syncingProductId === product.productId;
+                    const isOutOfStock = product.totalStock === 0;
+
+                    return (
+                      <div
+                        key={product.productId}
+                        className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-6 shadow-sm hover:border-neutral-300 transition-all space-y-4"
+                      >
+                        {/* Top Row: Thumbnail, Title, Metas, Actions */}
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                          <div className="flex items-start gap-3.5 min-w-0">
+                            {product.primaryImage ? (
+                              <img
+                                src={product.primaryImage}
+                                alt={product.name}
+                                className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border border-neutral-200 shrink-0 bg-neutral-50"
+                              />
+                            ) : (
+                              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg bg-neutral-100 border border-neutral-200 flex items-center justify-center text-neutral-400 shrink-0">
+                                <ImageIcon size={22} />
+                              </div>
+                            )}
+
+                            <div className="min-w-0 space-y-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-neutral-100 text-neutral-700">
+                                  {product.sku}
+                                </span>
+                                <span className="text-[10px] font-medium text-neutral-500">
+                                  {product.categoryName}
+                                </span>
+                                {isOutOfStock ? (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+                                    <AlertCircle size={10} />
+                                    Out of Stock
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                    {product.totalStock} units available
+                                  </span>
+                                )}
+                              </div>
+
+                              <h4 className="text-sm sm:text-base font-bold text-neutral-900 line-clamp-1">
+                                {product.name}
+                              </h4>
+
+                              {/* Supplier Link Badge */}
+                              <div className="flex items-center gap-2 pt-0.5">
+                                <span className="text-xs text-neutral-500 flex items-center gap-1">
+                                  Supplier Item ID: <strong className="font-mono text-neutral-800">{product.aliexpressProductId}</strong>
+                                </span>
+                                {product.aliexpressProductUrl && (
+                                  <a
+                                    href={product.aliexpressProductUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-xs text-neutral-900 hover:text-neutral-600 underline flex items-center gap-0.5 shrink-0"
+                                    title="Open AliExpress listing in new tab"
+                                  >
+                                    <span>View Listing</span>
+                                    <ExternalLink size={11} />
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex flex-wrap items-center gap-2 shrink-0 self-start sm:self-auto">
+                            <button
+                              type="button"
+                              onClick={() => handleQuickSyncStock(product.productId)}
+                              disabled={isSyncing}
+                              title="Fetch real-time stock quantities from current AliExpress link"
+                              className="px-3.5 py-2 text-xs font-semibold border border-neutral-300 text-neutral-800 rounded-lg hover:bg-neutral-50 disabled:opacity-50 flex items-center gap-1.5 transition-colors"
+                            >
+                              <RefreshCw size={12} className={isSyncing ? 'animate-spin' : ''} />
+                              <span>{isSyncing ? 'Syncing...' : 'Sync Live Stock'}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleOpenRelinkModal(product)}
+                              className="px-3.5 py-2 text-xs font-semibold bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg flex items-center gap-1.5 transition-colors shadow-sm"
+                            >
+                              <Link2 size={13} />
+                              <span>Relink Supplier</span>
+                            </button>
+
+                            <Link
+                              href={`/products/${product.productId}`}
+                              target="_blank"
+                              className="p-2 text-neutral-500 hover:text-neutral-900 border border-neutral-200 hover:border-neutral-300 rounded-lg transition-colors"
+                              title="View on storefront"
+                            >
+                              <Eye size={14} />
+                            </Link>
+                          </div>
+                        </div>
+
+                        {/* Variant Stock Breakdown Chips */}
+                        <div className="pt-3 border-t border-neutral-100">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">
+                              Variant Stock Levels ({product.variants.length} sizes/options)
+                            </span>
+                            <span className="text-[11px] text-neutral-500 font-medium">
+                              Total Inventory: {product.totalStock} units
+                            </span>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            {product.variants.map((v) => {
+                              const variantLabel = v.size || v.colour || v.sku;
+                              const isZero = v.quantity === 0;
+
+                              return (
+                                <div
+                                  key={v.productVariantId}
+                                  className={`px-2.5 py-1.5 rounded-lg text-xs font-mono border flex items-center gap-2 ${
+                                    isZero
+                                      ? 'bg-red-50 text-red-700 border-red-200'
+                                      : 'bg-neutral-50 text-neutral-800 border-neutral-200'
+                                  }`}
+                                >
+                                  <span className="font-sans font-bold text-neutral-900">
+                                    {variantLabel}
+                                  </span>
+                                  <span
+                                    className={`px-1.5 py-0.5 rounded text-[11px] font-semibold ${
+                                      isZero
+                                        ? 'bg-red-100 text-red-800'
+                                        : 'bg-white border border-neutral-200 text-neutral-700'
+                                    }`}
+                                  >
+                                    {v.quantity} in stock
+                                  </span>
+                                  {v.price > 0 && (
+                                    <span className="text-[10px] text-neutral-400 font-sans">
+                                      £{v.price.toFixed(2)}
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* TAB 3: ORDER FULFILLMENT & TRACKING                          */}
         {/* ============================================================ */}
         {activeTab === 'orders' && (
           <div className="space-y-6">
@@ -2629,6 +3084,280 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
             </div>
           );
         })()}
+
+        {/* ========================================================= */}
+        {/* RELINK SUPPLIER & LIVE STOCK SYNC MODAL                     */}
+        {/* ========================================================= */}
+        {relinkModalProduct && (
+          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+            <div className="bg-white rounded-2xl border border-neutral-200 shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+              {/* Modal Header */}
+              <div className="p-4 sm:p-6 border-b border-neutral-200 flex items-center justify-between shrink-0">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block">
+                    Supplier Management
+                  </span>
+                  <h3 className="text-lg font-bold text-neutral-900">
+                    Relink AliExpress Supplier
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCloseRelinkModal}
+                  disabled={isSubmittingRelink}
+                  className="p-1.5 text-neutral-400 hover:text-neutral-700 rounded-lg hover:bg-neutral-100 transition-colors disabled:opacity-50"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Modal Body (Scrollable) */}
+              <div className="p-4 sm:p-6 overflow-y-auto space-y-6">
+                {/* Target Store Product Summary */}
+                <div className="p-3.5 bg-neutral-50 rounded-xl border border-neutral-200 flex items-center gap-3">
+                  {relinkModalProduct.primaryImage && (
+                    <img
+                      src={relinkModalProduct.primaryImage}
+                      alt={relinkModalProduct.name}
+                      className="w-12 h-12 object-cover rounded-lg border border-neutral-200 shrink-0 bg-white"
+                    />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 block">
+                      Target Store Catalog Item
+                    </span>
+                    <h4 className="text-xs sm:text-sm font-bold text-neutral-900 truncate">
+                      {relinkModalProduct.name}
+                    </h4>
+                    <p className="text-[11px] text-neutral-500 font-mono">
+                      Current Supplier ID: {relinkModalProduct.aliexpressProductId}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Input New Supplier URL or ID */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-neutral-700 block">
+                    New AliExpress Product URL or Item ID
+                  </label>
+                  <p className="text-xs text-neutral-500">
+                    Paste the replacement listing URL (e.g. from search, image search, or recommendation) or numerical product ID.
+                  </p>
+
+                  <form onSubmit={handleFetchRelinkPreview} className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="text"
+                      value={relinkNewUrl}
+                      onChange={(e) => setRelinkNewUrl(e.target.value)}
+                      placeholder="e.g. https://www.aliexpress.com/item/1005007826530450.html or 1005007826530450"
+                      className="flex-1 px-3.5 py-2.5 text-xs sm:text-sm border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-900 bg-neutral-50/50 font-mono"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isFetchingRelinkPreview || !relinkNewUrl.trim()}
+                      className="px-4 py-2.5 bg-neutral-900 text-white text-xs font-semibold rounded-lg hover:bg-neutral-800 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5 shrink-0"
+                    >
+                      {isFetchingRelinkPreview ? (
+                        <>
+                          <RefreshCw size={13} className="animate-spin" />
+                          <span>Fetching Listing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Search size={13} />
+                          <span>Preview Supplier</span>
+                        </>
+                      )}
+                    </button>
+                  </form>
+
+                  {relinkPreviewError && (
+                    <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg flex items-center gap-2">
+                      <AlertCircle size={14} className="shrink-0" />
+                      <span>{relinkPreviewError}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Preview Card (Once supplier listing is fetched) */}
+                {relinkSupplierPreview && (
+                  <div className="space-y-4 border-t border-neutral-200 pt-5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-neutral-700 flex items-center gap-1.5">
+                        <Check size={14} className="text-emerald-600" />
+                        Replacement Supplier Found
+                      </span>
+                      <span className="text-[11px] font-mono text-neutral-500">
+                        ID: {relinkSupplierPreview.productId}
+                      </span>
+                    </div>
+
+                    <div className="p-3.5 bg-neutral-50 border border-neutral-200 rounded-xl flex items-start gap-3">
+                      {relinkSupplierPreview.images?.[0] && (
+                        <img
+                          src={relinkSupplierPreview.images[0]}
+                          alt="Supplier product"
+                          className="w-16 h-16 object-cover rounded-lg border border-neutral-200 shrink-0 bg-white"
+                        />
+                      )}
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <h5 className="text-xs font-bold text-neutral-900 line-clamp-2">
+                          {relinkSupplierPreview.title}
+                        </h5>
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-600">
+                          <span className="font-semibold text-neutral-900">
+                            Supplier Cost: £{relinkSupplierPreview.priceMin.toFixed(2)}
+                            {relinkSupplierPreview.priceMax > relinkSupplierPreview.priceMin &&
+                              ` - £${relinkSupplierPreview.priceMax.toFixed(2)}`}
+                          </span>
+                          <span>•</span>
+                          <span>{relinkSupplierPreview.variants.length} supplier variants</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Variant Mapping Comparison Table */}
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-wider text-neutral-700 block">
+                        Variant Inventory Mapping Preview
+                      </label>
+                      <div className="border border-neutral-200 rounded-xl overflow-hidden text-xs">
+                        <table className="w-full text-left">
+                          <thead className="bg-neutral-50 border-b border-neutral-200 text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
+                            <tr>
+                              <th className="py-2.5 px-3">Size / Option</th>
+                              <th className="py-2.5 px-3">Current Store</th>
+                              <th className="py-2.5 px-3">New Supplier</th>
+                              <th className="py-2.5 px-3">Sync Action</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-neutral-100 font-mono">
+                            {(() => {
+                              // Build mapping between store variants and supplier variants
+                              const supplierSizes = relinkSupplierPreview.variants.map((sv) => {
+                                const sizeProp = sv.properties.find((p) => /size/i.test(p.name))?.value || '';
+                                return {
+                                  rawSize: sizeProp,
+                                  cleanSize: extractCleanSizeCode(sizeProp),
+                                  stock: sv.stock
+                                };
+                              });
+
+                              // Collect all unique sizes
+                              const uniqueSizes = Array.from(
+                                new Set([
+                                  ...relinkModalProduct.variants.map((v) => v.size || v.sku),
+                                  ...supplierSizes.map((s) => s.cleanSize || s.rawSize)
+                                ])
+                              ).filter(Boolean);
+
+                              return uniqueSizes.map((sizeName) => {
+                                const cleanKey = extractCleanSizeCode(sizeName);
+                                const storeVar = relinkModalProduct.variants.find(
+                                  (v) => (v.size && extractCleanSizeCode(v.size) === cleanKey) || v.sku === sizeName
+                                );
+                                const supplierMatch = supplierSizes.find(
+                                  (s) => s.cleanSize === cleanKey || s.rawSize === sizeName
+                                );
+
+                                const storeStock = storeVar ? storeVar.quantity : null;
+                                const supplierStock = supplierMatch ? supplierMatch.stock : null;
+
+                                return (
+                                  <tr key={sizeName} className="hover:bg-neutral-50/50">
+                                    <td className="py-2 px-3 font-sans font-bold text-neutral-900">
+                                      {sizeName}
+                                    </td>
+                                    <td className="py-2 px-3">
+                                      {storeStock !== null ? (
+                                        <span className={storeStock === 0 ? 'text-red-600' : 'text-neutral-700'}>
+                                          {storeStock} units
+                                        </span>
+                                      ) : (
+                                        <span className="text-neutral-400 font-sans italic">Not in store</span>
+                                      )}
+                                    </td>
+                                    <td className="py-2 px-3">
+                                      {supplierStock !== null ? (
+                                        <span className={supplierStock > 0 ? 'text-emerald-700 font-bold' : 'text-red-600'}>
+                                          {supplierStock} in stock
+                                        </span>
+                                      ) : (
+                                        <span className="text-red-500 font-sans">Unavailable</span>
+                                      )}
+                                    </td>
+                                    <td className="py-2 px-3 font-sans">
+                                      {storeStock !== null && supplierStock !== null ? (
+                                        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                          Update to {supplierStock}
+                                        </span>
+                                      ) : storeStock !== null && supplierStock === null ? (
+                                        <span className="text-[11px] font-semibold text-red-700 bg-red-50 px-2 py-0.5 rounded border border-red-200">
+                                          Set to 0 (Out of Stock)
+                                        </span>
+                                      ) : (
+                                        <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                                          {relinkAddNewVariants ? `Add (+${supplierStock} units)` : 'Skip'}
+                                        </span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              });
+                            })()}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Add missing variants option toggle */}
+                    <label className="flex items-center gap-2 text-xs text-neutral-700 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={relinkAddNewVariants}
+                        onChange={(e) => setRelinkAddNewVariants(e.target.checked)}
+                        className="rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900"
+                      />
+                      <span>
+                        Add newly discovered sizes to store if offered by the replacement supplier
+                      </span>
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Actions Footer */}
+              <div className="p-4 sm:p-6 border-t border-neutral-200 bg-neutral-50 flex items-center justify-end gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleCloseRelinkModal}
+                  disabled={isSubmittingRelink}
+                  className="px-4 py-2 text-xs font-semibold text-neutral-700 hover:text-neutral-900 border border-neutral-300 rounded-lg hover:bg-white transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmitRelink}
+                  disabled={isSubmittingRelink || !relinkSupplierPreview}
+                  className="px-5 py-2 text-xs font-semibold bg-neutral-950 text-white rounded-lg hover:bg-neutral-800 disabled:opacity-50 transition-colors flex items-center gap-1.5 shadow-sm"
+                >
+                  {isSubmittingRelink ? (
+                    <>
+                      <RefreshCw size={13} className="animate-spin" />
+                      <span>Updating Supplier & Stock...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check size={13} />
+                      <span>Confirm Relink & Sync Stock</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </AdminLayout>
