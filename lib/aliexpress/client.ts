@@ -526,14 +526,23 @@ CRITICAL RULES FOR SIZES AND INVENTORY AVAILABILITY:
 export async function scrapeAliExpressProduct(productId: string): Promise<AliExpressProductDetails | null> {
   try {
     const itemUrl = `https://www.aliexpress.com/item/${productId}.html`;
-    const res = await fetch(itemUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Cache-Control': 'no-cache'
-      }
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
+    let res: Response;
+    try {
+      res = await fetch(itemUrl, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Cache-Control': 'no-cache'
+        }
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!res.ok) {
       logger.warn(`AliExpress scrape HTTP error ${res.status} for item ${productId}`);
@@ -600,6 +609,11 @@ export async function scrapeAliExpressProduct(productId: string): Promise<AliExp
       title = decodeHtmlEntities(title)
         .replace(/\s*[-|]\s*AliExpress.*$/i, '')
         .trim();
+    }
+
+    // If no title could be extracted, AliExpress likely returned a bot-detection page or empty shell — fail explicitly
+    if (!title) {
+      throw new Error(`Failed to extract product data from AliExpress for product ${productId}. The page may be blocked, require CAPTCHA, or use client-side rendering that cannot be scraped.`);
     }
 
     // Extract Images from all possible sources
@@ -879,7 +893,7 @@ export async function scrapeAliExpressProduct(productId: string): Promise<AliExp
 
     return {
       productId,
-      title: title || 'Premium Pet Product',
+      title: title,
       description: description,
       images: cleanedImages.length > 0 ? cleanedImages : ['/Logo.jpg'],
       variants,
