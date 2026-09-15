@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Edit2, Trash2, X, Image as ImageIcon, ChevronDown, Upload, Eye, EyeOff, PackageX, PackageCheck, FileSpreadsheet } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, ChevronDown, Upload, Eye, EyeOff, PackageX, PackageCheck, FileSpreadsheet, Sparkles } from 'lucide-react';
 import { ProductType, Property } from '@/lib/types/product-types';
 import AdminLayout from '../components/AdminLayout';
 import AdminModal from '../components/AdminModal';
@@ -14,6 +14,7 @@ import { Package } from 'lucide-react';
 import CompleteAnimation from '@/components/CompleteAnimation';
 import { adminAuthHeaders } from '@/lib/admin-auth-headers';
 import { MAX_PRODUCT_IMAGES } from '@/lib/product-images';
+import AiImageStudioModal from '@/components/AiImageStudioModal';
 
 // Select All Checkbox Component for Variant Characteristics
 function VariantSelectAllCheckbox({
@@ -159,6 +160,113 @@ export default function ProductsPage() {
   const [selectedRelatedProductIds, setSelectedRelatedProductIds] = useState<string[]>([]);
   const [relatedSearchQuery, setRelatedSearchQuery] = useState('');
   const [isExportingGoogle, setIsExportingGoogle] = useState(false);
+
+  // AI Image Studio State & Handlers
+  const [isAiStudioOpen, setIsAiStudioOpen] = useState(false);
+  const [aiStudioFocusedImage, setAiStudioFocusedImage] = useState<string | undefined>(undefined);
+  const [aiStudioProductContext, setAiStudioProductContext] = useState<{ productId?: string; name: string; images: string[] } | null>(null);
+
+  const handleOpenAiStudioFromEditModal = (focusedUrl?: string) => {
+    setAiStudioProductContext({
+      productId: editingProduct?.productid,
+      name: formData.name || editingProduct?.name || 'Pet Product',
+      images: productImages
+    });
+    setAiStudioFocusedImage(focusedUrl || productImages[0]);
+    setIsAiStudioOpen(true);
+  };
+
+  const handleOpenAiStudioFromTable = (product: Product) => {
+    const productImgs = product.images && product.images.length > 0 ? product.images : [];
+    setAiStudioProductContext({
+      productId: product.productid,
+      name: product.name,
+      images: productImgs
+    });
+    setAiStudioFocusedImage(productImgs[0]);
+    setIsAiStudioOpen(true);
+  };
+
+  const handleAiStudioReplaceImage = async (originalUrl: string, newUrl: string) => {
+    setProductImages((prev) => prev.map((u) => (u === originalUrl ? newUrl : u)));
+    setVariants((prev) =>
+      prev.map((v) => (v.imageurl === originalUrl ? { ...v, imageurl: newUrl } : v))
+    );
+
+    if (aiStudioProductContext?.productId && !showModal) {
+      try {
+        const updatedImages = (aiStudioProductContext.images || []).map((u) => (u === originalUrl ? newUrl : u));
+        const authHeaders = await adminAuthHeaders();
+        await fetch(`/api/products/${aiStudioProductContext.productId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
+          body: JSON.stringify({ productImages: updatedImages })
+        });
+        setAiStudioProductContext((prev) => (prev ? { ...prev, images: updatedImages } : null));
+        loadProducts();
+      } catch (e) {
+        console.error('Failed to update product images:', e);
+      }
+    }
+  };
+
+  const handleAiStudioAddImage = async (newUrl: string, makePrimary?: boolean) => {
+    setProductImages((prev) => (makePrimary ? [newUrl, ...prev] : [...prev, newUrl]));
+
+    if (aiStudioProductContext?.productId && !showModal) {
+      try {
+        const updatedImages = makePrimary
+          ? [newUrl, ...(aiStudioProductContext.images || [])]
+          : [...(aiStudioProductContext.images || []), newUrl];
+        const authHeaders = await adminAuthHeaders();
+        await fetch(`/api/products/${aiStudioProductContext.productId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
+          body: JSON.stringify({ productImages: updatedImages })
+        });
+        setAiStudioProductContext((prev) => (prev ? { ...prev, images: updatedImages } : null));
+        loadProducts();
+      } catch (e) {
+        console.error('Failed to add product image:', e);
+      }
+    }
+  };
+
+  const handleAiStudioApplyAll = async (replacements: Array<{ originalUrl: string; newUrl: string }>) => {
+    setProductImages((prev) => {
+      let updated = [...prev];
+      replacements.forEach(({ originalUrl, newUrl }) => {
+        updated = updated.map((u) => (u === originalUrl ? newUrl : u));
+      });
+      return updated;
+    });
+
+    setVariants((prev) => {
+      return prev.map((v) => {
+        const match = replacements.find((r) => r.originalUrl === v.imageurl);
+        return match ? { ...v, imageurl: match.newUrl } : v;
+      });
+    });
+
+    if (aiStudioProductContext?.productId && !showModal) {
+      try {
+        let updated = [...(aiStudioProductContext.images || [])];
+        replacements.forEach(({ originalUrl, newUrl }) => {
+          updated = updated.map((u) => (u === originalUrl ? newUrl : u));
+        });
+        const authHeaders = await adminAuthHeaders();
+        await fetch(`/api/products/${aiStudioProductContext.productId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
+          body: JSON.stringify({ productImages: updated })
+        });
+        setAiStudioProductContext((prev) => (prev ? { ...prev, images: updated } : null));
+        loadProducts();
+      } catch (e) {
+        console.error('Failed to apply all images:', e);
+      }
+    }
+  };
 
   const handleExportGoogleMerchant = async () => {
     try {
@@ -1445,7 +1553,7 @@ export default function ProductsPage() {
                         <TableHeaderCell align="center" columnId="shop" defaultWidth={180} minWidth={130}>
                           {'Price & Status'}
                         </TableHeaderCell>
-                        <TableHeaderCell align="right" columnId="actions" defaultWidth={128} resizable={false}>
+                        <TableHeaderCell align="right" columnId="actions" defaultWidth={160} resizable={false}>
                           {t.actions}
                         </TableHeaderCell>
                       </TableHeaderRow>
@@ -1540,7 +1648,7 @@ export default function ProductsPage() {
                                 </div>
                               </div>
                             </TableCell>
-                          <TableCell align="right" columnId="actions" defaultWidth={128}>
+                          <TableCell align="right" columnId="actions" defaultWidth={160}>
                             <div className="flex justify-end gap-2">
                               <button
                                 onClick={() => window.open(`/products/${product.productid}`, '_blank', 'noopener,noreferrer')}
@@ -1548,6 +1656,13 @@ export default function ProductsPage() {
                                 title={'View'}
                               >
                                 <Eye className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleOpenAiStudioFromTable(product)}
+                                className="p-1.5 sm:p-2 text-neutral-800 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors touch-manipulation"
+                                title="Re-Imagine with Gemini AI"
+                              >
+                                <Sparkles className="w-4 h-4 text-amber-500" />
                               </button>
                               <button
                                 onClick={() => handleEdit(product)}
@@ -1674,6 +1789,13 @@ export default function ProductsPage() {
                         title={'View'}
                       >
                         <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                      </button>
+                      <button
+                        onClick={() => handleOpenAiStudioFromTable(product)}
+                        className="p-2 text-neutral-800 hover:text-amber-600 hover:bg-amber-50 active:bg-amber-100 rounded transition-colors touch-manipulation"
+                        title="Re-Imagine with Gemini AI"
+                      >
+                        <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
                       </button>
                       <button
                         onClick={() => handleEdit(product)}
@@ -1919,6 +2041,14 @@ export default function ProductsPage() {
                             />
                             <button
                               type="button"
+                              onClick={() => handleOpenAiStudioFromEditModal(url)}
+                              className="absolute -top-2 -left-2 bg-neutral-900 text-amber-400 rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity touch-manipulation hover:scale-110 shadow-sm"
+                              title="Re-Imagine with Gemini AI"
+                            >
+                              <Sparkles className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => removeProductImage(url)}
                               className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity touch-manipulation"
                               title={'Remove image'}
@@ -1955,6 +2085,16 @@ export default function ProductsPage() {
                       >
                         <ImageIcon className="w-4 h-4" />
                         {'Select from media'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenAiStudioFromEditModal()}
+                        disabled={productImages.length === 0}
+                        className="inline-flex items-center gap-2 px-3 py-2 text-xs sm:text-sm font-semibold bg-neutral-950 text-white rounded hover:bg-neutral-800 active:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
+                        title="Re-imagine product photos and size guides using Gemini AI"
+                      >
+                        <Sparkles className="w-4 h-4 text-amber-400" />
+                        <span>{'Re-Imagine with Gemini AI'}</span>
                       </button>
                     </div>
                   </div>
@@ -3568,6 +3708,20 @@ export default function ProductsPage() {
             )}
           </div>
         </AdminModal>
+
+        {/* Gemini AI Image Studio Modal */}
+        {isAiStudioOpen && (
+          <AiImageStudioModal
+            isOpen={isAiStudioOpen}
+            onClose={() => setIsAiStudioOpen(false)}
+            productTitle={aiStudioProductContext?.name || formData.name || 'Pet Product'}
+            images={aiStudioProductContext?.images || productImages}
+            initialFocusedImage={aiStudioFocusedImage}
+            onReplaceImage={handleAiStudioReplaceImage}
+            onAddImage={handleAiStudioAddImage}
+            onApplyAllCompleted={handleAiStudioApplyAll}
+          />
+        )}
     </AdminLayout>
   );
 }
