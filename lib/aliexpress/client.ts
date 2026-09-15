@@ -5,23 +5,21 @@ import { logger } from '@/lib/logger';
 import { getGeminiApiKey } from '@/lib/gemini/copywriter';
 
 /**
- * Generate TOP (Taobao/AliExpress Open Platform) MD5 signature
+ * Generate TOP (Taobao/AliExpress Open Platform) HMAC-SHA256 signature
  */
-export function generateTopSignature(params: Record<string, string>, appSecret: string): string {
-  // 1. Sort all parameter keys alphabetically
-  const sortedKeys = Object.keys(params).sort();
-
-  // 2. Concatenate secret + key1value1key2value2... + secret
-  let query = appSecret;
-  for (const key of sortedKeys) {
-    if (key !== 'sign' && params[key] !== undefined && params[key] !== null) {
-      query += key + params[key];
-    }
+export function generateTopSignature(params: Record<string, any>, appSecret: string): string {
+  const p = { ...params };
+  let basestring = '';
+  if (typeof p.method === 'string' && p.method.includes('/')) {
+    basestring = p.method;
+    delete p.method;
   }
-  query += appSecret;
+  basestring += Object.entries(p)
+    .filter(([k, v]) => v != null && k !== 'sign')
+    .sort(([a], [b]) => a.localeCompare(b))
+    .reduce((acc, [k, v]) => acc + k + String(v), '');
 
-  // 3. Compute MD5 hash and return uppercase hex
-  return crypto.createHash('md5').update(query, 'utf8').digest('hex').toUpperCase();
+  return crypto.createHmac('sha256', appSecret).update(basestring).digest('hex').toUpperCase();
 }
 
 /**
@@ -48,15 +46,12 @@ export async function callAliExpressApi(
     const sysParams: Record<string, string> = {
       app_key: appKey,
       timestamp: String(Date.now()),
-      format: 'json',
-      v: '2.0',
-      sign_method: 'md5',
+      sign_method: 'sha256',
       method: method
     };
 
     if (accessToken) {
       sysParams.session = accessToken;
-      sysParams.access_token = accessToken;
     }
 
     const allParams: Record<string, string> = {
@@ -67,14 +62,14 @@ export async function callAliExpressApi(
     // Calculate signature
     allParams.sign = generateTopSignature(allParams, appSecret);
 
-    const postBody = new URLSearchParams(allParams);
+    const baseUrl = method.includes('/')
+      ? 'https://api-sg.aliexpress.com/rest'
+      : 'https://api-sg.aliexpress.com/sync';
 
-    const response = await fetch(ALIEXPRESS_CONFIG.apiGateway, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8'
-      },
-      body: postBody.toString()
+    const url = `${baseUrl}?${new URLSearchParams(allParams).toString()}`;
+
+    const response = await fetch(url, {
+      method: 'POST'
     });
 
     const result = await response.json();
@@ -934,13 +929,28 @@ export async function fetchAliExpressProduct(urlOrId: string): Promise<AliExpres
       const resp = apiResult?.aliexpress_ds_product_get_response?.result;
       if (resp) {
         // Format API response to AliExpressProductDetails
-        const rawImages: string[] = (resp.product_small_image_urls?.string || []).concat(resp.product_main_image_url ? [resp.product_main_image_url] : []);
-        const uniqueImages = Array.from(new Set(rawImages)).filter(Boolean);
+        const title = resp.ae_item_base_info_dto?.subject || resp.subject || 'AliExpress Product';
+        const description = resp.ae_item_base_info_dto?.detail || resp.detail || '';
 
-        const rawVariants: AliExpressVariant[] = (resp.aeop_ae_product_s_k_us?.aeop_ae_product_sku || []).map((sku: any, idx: number) => {
+        // Extract Images (modern API returns semicolon-delimited list in ae_multimedia_info_dto.image_urls)
+        let uniqueImages: string[] = [];
+        if (resp.ae_multimedia_info_dto?.image_urls) {
+          uniqueImages = resp.ae_multimedia_info_dto.image_urls.split(';').map((u: string) => u.trim()).filter(Boolean);
+        } else {
+          const rawImages: string[] = (resp.product_small_image_urls?.string || []).concat(resp.product_main_image_url ? [resp.product_main_image_url] : []);
+          uniqueImages = Array.from(new Set(rawImages)).filter(Boolean);
+        }
+        if (uniqueImages.length === 0) uniqueImages = ['/Logo.jpg'];
+
+        // Extract SKUs / Variants (modern API returns ae_item_sku_info_dtos.ae_item_sku_info_d_t_o)
+        const rawSkus: any[] = resp.ae_item_sku_info_dtos?.ae_item_sku_info_d_t_o || resp.aeop_ae_product_s_k_us?.aeop_ae_product_sku || [];
+
+        const rawVariants: AliExpressVariant[] = rawSkus.map((sku: any, idx: number) => {
           const rawPrice = Number(sku.offer_sale_price || sku.sku_price || 19.99);
           const gbpPrice = Math.round(rawPrice * 0.82 * 100) / 100;
-          const properties = (sku.aeop_s_k_u_property?.aeop_sku_property || []).map((p: any) => ({
+
+          const propList = sku.ae_sku_property_dtos?.ae_sku_property_d_t_o || sku.aeop_s_k_u_property?.aeop_sku_property || [];
+          const properties = propList.map((p: any) => ({
             name: p.sku_property_name || 'Option',
             value: p.property_value_definition_name || p.sku_property_value || 'Default',
             imageUrl: p.sku_image
@@ -949,26 +959,27 @@ export async function fetchAliExpressProduct(urlOrId: string): Promise<AliExpres
           const sizeVal = properties.find((p: any) => /size/i.test(p.name))?.value;
           const optionNames = properties.map((p: any) => p.value).join(' / ');
 
-          let baseSku = sku.sku_code?.trim();
+          let baseSku = sku.sku_code?.trim() || sku.id;
           if (!baseSku) {
             baseSku = generateVariantSku(productId, optionNames || `Option-${idx + 1}`, idx);
           } else if (sizeVal) {
-            // If supplier provided an SKU like 1005003079767433-RED, ensure the sizing is in the SKU!
             const cleanSize = extractCleanSizeCode(sizeVal);
             if (cleanSize && !baseSku.includes(cleanSize)) {
               baseSku = `${baseSku}-${cleanSize}`;
             }
           }
 
+          const propImg = properties.find((p: any) => p.imageUrl)?.imageUrl;
+
           return {
             skuId: String(sku.sku_id || `${productId}-${idx + 1}`),
-            skuCode: baseSku,
+            skuCode: String(baseSku),
             price: gbpPrice,
             originalPrice: sku.sku_price ? Math.round(Number(sku.sku_price) * 0.82 * 100) / 100 : undefined,
             currency: 'GBP',
-            stock: Number(sku.ipm_sku_stock || 99),
+            stock: Number(sku.sku_available_stock || sku.ipm_sku_stock || 99),
             properties,
-            imageUrl: sku.sku_image || uniqueImages[0] || '/Logo.jpg'
+            imageUrl: propImg || sku.sku_image || uniqueImages[0] || '/Logo.jpg'
           };
         });
 
@@ -976,9 +987,9 @@ export async function fetchAliExpressProduct(urlOrId: string): Promise<AliExpres
         const prices = variants.map((v) => v.price);
         return {
           productId,
-          title: resp.subject || 'AliExpress Product',
-          description: resp.detail || '',
-          images: uniqueImages.length > 0 ? uniqueImages : ['/Logo.jpg'],
+          title,
+          description,
+          images: uniqueImages,
           variants: variants.length > 0 ? variants : [],
           properties: {},
           priceMin: prices.length > 0 ? Math.min(...prices) : 19.99,
