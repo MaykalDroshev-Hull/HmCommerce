@@ -7,7 +7,7 @@ import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useStoreSettings } from '@/context/StoreSettingsContext';
-import { useCart } from '@/contexts/CartContext';
+import { useCart } from '@/context/CartContext';
 import { CheckCircle, Package, Truck, MapPin, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
 import { KlarnaBadgeIcon, ApplePayIcon, PayPalIcon } from '@/components/PaymentIcons';
 
