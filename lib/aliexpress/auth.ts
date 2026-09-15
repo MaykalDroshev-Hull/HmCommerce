@@ -4,7 +4,7 @@ import { logger } from '@/lib/logger';
 export const ALIEXPRESS_CONFIG = {
   appKey: process.env.ALIEXPRESS_APP_KEY || '546324',
   appSecret: process.env.ALIEXPRESS_APP_SECRET || '0wUdqT6XZKduDfjqxixtIsqToOSvyXz',
-  redirectUri: process.env.ALIEXPRESS_REDIRECT_URI || 'https://mb-paws.com/api/aliexpress/callback',
+  redirectUri: process.env.ALIEXPRESS_REDIRECT_URI || 'https://mb-paws.co.uk/api/aliexpress/callback',
   authUrl: 'https://oauth.aliexpress.com/authorize',
   tokenUrl: 'https://oauth.aliexpress.com/token',
   apiGateway: 'https://api-sg.aliexpress.com/rest'

@@ -992,12 +992,13 @@ export async function fetchAliExpressProduct(urlOrId: string): Promise<AliExpres
     }
   }
 
-  // 2. Fallback to resilient parser
+  // 2. Fallback to resilient HTML scraper/parser
   const product = await scrapeAliExpressProduct(productId);
-  if (product && canonicalUrl) {
-    product.sourceUrl = canonicalUrl;
+  if (product) {
+    if (canonicalUrl) product.sourceUrl = canonicalUrl;
+    return product;
   }
-  return product;
+  return null;
 }
 
 /**
