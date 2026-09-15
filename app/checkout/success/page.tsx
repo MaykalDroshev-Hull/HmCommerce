@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useStoreSettings } from '@/context/StoreSettingsContext';
+import { useCart } from '@/contexts/CartContext';
 import { CheckCircle, Package, Truck, MapPin, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
 import { KlarnaBadgeIcon, ApplePayIcon, PayPalIcon } from '@/components/PaymentIcons';
 
@@ -58,6 +59,7 @@ function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const { theme } = useTheme();
   const { settings } = useStoreSettings();
+  const { clearCart } = useCart();
   
   const [orderId, setOrderId] = useState<string>('');
   const [order, setOrder] = useState<Order | null>(null);
@@ -111,6 +113,8 @@ function CheckoutSuccessContent() {
       const data = await response.json();
       if (data.success && data.order) {
         setOrder(data.order);
+        // Clear the cart once we've confirmed the order was successful
+        clearCart();
       } else {
         throw new Error('Invalid order data');
       }

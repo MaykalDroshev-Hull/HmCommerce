@@ -32,6 +32,7 @@ export interface CreateStripeSessionParams {
     price: number;
     quantity: number;
     size?: string;
+    imageUrl?: string;
   }>;
   deliveryCost: number;
   discountAmount?: number;
@@ -73,15 +74,26 @@ export async function createStripeCheckoutSession(params: CreateStripeSessionPar
     const itemName = item.name || 'MB-Paws Canine Gear';
     const variantName = item.size ? `${itemName} - Size ${item.size}` : itemName;
 
+    // Build product images array — use the item's actual image URL if available
+    const productImages: string[] = [];
+    if (item.imageUrl) {
+      // If imageUrl is a relative path, prefix with siteUrl; otherwise use as-is
+      const imgUrl = item.imageUrl.startsWith('http')
+        ? item.imageUrl
+        : `${siteUrl}${item.imageUrl.startsWith('/') ? '' : '/'}${item.imageUrl}`;
+      // Stripe only accepts HTTPS image URLs
+      if (imgUrl.startsWith('https://')) {
+        productImages.push(imgUrl);
+      }
+    }
+
     return {
       price_data: {
         currency: 'gbp',
         product_data: {
           name: variantName,
           description: item.size ? `Selected size: ${item.size}` : 'Premium Adventure Canine Gear',
-          ...(siteUrl.startsWith('https://')
-            ? { images: [`${siteUrl}/products/collar-graphite-grey.jpg`] }
-            : {}),
+          ...(productImages.length > 0 ? { images: productImages } : {}),
         },
         unit_amount: Math.round(Number(item.price) * 100),
       },

@@ -492,6 +492,7 @@ function CheckoutContent() {
             price: item.price,
             quantity: item.quantity,
             size: item.size,
+            imageUrl: item.imageUrl,
           })),
           totals: {
             delivery: deliveryCost,
@@ -503,7 +504,6 @@ function CheckoutContent() {
 
       const stripeData = await stripeRes.json();
       if (stripeData.success && stripeData.url) {
-        clearCart();
         window.location.href = stripeData.url;
       } else {
         throw new Error(stripeData.error || 'Failed to initialize Apple Pay session');
@@ -702,6 +702,7 @@ function CheckoutContent() {
               price: item.price,
               quantity: item.quantity,
               size: item.size,
+              imageUrl: item.imageUrl,
             })),
             totals: orderData.totals,
             discount: orderData.discount,
@@ -711,7 +712,6 @@ function CheckoutContent() {
         const stripeData = await stripeRes.json();
 
         if (stripeData.success && stripeData.url) {
-          clearCart();
           resetForm();
           window.location.href = stripeData.url;
           return;
@@ -729,7 +729,6 @@ function CheckoutContent() {
       // Default redirect to success page
       window.location.href = `/checkout/success?orderId=${orderResult.orderId}`;
       
-      clearCart();
       resetForm();
 
     } catch (err) {
