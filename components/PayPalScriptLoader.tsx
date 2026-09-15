@@ -49,14 +49,15 @@ export function usePayPalScript() {
     script.id = scriptId;
     script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(
       clientId
-    )}&currency=GBP&buyer-country=GB&components=buttons,messages&disable-funding=card,credit,paylater,venmo`;
+    )}&currency=GBP&components=buttons,messages&disable-funding=card,credit,paylater,venmo`;
     script.async = true;
 
     script.onload = () => {
       setIsLoaded(true);
     };
 
-    script.onerror = () => {
+    script.onerror = (err) => {
+      console.error('PayPal SDK load error:', err);
       setLoadError('Failed to load PayPal SDK');
     };
 

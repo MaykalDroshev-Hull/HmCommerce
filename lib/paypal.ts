@@ -15,11 +15,12 @@ let cachedToken: { token: string; expiresAt: number } | null = null;
 export async function getPaypalAccessToken(): Promise<string> {
   const clientId =
     process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || process.env.PAYPAL_CLIENT_ID;
-  const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+  const clientSecret =
+    process.env.PAYPAL_CLIENT_SECRET || process.env.PAYPAL_SECRET_KEY;
 
   if (!clientId || !clientSecret) {
     throw new Error(
-      'PayPal credentials missing. Please set NEXT_PUBLIC_PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET in .env.local.'
+      'PayPal credentials missing. Please set NEXT_PUBLIC_PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET (or PAYPAL_SECRET_KEY).'
     );
   }
 
