@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ImageSlider from './ImageSlider';
-import AddToCartModal from './AddToCartModal';
 import QuickLoginModal from './QuickLoginModal';
 import { Product } from '@/lib/data';
 import { useLanguage } from '@/context/LanguageContext';
@@ -31,7 +30,6 @@ export default function ProductCard({ product, isFavorited: initialIsFavorited }
   const { theme } = useTheme();
   const { user, isAuthenticated } = useAuth();
   const t = translations[language];
-  const [showAddToCartModal, setShowAddToCartModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isFavorited, setIsFavorited] = useState(initialIsFavorited || false);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
@@ -111,13 +109,8 @@ export default function ProductCard({ product, isFavorited: initialIsFavorited }
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    if (showAddToCartModal) {
-      e.preventDefault();
-      e.stopPropagation();
-      return;
-    }
     const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest('[data-express-checkout]')) {
+    if (target.closest('button.favorite-btn')) {
       e.preventDefault();
       e.stopPropagation();
       return;
@@ -220,32 +213,20 @@ export default function ProductCard({ product, isFavorited: initialIsFavorited }
               or 3 payments of <span className="font-semibold text-neutral-900">£{((promoActive ? displayPrice : (product.price || 36)) / 3).toFixed(2)}</span> with Klarna
             </p>
 
-            {canPurchase && (
-              <div data-express-checkout className="mt-3">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setShowAddToCartModal(true);
-                  }}
-                  className="w-full py-2 px-3 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-2xs active:scale-[0.99]"
-                >
-                  <ShoppingCart size={13} />
-                  <span>{t.expressAdd || 'Quick Add'}</span>
-                </button>
-              </div>
-            )}
+            <div className="mt-3">
+              <button
+                type="button"
+                className="w-full py-2 px-3 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-2xs active:scale-[0.99]"
+              >
+                <span>View</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
 
-      <AddToCartModal
-        isOpen={showAddToCartModal}
-        onClose={() => setShowAddToCartModal(false)}
-        product={product}
-      />
+
       <QuickLoginModal
         isOpen={showLoginModal}
         onClose={() => setShowLoginModal(false)}

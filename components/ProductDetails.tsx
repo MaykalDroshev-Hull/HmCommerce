@@ -10,7 +10,6 @@ import { Heart, Share2, ChevronDown, ChevronUp, Truck, Check, Info, X, Star } fr
 import KlarnaWidget from './KlarnaWidget';
 import QuickLoginModal from './QuickLoginModal';
 import { PaymentBadgesRow } from './PaymentIcons';
-import PayPalButtons from './PayPalButtons';
 import { getVariantEffectivePrice } from '@/lib/product-promo';
 import { useStoreSettings } from '@/context/StoreSettingsContext';
 import { parseShippingSettings } from '@/lib/shipping-rules';
@@ -599,35 +598,7 @@ export default function ProductDetails({
         </button>
       </div>
 
-      {/* Express Checkout (Dedicated PayPal - UK GBP) */}
-      <div className="pt-2 space-y-2">
-        <div className="relative flex py-1 items-center">
-          <div className="flex-grow border-t border-neutral-200"></div>
-          <span className="flex-shrink mx-3 text-[10px] font-bold uppercase tracking-widest text-neutral-400">
-            Instant Express Checkout
-          </span>
-          <div className="flex-grow border-t border-neutral-200"></div>
-        </div>
 
-        <PayPalButtons
-          mode="product"
-          productData={{
-            productId: product.id || (product as any).productid,
-            variantId: selectedVariant?.productvariantid,
-            price: currentPrice,
-            quantity: 1,
-            title: productName,
-            colour: selectedColour,
-            size: selectedSize,
-          }}
-          onValidate={() => {
-            if (sizeOptions.size > 0 && !selectedSize) {
-              return 'Please select a size before checking out with PayPal';
-            }
-            return true;
-          }}
-        />
-      </div>
 
       {/* Payment Security & Badges */}
       <div className="pt-3 pb-2 flex flex-col items-center sm:items-start gap-1.5 border-b border-neutral-100">
