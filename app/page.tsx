@@ -958,8 +958,8 @@ export default function Home() {
                   </div>
                   <Link
                     href={
-                      featuredProduct?.id
-                        ? `/products/${featuredProduct.id}`
+                      featuredProducts[0]?.id
+                        ? `/products/${featuredProducts[0].id}`
                         : '/products/a51e34f9-bdf0-41dc-a266-bc1e37fcb816'
                     }
                     onClick={() => setActiveStory(null)}

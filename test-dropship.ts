@@ -1,6 +1,6 @@
-import { getStoredAliExpressToken } from './lib/aliexpress/auth.ts';
-import { createDropshipOrder } from './lib/aliexpress/client.ts';
-import { logger } from './lib/logger.ts';
+import { getStoredAliExpressToken } from './lib/aliexpress/auth';
+import { createDropshipOrder } from './lib/aliexpress/client';
+import { logger } from './lib/logger';
 
 async function test() {
   const token = await getStoredAliExpressToken();

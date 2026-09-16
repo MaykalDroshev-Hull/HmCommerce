@@ -31,6 +31,7 @@ interface PayPalButtonsProps {
     };
     discount?: any;
     providedShippingAddress?: any;
+    customerInfo?: any;
   };
   onSuccess?: (orderId: string) => void;
   onError?: (errorMessage: string) => void;
