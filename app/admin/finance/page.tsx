@@ -127,7 +127,7 @@ export default function FinancePage() {
               <div className="bg-white p-6 rounded-lg shadow">
                 <h3 className="text-lg font-semibold text-gray-900">{t.totalRevenue}</h3>
                 <p className="text-3xl font-bold text-success mt-2">
-                  €{financeData.totalRevenue.toFixed(2)}
+                  £{financeData.totalRevenue.toFixed(2)}
                 </p>
                 {financeData.revenueChange !== 0 && (
                   <p className={`text-sm mt-1 ${financeData.revenueChange > 0 ? 'text-success' : 'text-danger'}`}>
@@ -138,10 +138,10 @@ export default function FinancePage() {
               <div className="bg-white p-6 rounded-lg shadow">
                 <h3 className="text-lg font-semibold text-gray-900">{t.netRevenue}</h3>
                 <p className="text-3xl font-bold text-primary mt-2">
-                  €{financeData.netRevenue.toFixed(2)}
+                  £{financeData.netRevenue.toFixed(2)}
                 </p>
                 <p className="text-sm text-gray-500 mt-1">
-                  {t.afterDeliveryCostsText} €{financeData.totalDeliveryCost.toFixed(2)}
+                  {t.afterDeliveryCostsText} £{financeData.totalDeliveryCost.toFixed(2)}
                 </p>
               </div>
               <div className="bg-white p-6 rounded-lg shadow">
@@ -158,7 +158,7 @@ export default function FinancePage() {
               <div className="bg-white p-6 rounded-lg shadow">
                 <h3 className="text-lg font-semibold text-gray-900">{t.averageOrderValue}</h3>
                 <p className="text-3xl font-bold text-primary mt-2">
-                  €{financeData.averageOrderValue.toFixed(2)}
+                  £{financeData.averageOrderValue.toFixed(2)}
                 </p>
                 <p className="text-sm text-gray-500 mt-1">{t.perOrder}</p>
               </div>
@@ -192,12 +192,12 @@ export default function FinancePage() {
                         <div>
                           <p className="font-medium text-gray-900">{transaction.customer || 'Unknown Customer'}</p>
                           <p className="text-sm text-gray-500">
-                            {t.orderNumber}{transaction.orderid} • {new Date(transaction.date).toLocaleDateString()}
+                            {t.orderNumber}{transaction.orderid} ⣢ {new Date(transaction.date).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-success">€{transaction.amount.toFixed(2)}</p>
+                        <p className="font-semibold text-success">£{transaction.amount.toFixed(2)}</p>
                         <Badge variant={getOrderStatusVariant(transaction.status)} className="mt-1">
                           {transaction.status === 'delivered' ? t.delivered :
                            transaction.status === 'shipped' ? t.shipped :
@@ -279,14 +279,14 @@ export default function FinancePage() {
               <div className="bg-white p-6 rounded-lg shadow text-center">
                 <h3 className="text-lg font-semibold text-gray-900">{t.deliveryCosts}</h3>
                 <p className="text-3xl font-bold text-danger mt-2">
-                  €{financeData.totalDeliveryCost.toFixed(2)}
+                  £{financeData.totalDeliveryCost.toFixed(2)}
                 </p>
                 <p className="text-sm text-gray-500 mt-1">{t.totalShippingExpenses}</p>
               </div>
               <div className="bg-white p-6 rounded-lg shadow text-center">
                 <h3 className="text-lg font-semibold text-gray-900">{t.pendingPayments}</h3>
                 <p className="text-3xl font-bold text-warning mt-2">
-                  €{financeData.pendingPayments.toFixed(2)}
+                  £{financeData.pendingPayments.toFixed(2)}
                 </p>
                 <p className="text-sm text-gray-500 mt-1">{t.awaitingProcessing}</p>
               </div>

@@ -1033,16 +1033,22 @@ export async function createDropshipOrder(
           phone_country: '+44',
           mobile_no: orderRequest.shippingAddress.phone || '07123456789'
         },
-        product_items: orderRequest.items.map((item) => ({
-          product_id: orderRequest.aliexpressProductId,
-          sku_attr: item.aliexpressSkuId,
-          product_count: item.quantity
-        }))
+        product_items: orderRequest.items.map((item) => {
+          const isSkuAttr = item.aliexpressSkuId && item.aliexpressSkuId.includes(':');
+          return {
+            product_id: orderRequest.aliexpressProductId,
+            ...(isSkuAttr ? { sku_attr: item.aliexpressSkuId } : { sku_id: item.aliexpressSkuId }),
+            product_count: item.quantity
+          };
+        })
       })
     };
 
-    const response = await callAliExpressApi('aliexpress.ds.trade.order.create', params, accessToken);
-    const result = response?.aliexpress_ds_trade_order_create_response?.result;
+    logger.info('AliExpress API Payload:', params);
+    const response = await callAliExpressApi('aliexpress.trade.buy.placeorder', params, accessToken);
+    logger.info('AliExpress API Response:', JSON.stringify(response, null, 2));
+    
+    const result = response?.aliexpress_trade_buy_placeorder_response?.result;
 
     if (result && result.order_list?.number) {
       const orderIds = Array.isArray(result.order_list.number)
@@ -1057,7 +1063,12 @@ export async function createDropshipOrder(
 
     return {
       success: false,
-      error: response?.error_response?.sub_msg || response?.error_response?.msg || 'AliExpress order placement failed'
+      error: response?.error_response?.sub_msg || 
+             response?.error_response?.msg || 
+             result?.error_msg || 
+             result?.error_code || 
+             JSON.stringify(response) || 
+             'AliExpress order placement failed'
     };
   } catch (error: any) {
     logger.error('Error placing dropship order on AliExpress:', error);

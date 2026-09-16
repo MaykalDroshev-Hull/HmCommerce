@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
           order_items(
             *,
             product:productid(aliexpress_product_id),
-            variant:productvariantid(aliexpress_sku_id)
+            variant:productvariantid(sku, aliexpress_sku_id)
           )
         `)
         .eq('orderid', orderId)
@@ -165,18 +165,26 @@ export async function POST(request: NextRequest) {
           aliexpressProductId: dropshipItem.product.aliexpress_product_id,
           items: order.order_items
             .filter((item: any) => item.product?.aliexpress_product_id)
-            .map((item: any) => ({
-              aliexpressSkuId: item.variant?.aliexpress_sku_id || '',
-              quantity: item.quantity,
-              price: item.price
-            })),
+            .map((item: any) => {
+              let skuAttr = item.variant?.sku || item.variant?.aliexpress_sku_id || '';
+              if (skuAttr.includes('#')) {
+                skuAttr = skuAttr.split('#')[0];
+              }
+              return {
+                aliexpressSkuId: skuAttr,
+                quantity: item.quantity,
+                price: item.price
+              };
+            }),
           shippingAddress: {
-            fullName: `${order.customer_order_note || 'Customer'}`,
-            addressLine1: order.deliverystreet || 'High Street',
-            addressLine2: order.deliveryapartment || '',
-            city: order.delivery_region || 'London',
-            postcode: order.econtoffice || 'SW1A 1AA',
-            country: 'GB'
+            fullName: `${order.customerfirstname || ''} ${order.customerlastname || ''}`.trim() || 'Customer',
+            addressLine1: order.deliverystreet ? `${order.deliverystreet} ${order.deliverystreetnumber || ''}`.trim() : 'High Street',
+            addressLine2: order.deliveryapartment ? `Apt ${order.deliveryapartment}` : '',
+            city: order.customercity || 'London',
+            region: 'England',
+            postcode: 'SW1A 1AA', // Fallback since postcode isn't in orders table
+            country: 'GB',
+            phone: order.customertelephone || '07123456789'
           }
         },
         token

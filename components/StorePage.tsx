@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ChevronRight, Sparkles, X, SlidersHorizontal, Tag, FileText, ArrowRight } from 'lucide-react';
 import ProductCard from './ProductCard';
 import ProductFilters from './ProductFilters';
@@ -590,8 +591,14 @@ export default function StorePage({ products, currentPage }: StorePageProps) {
         {/* Friendly Pet Parent Empty State */}
         {sortedProducts.length === 0 && (
           <div className="text-center py-16 sm:py-24 max-w-lg mx-auto">
-            <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-4 text-neutral-700">
-              <Sparkles size={22} />
+            <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center mx-auto mb-4 opacity-50 grayscale hover:opacity-80 transition-opacity">
+              <Image 
+                src="/Black Logo.png"
+                alt="Meow Bark"
+                width={80}
+                height={80}
+                className="w-full h-full object-contain"
+              />
             </div>
             <h3 className="text-base sm:text-lg font-bold text-neutral-950 mb-1">
               {siteResults.categories.length > 0 || siteResults.pages.length > 0

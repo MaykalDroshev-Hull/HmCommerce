@@ -155,7 +155,7 @@ export default function StockInPage() {
                 style={{ borderColor: theme.colors.border, color: theme.colors.text, backgroundColor: theme.colors.cardBg }}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder={'Product, SKU, color…'}
+                placeholder={'Product, SKU, color⣦'}
               />
             </div>
           </div>
@@ -171,7 +171,7 @@ export default function StockInPage() {
               value={selectedId}
               onChange={(e) => setSelectedId(e.target.value)}
             >
-              <option value="">{'— choose —'}</option>
+              <option value="">{'⣔ choose ⣔'}</option>
               {filtered.map((v) => (
                 <option key={v.productvariantid} value={v.productvariantid}>
                   {v.product_name} · {v.characteristics.map((c) => `${c.property_name}: ${c.value}`).join(', ') || v.sku || v.productvariantid.slice(0, 8)} · Q:{v.quantity}
@@ -240,7 +240,7 @@ export default function StockInPage() {
             className="w-full py-3.5 rounded-lg font-semibold text-white min-h-[48px] touch-manipulation disabled:opacity-60"
             style={{ backgroundColor: theme.colors.primary }}
           >
-            {saving ? '…' : 'Receive stock'}
+            {saving ? '⣦' : 'Receive stock'}
           </button>
         </form>
       </div>

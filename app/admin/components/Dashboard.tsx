@@ -248,7 +248,7 @@ export default function Dashboard() {
             value={dashboardData.totalSales}
             growth={dashboardData.salesGrowth}
             icon={EuroIcon}
-            suffix="€"
+            suffix="£"
           />
           <MetricCard
             title={t.totalOrders}
@@ -354,7 +354,7 @@ export default function Dashboard() {
                           className="text-[10px] sm:text-xs ml-1 sm:block"
                           style={{ color: theme.colors.textSecondary }}
                         >
-                          €{productType.sales.toFixed(2)}
+                          £{productType.sales.toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -424,7 +424,7 @@ export default function Dashboard() {
                     </p>
                   </div>
                   <div className="flex items-center justify-between sm:flex-col sm:items-end sm:justify-start gap-2">
-                    <p className="font-medium text-sm sm:text-base">€{order.amount.toFixed(2)}</p>
+                    <p className="font-medium text-sm sm:text-base">£{order.amount.toFixed(2)}</p>
                     <Badge variant={getOrderStatusVariant(order.status)} className="text-[10px] sm:text-xs">
                       {order.status}
                     </Badge>
@@ -491,7 +491,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="font-medium text-xs sm:text-sm">€{product.revenue.toFixed(2)}</p>
+                    <p className="font-medium text-xs sm:text-sm">£{product.revenue.toFixed(2)}</p>
                     {product.growth !== 0 && (
                       <div className="flex items-center justify-end mt-0.5">
                         {product.growth >= 0 ? (

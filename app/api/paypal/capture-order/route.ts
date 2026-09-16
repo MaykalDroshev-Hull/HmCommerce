@@ -132,11 +132,11 @@ export async function POST(request: NextRequest) {
     const firstName = nameParts[0] || payer.name?.given_name || 'Valued';
     const lastName = nameParts.slice(1).join(' ') || payer.name?.surname || 'Customer';
 
-    const email = payer.email_address || '';
-    const telephone = payer.phone?.phone_number?.national_number || '';
+    const email = payer.email_address || body.customerInfo?.email || '';
+    const telephone = payer.phone?.phone_number?.national_number || body.customerInfo?.telephone || '';
 
-    const street = address.address_line_1 || '';
-    const streetNumber = address.address_line_2 || '';
+    const street = address.address_line_1 || body.customerInfo?.street || '';
+    const streetNumber = address.address_line_2 || body.customerInfo?.streetNumber || '';
     const city = address.admin_area_2 || address.admin_area_1 || 'United Kingdom';
     const postalCode = address.postal_code || '';
     const country = address.country_code === 'GB' ? 'United Kingdom' : (address.country_code || 'United Kingdom');

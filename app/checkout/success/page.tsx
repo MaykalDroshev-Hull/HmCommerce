@@ -384,9 +384,15 @@ function CheckoutSuccessContent() {
               <p className="font-bold text-neutral-900" style={{ color: theme.colors.text }}>
                 {order.customerfirstname} {order.customerlastname}
               </p>
-              <p>{order.customeremail}</p>
-              <p>{order.customertelephone}</p>
-              <p>{order.customercity}, {order.customercountry || 'United Kingdom'}</p>
+              {order.customeremail && !order.customeremail.endsWith('@checkout.local') && (
+                <p>{order.customeremail}</p>
+              )}
+              {order.customertelephone && order.customertelephone !== 'N/A' && (
+                <p>{order.customertelephone}</p>
+              )}
+              {order.customercity && order.customercity !== 'United Kingdom' && (
+                <p>{order.customercity}, {order.customercountry || 'United Kingdom'}</p>
+              )}
             </div>
           </div>
 

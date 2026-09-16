@@ -11,7 +11,7 @@ import { useCart } from '@/context/CartContext';
 import { useStoreSettings } from '@/context/StoreSettingsContext';
 import { translations } from '@/lib/translations';
 import Link from 'next/link';
-import { ExpressCheckoutButtons } from './PaymentIcons';
+
 import { getFreeDeliveryProgress } from '@/lib/shipping-rules';
 
 function unlockBodyScroll(savedScrollY: number) {
@@ -57,17 +57,7 @@ const CartDrawer: React.FC = () => {
     router.push('/checkout');
   }, [closeCart, router]);
 
-  const handleApplePayCheckout = useCallback(() => {
-    unlockBodyScroll(scrollYRef.current);
-    closeCart();
-    router.push('/checkout?paymentMethod=applepay');
-  }, [closeCart, router]);
 
-  const handlePayPalCheckout = useCallback(() => {
-    unlockBodyScroll(scrollYRef.current);
-    closeCart();
-    router.push('/checkout?paymentMethod=paypal');
-  }, [closeCart, router]);
 
   // Handle smooth open and close transitions with body scroll lock
   useEffect(() => {
@@ -350,12 +340,6 @@ const CartDrawer: React.FC = () => {
                 {formatPrice(totalPrice)}
               </span>
             </div>
-
-            {/* Express Checkout (Apple Pay & PayPal) */}
-            <ExpressCheckoutButtons
-              onApplePay={handleApplePayCheckout}
-              onPayPal={handlePayPalCheckout}
-            />
 
             <div className="flex gap-3">
               <button

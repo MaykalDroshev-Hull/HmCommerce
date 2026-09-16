@@ -135,6 +135,7 @@ export default function PayPalButtons({
           } else {
             capturePayload.cartItems = checkoutData?.items;
             capturePayload.discount = checkoutData?.discount;
+            capturePayload.customerInfo = checkoutData?.customerInfo;
           }
 
           const response = await fetch('/api/paypal/capture-order', {

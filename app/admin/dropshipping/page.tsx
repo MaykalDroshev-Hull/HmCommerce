@@ -77,6 +77,7 @@ interface StudioQueueItem {
   status: 'idle' | 'generating' | 'completed' | 'error';
   generatedUrl?: string;
   error?: string;
+  selectedToGenerate?: boolean;
 }
 
 export default function DropshippingPage() {
@@ -144,6 +145,7 @@ export default function DropshippingPage() {
   const [isLoadingLinkedProducts, setIsLoadingLinkedProducts] = useState(false);
   const [linkedProductsSearch, setLinkedProductsSearch] = useState('');
   const [syncingProductId, setSyncingProductId] = useState<string | null>(null);
+  const [isSyncingAll, setIsSyncingAll] = useState(false);
   const [syncFeedback, setSyncFeedback] = useState<{ productId: string; message: string; isError?: boolean } | null>(null);
 
   // Relink Modal state
@@ -264,6 +266,50 @@ export default function DropshippingPage() {
       });
     } finally {
       setSyncingProductId(null);
+    }
+  };
+
+  const handleSyncAllStock = async () => {
+    try {
+      setIsSyncingAll(true);
+      setSyncFeedback(null);
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const product of linkedProducts) {
+        setSyncingProductId(product.productId);
+        try {
+          const res = await fetch('/api/aliexpress/sync-supplier', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId: product.productId, updateStock: true })
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) {
+            failCount++;
+          } else {
+            successCount++;
+          }
+        } catch (e) {
+          failCount++;
+        }
+      }
+
+      setSyncFeedback({
+        productId: 'all',
+        message: `Sync complete. ${successCount} products synced successfully${failCount > 0 ? `, ${failCount} failed` : ''}.`,
+        isError: failCount > 0 && successCount === 0
+      });
+      loadLinkedProducts();
+    } catch (err: any) {
+      setSyncFeedback({
+        productId: 'all',
+        message: 'An error occurred while syncing products.',
+        isError: true
+      });
+    } finally {
+      setSyncingProductId(null);
+      setIsSyncingAll(false);
     }
   };
 
@@ -466,9 +512,9 @@ export default function DropshippingPage() {
     return `Give your beloved furbaby the ultimate in tail-wagging comfort and style! Designed with pure pet happiness in mind, the ${prodTitle} delivers the perfect blend of cozy warmth, effortless dressing, and delightful charm for family gatherings, park walks, and celebrations.
 
 Why Devoted Pet Parents Love It:
-• Exceptionally Soft & Gentle: Crafted from skin-friendly, breathable fabric that won't pinch, rub, or tug against delicate fur.
-• Fuss-Free Dressing: Engineered with quick, secure fastenings for a snug fit that stays comfortably in place through running and play.
-• Safe & Lightweight: Designed for unrestricted movement so your four-legged companion can strut and play happily.
+⣢ Exceptionally Soft & Gentle: Crafted from skin-friendly, breathable fabric that won't pinch, rub, or tug against delicate fur.
+⣢ Fuss-Free Dressing: Engineered with quick, secure fastenings for a snug fit that stays comfortably in place through running and play.
+⣢ Safe & Lightweight: Designed for unrestricted movement so your four-legged companion can strut and play happily.
 
 Sizing & Fit:
 We always recommend measuring your pet's neck and chest girth before ordering to ensure the most comfortable, tail-wagging fit.
@@ -616,7 +662,8 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
         sourceUrl: url,
         imageType: isLikelySizeGuide ? 'size_guide' : 'product',
         logoVariant: 'black',
-        status: 'idle'
+        status: 'idle',
+        selectedToGenerate: true
       };
     });
 
@@ -698,6 +745,27 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
       });
       setStudioError(err.message || 'Network error');
     }
+  };
+
+  const handleRevertItem = (index: number) => {
+    setStudioQueue((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], status: 'idle', generatedUrl: undefined, error: undefined };
+      return next;
+    });
+    if (activeQueueIndex === index) {
+      setGeneratedImageUrl(null);
+      setStudioError(null);
+    }
+  };
+
+  const handleToggleItemSelection = (index: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setStudioQueue((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], selectedToGenerate: !next[index].selectedToGenerate };
+      return next;
+    });
   };
 
   // Generate ALL queued images simultaneously
@@ -1349,7 +1417,7 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                           </>
                         )}
                       </button>
-                      <span className="text-neutral-300">•</span>
+                      <span className="text-neutral-300">⣢</span>
                       <button
                         type="button"
                         onClick={() => {
@@ -1621,7 +1689,7 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                         } else if (sell > 0) {
                           return <p className="text-sm font-bold text-red-500">Below Cost</p>;
                         } else {
-                          return <p className="text-sm text-neutral-400 font-medium">—</p>;
+                          return <p className="text-sm text-neutral-400 font-medium">⣔</p>;
                         }
                       })()}
                     </div>
@@ -1874,11 +1942,20 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
               <div className="flex items-center gap-2">
                 <button
                   type="button"
+                  onClick={handleSyncAllStock}
+                  disabled={isSyncingAll || isLoadingLinkedProducts || linkedProducts.length === 0}
+                  className="px-3.5 py-2 text-xs font-semibold bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw size={13} className={isSyncingAll ? 'animate-spin' : ''} />
+                  <span>{isSyncingAll ? 'Syncing All...' : 'Sync All Stock'}</span>
+                </button>
+                <button
+                  type="button"
                   onClick={loadLinkedProducts}
-                  disabled={isLoadingLinkedProducts}
+                  disabled={isLoadingLinkedProducts || isSyncingAll}
                   className="px-3.5 py-2 text-xs font-semibold border border-neutral-300 rounded-lg hover:bg-neutral-50 flex items-center gap-1.5 transition-colors"
                 >
-                  <RefreshCw size={13} className={isLoadingLinkedProducts ? 'animate-spin' : ''} />
+                  <RefreshCw size={13} className={isLoadingLinkedProducts && !isSyncingAll ? 'animate-spin' : ''} />
                   <span>Refresh List</span>
                 </button>
               </div>
@@ -2185,7 +2262,7 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                           <span className="text-xs font-bold text-neutral-900">
                             Order #{order.orderid}
                           </span>
-                          <span className="text-xs text-neutral-400">•</span>
+                          <span className="text-xs text-neutral-400">⣢</span>
                           <span className="text-xs text-neutral-500">
                             {new Date(order.createdat).toLocaleDateString('en-GB')}
                           </span>
@@ -2354,7 +2431,7 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                   </div>
                   <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-lg">
                     <span className="text-[10px] font-semibold text-neutral-400 uppercase">App Secret</span>
-                    <p className="text-xs font-mono font-bold text-neutral-900 mt-0.5">••••••••••••••••</p>
+                    <p className="text-xs font-mono font-bold text-neutral-900 mt-0.5">⣢⣢⣢⣢⣢⣢⣢⣢⣢⣢⣢⣢⣢⣢⣢⣢</p>
                   </div>
                 </div>
               </div>
@@ -2490,7 +2567,7 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                       <button
                         type="button"
                         onClick={handleApplyAllCompleted}
-                        className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
+                        className="inline-flex items-center justify-center flex-1 sm:flex-initial gap-1.5 px-3 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
                       >
                         <CheckCircle2 size={13} />
                         <span>Apply All Completed ({completedCount}) to Store</span>
@@ -2499,9 +2576,10 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                     <button
                       type="button"
                       onClick={() => setIsStudioOpen(false)}
-                      className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors touch-manipulation min-w-[36px] min-h-[36px] flex items-center justify-center shrink-0"
+                      className="p-2 sm:py-2 sm:px-3 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors touch-manipulation min-w-[36px] min-h-[36px] sm:h-[32px] sm:min-h-0 flex items-center justify-center shrink-0"
                     >
                       <X size={18} />
+                      <span className="hidden sm:inline-block ml-1 text-xs font-bold">Close</span>
                     </button>
                   </div>
                 </div>
@@ -2516,16 +2594,16 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                       {studioQueue.map((item, idx) => {
                         const isActive = idx === activeQueueIndex;
                         return (
-                          <button
-                            key={item.id}
-                            type="button"
-                            onClick={() => handleSelectQueueIndex(idx)}
-                            className={`relative shrink-0 w-11 h-11 sm:w-12 sm:h-12 rounded-lg overflow-hidden border-2 transition-all touch-manipulation group ${
-                              isActive
-                                ? 'border-neutral-950 ring-2 ring-neutral-950/20 shadow-md scale-105'
-                                : 'border-neutral-300 hover:border-neutral-400 opacity-75 hover:opacity-100'
-                            }`}
-                          >
+                          <div key={item.id} className="relative shrink-0 flex flex-col items-center">
+                            <button
+                              type="button"
+                              onClick={() => handleSelectQueueIndex(idx)}
+                              className={`relative w-11 h-11 sm:w-12 sm:h-12 rounded-lg overflow-hidden border-2 transition-all touch-manipulation group ${
+                                isActive
+                                  ? 'border-neutral-950 ring-2 ring-neutral-950/20 shadow-md scale-105'
+                                  : 'border-neutral-300 hover:border-neutral-400 opacity-75 hover:opacity-100'
+                              }`}
+                            >
                             <img
                               src={item.generatedUrl || item.sourceUrl}
                               alt={`Queue ${idx + 1}`}
@@ -2549,12 +2627,25 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                                 <AlertCircle size={9} />
                               </span>
                             )}
-                            {item.imageType === 'size_guide' && (
-                              <span className="absolute bottom-0 inset-x-0 bg-neutral-950/80 text-[8px] text-amber-300 font-bold uppercase text-center py-0.2 truncate leading-tight">
-                                Size
-                              </span>
-                            )}
-                          </button>
+                              {item.imageType === 'size_guide' && (
+                                <span className="absolute bottom-0 inset-x-0 bg-neutral-950/80 text-[8px] text-amber-300 font-bold uppercase text-center py-0.2 truncate leading-tight">
+                                  Size
+                                </span>
+                              )}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => handleToggleItemSelection(idx, e)}
+                              className="mt-1"
+                              title="Toggle generate selection"
+                            >
+                              {item.selectedToGenerate ? (
+                                <CheckCircle2 size={14} className="text-emerald-500" />
+                              ) : (
+                                <div className="w-3.5 h-3.5 rounded-full border border-neutral-400 bg-white" />
+                              )}
+                            </button>
+                          </div>
                         );
                       })}
                     </div>
@@ -2565,7 +2656,7 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                     <button
                       type="button"
                       onClick={handleGenerateAllQueued}
-                      disabled={isBatchGenerating || studioQueue.some((q) => q.status === 'generating')}
+                      disabled={isBatchGenerating || !studioQueue.some((q) => q.selectedToGenerate) || studioQueue.some((q) => q.status === 'generating')}
                       className="px-3.5 py-2 bg-neutral-950 hover:bg-black text-white text-xs font-bold rounded-lg transition-all shadow-sm flex items-center gap-1.5 touch-manipulation disabled:opacity-50"
                     >
                       {isBatchGenerating ? (
@@ -2576,7 +2667,7 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                       ) : (
                         <>
                           <Sparkles size={13} className="text-amber-400" />
-                          <span>Re-imagine All ({studioQueue.length}) Directly</span>
+                          <span>Re-imagine Selected ({studioQueue.filter((q) => q.selectedToGenerate).length})</span>
                         </>
                       )}
                     </button>
@@ -2811,24 +2902,44 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
 
                     {/* Active Item Action Buttons */}
                     <div className="pt-1 flex flex-col gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleGenerateDirectItem(activeQueueIndex)}
-                        disabled={activeItem?.status === 'generating' || isBatchGenerating}
-                        className="w-full py-3 px-4 bg-neutral-950 hover:bg-black text-white text-xs sm:text-sm font-bold rounded-xl transition-all shadow-md flex items-center justify-center gap-2 touch-manipulation disabled:opacity-50"
-                      >
-                        {activeItem?.status === 'generating' ? (
-                          <>
-                            <RefreshCw size={14} className="animate-spin text-amber-400" />
-                            <span>Feeding Directly to Gemini...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles size={14} className="text-amber-400" />
-                            <span>Re-imagine Active Image #{activeQueueIndex + 1} Directly</span>
-                          </>
+                      <div className="flex gap-2 w-full mt-3">
+                        {activeItem?.status === 'completed' && activeItem?.generatedUrl && (
+                          <button
+                            type="button"
+                            onClick={() => handleRevertItem(activeQueueIndex)}
+                            className="flex-1 px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-xs font-bold rounded-lg transition-colors border border-neutral-300 shadow-sm"
+                          >
+                            Revert
+                          </button>
                         )}
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => handleGenerateDirectItem(activeQueueIndex)}
+                          disabled={activeItem?.status === 'generating'}
+                          className={`flex-[3] px-4 py-2 ${
+                            activeItem?.status === 'completed'
+                              ? 'bg-neutral-800 hover:bg-neutral-900 text-white border-neutral-700'
+                              : 'bg-neutral-950 hover:bg-black text-white shadow-[0_4px_14px_0_rgba(0,0,0,0.39)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.23)] border border-neutral-800 hover:-translate-y-0.5'
+                          } text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 touch-manipulation disabled:opacity-50 disabled:transform-none disabled:shadow-none`}
+                        >
+                          {activeItem?.status === 'generating' ? (
+                            <>
+                              <RefreshCw size={14} className="animate-spin text-amber-400" />
+                              <span>Generating...</span>
+                            </>
+                          ) : activeItem?.status === 'completed' ? (
+                            <>
+                              <RefreshCw size={14} className="text-neutral-400" />
+                              <span>Re-generate Selected Image</span>
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles size={14} className="text-amber-400" />
+                              <span>Generate with Gemini</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
 
                       {activeItem?.imageType === 'product' && (
                         <button
@@ -3210,7 +3321,7 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                             {relinkSupplierPreview.priceMax > relinkSupplierPreview.priceMin &&
                               ` - £${relinkSupplierPreview.priceMax.toFixed(2)}`}
                           </span>
-                          <span>•</span>
+                          <span>⣢</span>
                           <span>{relinkSupplierPreview.variants.length} supplier variants</span>
                         </div>
                       </div>

@@ -540,7 +540,7 @@ export default function AdminNewsletterPage() {
                         <span className="text-[11px] font-semibold text-neutral-800 capitalize">
                           {subscriber.source}
                         </span>
-                        <span className="text-neutral-300">•</span>
+                        <span className="text-neutral-300">⣢</span>
                         <span className="font-mono text-[11px] font-bold text-neutral-700">
                           {subscriber.discount_code_sent || 'WELCOME10'}
                         </span>

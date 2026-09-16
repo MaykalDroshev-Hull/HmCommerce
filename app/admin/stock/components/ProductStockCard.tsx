@@ -106,7 +106,7 @@ function PromoPriceInput({
         type="number"
         min={0}
         step="0.01"
-        placeholder="—"
+        placeholder="⣔"
         value={displayValue}
         disabled={disabled}
         onChange={(e) => {
@@ -169,7 +169,7 @@ function SizeBadge({
   variant: StockVariant;
   language: 'bg' | 'en';
 }) {
-  const size = getVariantSize(variant) || ('—');
+  const size = getVariantSize(variant) || ('⣔');
   const status = getVariantStockStatus(variant);
   const colorClass =
     status === 'out_of_stock' || status === 'negative'
@@ -222,8 +222,8 @@ function VariantRowControls({
   onToggleSelection: (variantId: string) => void;
 }) {
   const status = getVariantStockStatus(variant);
-  const size = getVariantSize(variant) || '—';
-  const color = getVariantColor(variant) || '—';
+  const size = getVariantSize(variant) || '⣔';
+  const color = getVariantColor(variant) || '⣔';
 
   const rowStyle = isHighlighted
     ? { backgroundColor: `${theme.colors.primary}12`, borderColor: theme.colors.primary }
@@ -569,10 +569,10 @@ export default function ProductStockCard({
                         </button>
                       </td>
                       <td className="py-2 pr-3 align-middle font-medium">
-                        {getVariantSize(variant) || '—'}
+                        {getVariantSize(variant) || '⣔'}
                       </td>
-                      <td className="py-2 pr-3 align-middle">{getVariantColor(variant) || '—'}</td>
-                      <td className="py-2 pr-3 align-middle text-xs">{variant.sku || '—'}</td>
+                      <td className="py-2 pr-3 align-middle">{getVariantColor(variant) || '⣔'}</td>
+                      <td className="py-2 pr-3 align-middle text-xs">{variant.sku || '⣔'}</td>
                       <td className="py-2 pr-3 align-middle font-semibold">{currentQuantity}</td>
                       <td className="py-2 pr-3 align-middle">
                         <div className="flex items-center gap-1">

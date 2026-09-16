@@ -783,7 +783,7 @@ export default function ProductDetails({
       {/* Size Guide Modal */}
       {showSizeGuide && (
         <div
-          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in"
+          className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in"
           onClick={() => setShowSizeGuide(false)}
         >
           <div

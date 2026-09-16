@@ -311,7 +311,7 @@ async function createOrder(orderData: OrderData): Promise<string> {
       // Looks like a UUID variant ID (from cart when size is selected)
       const { data: variant } = await supabase
         .from('product_variants')
-        .select('productid, price, promotional_price, products(promodiscountpercent)')
+        .select('productid, price, compare_at_price, promotional_price, products(promodiscountpercent)')
         .eq('productvariantid', item.id)
         .single();
 
@@ -425,19 +425,9 @@ export async function POST(request: NextRequest) {
       orderDate: new Date().toISOString()
     };
 
-    // Send emails (run in parallel)
-    const [customerEmailResult, adminEmailResult] = await Promise.allSettled([
-      sendCustomerOrderEmail(orderDetails, language),
-      sendAdminOrderEmail(orderDetails, language)
-    ]);
-
-    // Log email results
-    if (customerEmailResult.status === 'rejected') {
-      logger.error('Customer order email failed', customerEmailResult.reason);
-    }
-    if (adminEmailResult.status === 'rejected') {
-      logger.error('Admin order email failed', adminEmailResult.reason);
-    }
+    // Removed email sending from here. 
+    // Emails for Stripe payments are sent in verify-session after payment is confirmed.
+    // Emails for PayPal are sent in capture-order.
 
     void trackServerEvent('Purchase', {
       orderId,

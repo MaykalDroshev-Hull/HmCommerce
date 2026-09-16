@@ -61,6 +61,23 @@ export default function AdminSidebar({ currentPath, collapsed: externalCollapsed
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
+  // Badge counts state
+  const [counts, setCounts] = useState({ newOrders: 0, dropshipping: 0 });
+
+  useEffect(() => {
+    let isMounted = true;
+    fetch('/api/admin/order-counts')
+      .then((res) => res.json())
+      .then((data) => {
+        if (isMounted && data.success && data.counts) {
+          setCounts(data.counts);
+        }
+      })
+      .catch((err) => console.error('Failed to fetch order counts:', err));
+    
+    return () => { isMounted = false; };
+  }, []);
+
   // Close mobile menu when route changes
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -134,7 +151,8 @@ export default function AdminSidebar({ currentPath, collapsed: externalCollapsed
       id: 'dropshipping',
       label: 'Dropshipping',
       path: '/admin/dropshipping',
-      icon: Truck
+      icon: Truck,
+      badge: counts.dropshipping > 0 ? counts.dropshipping : undefined
     },
     {
       id: 'stock',
@@ -152,7 +170,8 @@ export default function AdminSidebar({ currentPath, collapsed: externalCollapsed
       id: 'order-new',
       label: 'New order',
       path: '/admin/order-new',
-      icon: ShoppingCart
+      icon: ShoppingCart,
+      badge: counts.newOrders > 0 ? counts.newOrders : undefined
     },
     {
       id: 'sales',
@@ -333,10 +352,24 @@ export default function AdminSidebar({ currentPath, collapsed: externalCollapsed
                   >
                     <Icon size={18} className="sm:w-5 sm:h-5 flex-shrink-0" />
                     {!isCollapsed && (
-                      <span className="text-xs sm:text-sm truncate">{item.label}</span>
+                      <>
+                        <span className="text-xs sm:text-sm truncate flex-1">{item.label}</span>
+                        {item.badge !== undefined && (
+                          <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold text-white bg-red-500 rounded-full ml-auto">
+                            {item.badge}
+                          </span>
+                        )}
+                      </>
                     )}
                     {isCollapsed && (
-                      <span className="sr-only">{item.label}</span>
+                      <>
+                        <span className="sr-only">{item.label}</span>
+                        {item.badge !== undefined && (
+                          <span className="absolute top-1.5 right-1.5 inline-flex items-center justify-center w-4 h-4 text-[9px] font-bold text-white bg-red-500 rounded-full border-2 shadow-sm" style={{ borderColor: theme.colors.surface }}>
+                            {item.badge > 9 ? '9+' : item.badge}
+                          </span>
+                        )}
+                      </>
                     )}
                   </Link>
                   {/* Custom tooltip for collapsed state */}

@@ -358,7 +358,7 @@ export default function AdminNewOrderPage() {
                   setPickVariant('');
                 }}
               >
-                <option value="">{'— Pick product —'}</option>
+                <option value="">{'⣔ Pick product ⣔'}</option>
                 {productsGrouped.map((p) => (
                   <option key={p.productid} value={p.productid}>
                     {p.product_name}
@@ -372,7 +372,7 @@ export default function AdminNewOrderPage() {
                 disabled={!pickProductId}
                 onChange={(e) => setPickVariant(e.target.value)}
               >
-                <option value="">{'— Pick size —'}</option>
+                <option value="">{'⣔ Pick size ⣔'}</option>
                 {variantsForProduct.map((v) => (
                   <option key={v.productvariantid} value={v.productvariantid}>
                     {getVariantOptionLabel(v)}
@@ -448,7 +448,7 @@ export default function AdminNewOrderPage() {
                             />
                           </label>
                           <span className="text-sm font-semibold ml-auto" style={{ color: theme.colors.text }}>
-                            {(line.unitPrice * line.quantity).toFixed(2)} €
+                            {(line.unitPrice * line.quantity).toFixed(2)} £
                           </span>
                           <button
                             type="button"
@@ -468,7 +468,7 @@ export default function AdminNewOrderPage() {
 
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
               <label className="text-sm flex items-center gap-2" style={{ color: theme.colors.text }}>
-                {'Delivery (€)'}
+                {'Delivery (£)'}
                 <input
                   type="number"
                   min={0}
@@ -481,10 +481,10 @@ export default function AdminNewOrderPage() {
               </label>
               <div className="sm:ml-auto text-right space-y-1">
                 <p className="text-sm" style={{ color: theme.colors.textSecondary }}>
-                  {'Subtotal'}: {subtotal.toFixed(2)} €
+                  {'Subtotal'}: {subtotal.toFixed(2)} £
                 </p>
                 <p className="text-lg font-bold" style={{ color: theme.colors.text }}>
-                  {'Total'}: {total.toFixed(2)} €
+                  {'Total'}: {total.toFixed(2)} £
                 </p>
               </div>
             </div>
@@ -498,7 +498,7 @@ export default function AdminNewOrderPage() {
             className="fixed bottom-4 left-4 right-4 sm:static sm:w-full py-4 rounded-xl font-semibold text-white shadow-lg min-h-[52px] z-30 max-w-3xl mx-auto sm:mx-0"
             style={{ backgroundColor: theme.colors.primary }}
           >
-            {saving ? '…' : 'Save order'}
+            {saving ? '⣦' : 'Save order'}
           </button>
         </form>
       </div>

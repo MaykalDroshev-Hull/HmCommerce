@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import PublicPageLayout from '@/components/PublicPageLayout';
+import ProductCard from '@/components/ProductCard';
 import { useProducts } from '@/context/ProductContext';
 
 import { useStoreSettings } from '@/context/StoreSettingsContext';
@@ -295,12 +296,15 @@ export default function Home() {
     localStorage.setItem('isAdmin', value.toString());
   };
 
-  // Find the primary featured product from the database if available (Saddle-Up Cowboy Rider Dog Costume)
   const availableProducts = products.filter((p) => isListedOnStorefront(p));
-  const featuredProduct =
-    availableProducts.find((p) => (p.name || p.model || '').toLowerCase().includes('cowboy')) ||
-    availableProducts.find((p) => p.isfeatured) ||
-    availableProducts[0];
+  
+  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
+  
+  useEffect(() => {
+    if (availableProducts.length > 0 && featuredProducts.length === 0) {
+      setFeaturedProducts([...availableProducts].sort(() => 0.5 - Math.random()).slice(0, 4));
+    }
+  }, [availableProducts.length]);
 
   const scrollCategories = (direction: 'left' | 'right') => {
     if (!categoriesScrollRef.current) return;
@@ -497,87 +501,35 @@ export default function Home() {
         </section>
 
         {/* =====================================================================
-            3. FEATURED PRODUCT SHOWCASE: Saddle-Up Cowboy Rider Dog Costume
+            3. FEATURED PRODUCTS
         ====================================================================== */}
         <section
           id="features"
-          className="scroll-mt-20 relative w-full bg-neutral-950 text-white overflow-hidden min-h-[580px] sm:min-h-[640px] lg:min-h-[720px] flex flex-col justify-between"
+          className="py-16 sm:py-24 bg-white"
         >
-          <span id="featured-product" className="sr-only" />
-          {/* Full-Bleed High-Resolution Lifestyle Background */}
-          <div className="absolute inset-0 z-0">
-            <Image
-              src={
-                (featuredProduct as any)?.hero_landscape_imageurl ||
-                (featuredProduct?.images && featuredProduct.images[0]) ||
-                (featuredProduct?.Images && (featuredProduct.Images[0] as any)?.imageurl) ||
-                'https://rrpmpvffewatuldyytqf.supabase.co/storage/v1/object/public/products/images/1789233765308-Gemini_Generated_Image_hye9ixhye9ixhye9.avif'
-              }
-              alt={featuredProduct?.name || 'Saddle-Up Cowboy Rider Dog Costume'}
-              fill
-              sizes="100vw"
-              className="object-cover object-[55%_top] sm:object-[75%_top] md:object-[78%_top] lg:object-[82%_top] xl:object-[84%_top] brightness-[0.92] contrast-[1.03]"
-            />
-            {/* Mobile Overlays: Smooth top-to-bottom scrim protecting text while highlighting the cowboy pup */}
-            <div className="sm:hidden absolute inset-0 bg-gradient-to-b from-neutral-950/85 via-neutral-950/25 via-45% to-neutral-950/90 pointer-events-none" />
-            <div className="sm:hidden absolute inset-0 bg-gradient-to-t from-neutral-950/95 via-neutral-950/40 via-30% to-transparent pointer-events-none" />
-
-            {/* Tablet & Desktop Overlays: Elegant horizontal gradient backdrop for typography & smooth edge blenders */}
-            <div className="hidden sm:block absolute inset-0 bg-gradient-to-r from-neutral-950 via-neutral-950/85 via-35% md:via-neutral-950/70 md:via-48% lg:via-neutral-950/50 lg:via-58% to-transparent pointer-events-none" />
-            <div className="hidden sm:block absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-neutral-950/50 via-neutral-950/15 to-transparent pointer-events-none" />
-            <div className="hidden sm:block absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-neutral-950/70 via-neutral-950/20 to-transparent pointer-events-none" />
-          </div>
-
-          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full h-full min-h-[580px] sm:min-h-[640px] lg:min-h-[720px] py-10 sm:py-14 lg:py-18 flex flex-col justify-between">
-            {/* Docked on top: Product Name */}
-            <div className="max-w-xs sm:max-w-sm md:max-w-md lg:max-w-xl">
-              <h2 className="font-serif-display text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-normal text-white leading-[1.12] drop-shadow-sm">
-                {featuredProduct?.name || 'The Saddle-Up Cowboy Rider Dog Costume.'}
-              </h2>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-12 gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-500 mb-1.5">
+                  Hand-Picked
+                </p>
+                <h2 className="font-serif-display text-3xl sm:text-4xl font-normal text-neutral-950 tracking-tight">
+                  Featured Gear
+                </h2>
+              </div>
+              <Link
+                href="/products"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs font-semibold uppercase tracking-[0.14em] bg-white border border-neutral-200 text-neutral-950 hover:bg-neutral-50 transition-colors shadow-sm"
+              >
+                <span>View All Products</span>
+                <ArrowRight size={14} />
+              </Link>
             </div>
-
-            {/* Pushed lower: Technical specs, Price & CTA */}
-            <div className="max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg space-y-4 pt-8 sm:pt-10">
-              {/* Technical Feature Badges */}
-              <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-white/90 font-medium">
-                <div className="flex items-center gap-1.5">
-                  <Shield size={15} className="text-emerald-400 flex-shrink-0" />
-                  <span>Soft Breathable Fabric</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Sparkles size={15} className="text-emerald-400 flex-shrink-0" />
-                  <span>Adjustable Saddle Straps</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <CheckCircle2 size={15} className="text-emerald-400 flex-shrink-0" />
-                  <span>Matching Rider &amp; Hat</span>
-                </div>
-              </div>
-
-              {/* Price & 0% Interest (without 'with Klarna') */}
-              <div className="pt-2 border-t border-white/20 flex flex-wrap items-baseline gap-3 text-white">
-                <span className="text-2xl sm:text-3xl font-bold tracking-tight">
-                  £{Number(featuredProduct?.price || 24.99).toFixed(2)}
-                </span>
-                <span className="text-xs text-white/75">
-                  or 3 payments of{' '}
-                  <strong className="text-white font-semibold">
-                    £{(Number(featuredProduct?.price || 24.99) / 3).toFixed(2)}
-                  </strong>{' '}
-                  at 0% interest
-                </span>
-              </div>
-
-              {/* Single Clean CTA Action */}
-              <div className="pt-1">
-                <Link
-                  href={`/products/${featuredProduct?.id || (featuredProduct as any)?.productid || 'd07fec36-2ec7-4247-9278-625de74b3b7f'}`}
-                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full font-semibold text-xs uppercase tracking-[0.14em] bg-white text-neutral-950 hover:bg-neutral-100 transition-all shadow-md active:scale-95"
-                >
-                  <span>Shop Costume — £{Number(featuredProduct?.price || 24.99).toFixed(2)}</span>
-                  <ArrowRight size={15} />
-                </Link>
-              </div>
+            
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              {featuredProducts.map((product) => (
+                <ProductCard key={product.id || product.productid} product={product} />
+              ))}
             </div>
           </div>
         </section>

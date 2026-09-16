@@ -27,8 +27,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Retrieve session from Stripe
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    // Retrieve session from Stripe with expanded customer & shipping details
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ['customer_details', 'shipping_details'],
+    });
+
+    logger.info('[Stripe Verify] Session customer_details:', JSON.stringify((session as any).customer_details));
+    logger.info('[Stripe Verify] Session shipping_details:', JSON.stringify((session as any).shipping_details));
 
     if (session.payment_status !== 'paid') {
       return NextResponse.json({
@@ -73,9 +78,6 @@ export async function GET(request: NextRequest) {
       if (shippingDetails.address.line2) {
         orderUpdates.deliveryentrance = shippingDetails.address.line2;
       }
-      if (shippingDetails.address.city) {
-        orderUpdates.deliverycity = shippingDetails.address.city;
-      }
     }
 
     await (supabase as any)
@@ -84,7 +86,7 @@ export async function GET(request: NextRequest) {
       .eq('orderid', orderId);
 
     // Also update customer info if available from Apple Pay / Stripe
-    if (shippingDetails?.name || customerDetails?.email) {
+    if (shippingDetails?.name || customerDetails?.email || shippingDetails?.address) {
       const { data: currentOrd } = await (supabase as any)
         .from('orders')
         .select('customerid')
@@ -104,6 +106,13 @@ export async function GET(request: NextRequest) {
         if (customerDetails?.phone) {
           custUpdates.telephone = customerDetails.phone;
         }
+        if (shippingDetails?.address?.city) {
+          custUpdates.city = shippingDetails.address.city;
+        }
+        if (shippingDetails?.address?.country) {
+          custUpdates.country = shippingDetails.address.country;
+        }
+        
         await (supabase as any)
           .from('customers')
           .update(custUpdates)

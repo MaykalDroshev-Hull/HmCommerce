@@ -270,7 +270,7 @@ export default function OrderEditModal({
         <div className="space-y-5 max-h-[70vh] overflow-y-auto pr-1">
           {itemsLocked && (
             <div className="rounded-lg bg-amber-50 border border-amber-200 text-amber-950 text-sm p-3">
-              {'This order was returned — line items cannot be changed. You can still edit customer, delivery and notes.'}
+              {'This order was returned ⣔ line items cannot be changed. You can still edit customer, delivery and notes.'}
             </div>
           )}
 
@@ -356,7 +356,7 @@ export default function OrderEditModal({
                     setPickVariant('');
                   }}
                 >
-                  <option value="">{'— Product —'}</option>
+                  <option value="">{'⣔ Product ⣔'}</option>
                   {productsGrouped.map((p) => (
                     <option key={p.productid} value={p.productid}>
                       {p.product_name}
@@ -369,7 +369,7 @@ export default function OrderEditModal({
                   disabled={!pickProductId}
                   onChange={(e) => setPickVariant(e.target.value)}
                 >
-                  <option value="">{'— Size —'}</option>
+                  <option value="">{'⣔ Size ⣔'}</option>
                   {variantsForProduct.map((v) => (
                     <option key={v.productvariantid} value={v.productvariantid}>
                       {getVariantOptionLabel(v)}
@@ -449,7 +449,7 @@ export default function OrderEditModal({
                             />
                           </label>
                           <span className="text-sm font-semibold ml-auto">
-                            {(line.unitPrice * line.quantity).toFixed(2)} €
+                            {(line.unitPrice * line.quantity).toFixed(2)} £
                           </span>
                           {!itemsLocked && (
                             <button
@@ -471,7 +471,7 @@ export default function OrderEditModal({
 
           <div className="flex flex-wrap items-center gap-4 border-t border-gray-200 pt-4">
             <label className="text-sm text-gray-700 flex items-center gap-2">
-              {'Delivery (€)'}
+              {'Delivery (£)'}
               <input
                 type="number"
                 min={0}
@@ -483,10 +483,10 @@ export default function OrderEditModal({
             </label>
             <div className="ml-auto text-right space-y-1">
               <p className="text-sm text-gray-600">
-                {'Subtotal'}: {subtotal.toFixed(2)} €
+                {'Subtotal'}: {subtotal.toFixed(2)} £
               </p>
               <p className="text-base font-bold text-gray-900">
-                {'Total'}: {total.toFixed(2)} €
+                {'Total'}: {total.toFixed(2)} £
               </p>
             </div>
           </div>
@@ -507,7 +507,7 @@ export default function OrderEditModal({
               disabled={saving}
               className="px-4 py-3 rounded-lg bg-blue-600 text-white text-sm font-medium min-h-[44px] disabled:opacity-50"
             >
-              {saving ? '…' : 'Save'}
+              {saving ? '⣦' : 'Save'}
             </button>
           </div>
         </div>

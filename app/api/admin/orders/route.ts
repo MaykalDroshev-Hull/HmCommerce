@@ -47,6 +47,10 @@ interface OrderWithItems {
       allProperties?: Record<string, string>;
     };
   }>;
+  hasDropshipItems?: boolean;
+  aliexpress_order_id?: string | null;
+  aliexpress_status?: string | null;
+  aliexpress_tracking_number?: string | null;
 }
 
 export async function GET(request: NextRequest) {
@@ -84,9 +88,19 @@ export async function GET(request: NextRequest) {
       }, { status: 500 });
     }
 
+    // Filter out abandoned carts (pending orders from Stripe/PayPal that haven't been paid yet)
+    // We only keep 'pending' if it's Cash on Delivery or Bank Transfer where payment is deferred.
+    const validOrders = (orders || []).filter(o => {
+      if (o.status === 'pending') {
+        const method = (o.paymentmethod || '').toLowerCase();
+        return method === 'cod' || method === 'bank_transfer' || method === 'cash_on_delivery';
+      }
+      return true;
+    });
+
     const variantIds = new Set<string>();
     const productIds = new Set<string>();
-    for (const order of orders || []) {
+    for (const order of validOrders) {
       for (const item of (order as any).order_items || []) {
         if (item.productvariantid) variantIds.add(String(item.productvariantid));
         if (item.productid) productIds.add(String(item.productid));
@@ -126,8 +140,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Process the orders data to format it nicely
-    const processedOrdersPromises = orders.map(async (order) => {
-      const orderItems = await Promise.all(order.order_items.map(async (item: any) => {
+    const processedOrdersPromises = validOrders.map(async (order) => {
+      const orderItems = await Promise.all(((order as any).order_items || []).map(async (item: any) => {
         const imgFromVariant = item.productvariantid
           ? firstImageByVariant[String(item.productvariantid)]
           : undefined;
@@ -144,6 +158,8 @@ export async function GET(request: NextRequest) {
           allProperties: {} as Record<string, string>
         };
 
+        let isDropship = false;
+
         // Fetch product and variant details separately
         try {
           if (item.productvariantid) {
@@ -154,7 +170,8 @@ export async function GET(request: NextRequest) {
                 sku,
                 productid,
                 products!inner (
-                  name
+                  name,
+                  aliexpress_product_id
                 ),
                 product_variant_property_values (
                   value,
@@ -174,8 +191,16 @@ export async function GET(request: NextRequest) {
               if (productData) {
                 if (Array.isArray(productData)) {
                   productName = productData[0]?.name || variant.sku || 'Unknown Product';
+                  if (productData[0]?.aliexpress_product_id) {
+                    isDropship = true;
+                    (productInfo as any).aliexpress_product_id = productData[0].aliexpress_product_id;
+                  }
                 } else {
                   productName = (productData as any).name || variant.sku || 'Unknown Product';
+                  if ((productData as any).aliexpress_product_id) {
+                    isDropship = true;
+                    (productInfo as any).aliexpress_product_id = (productData as any).aliexpress_product_id;
+                  }
                 }
               }
 
@@ -213,12 +238,16 @@ export async function GET(request: NextRequest) {
             // Get product details directly
             const { data: product, error: productError } = await supabaseAdmin
               .from('products')
-              .select('name')
+              .select('name, aliexpress_product_id')
               .eq('productid', item.productid)
               .single();
 
             if (product && !productError) {
               productInfo.name = product.name || 'Unknown Product';
+              if (product.aliexpress_product_id) {
+                isDropship = true;
+                (productInfo as any).aliexpress_product_id = product.aliexpress_product_id;
+              }
             }
           }
         } catch (error) {
@@ -232,9 +261,13 @@ export async function GET(request: NextRequest) {
           price: item.price,
           createdat: item.createdat,
           productvariantid: item.productvariantid, // Debug: include variant ID
-          product: productInfo
+          product: productInfo,
+          isDropship
         };
       }));
+
+      // Check if any item is a dropship item
+      const hasDropshipItems = orderItems.some((i: any) => i.isDropship);
 
       // Map customer data for backward compatibility
       const customer = Array.isArray(order.customers) ? order.customers[0] : order.customers;
@@ -248,7 +281,11 @@ export async function GET(request: NextRequest) {
         customertelephone: customer?.telephone || order.customertelephone,
         customercountry: customer?.country || order.customercountry,
         customercity: customer?.city || order.customercity,
-        order_items: orderItems
+        order_items: orderItems,
+        hasDropshipItems,
+        aliexpress_order_id: order.aliexpress_order_id,
+        aliexpress_status: order.aliexpress_status,
+        aliexpress_tracking_number: order.aliexpress_tracking_number
       };
     });
 

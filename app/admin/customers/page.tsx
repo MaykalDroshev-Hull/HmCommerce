@@ -162,7 +162,7 @@ export default function CustomersPage() {
                           {customer.totalorders || 0}
                         </td>
                         <td className="px-4 xl:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          €{customer.totalspent?.toFixed(2) || '0.00'}
+                          £{customer.totalspent?.toFixed(2) || '0.00'}
                         </td>
                         <td className="px-4 xl:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {customer.lastorder ? new Date(customer.lastorder).toLocaleDateString() : t.never}
@@ -198,7 +198,7 @@ export default function CustomersPage() {
                         </div>
                         <div>
                           <p className="text-xs text-gray-500">{t.totalSpentHeader}</p>
-                          <p className="text-sm font-medium text-gray-900">€{customer.totalspent?.toFixed(2) || '0.00'}</p>
+                          <p className="text-sm font-medium text-gray-900">£{customer.totalspent?.toFixed(2) || '0.00'}</p>
                         </div>
                         <div>
                           <p className="text-xs text-gray-500">{t.lastOrderHeader}</p>

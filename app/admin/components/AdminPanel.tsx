@@ -453,7 +453,7 @@ export default function AdminPanel() {
                           </div>
                           <div>
                             <span style={{ color: theme.colors.textSecondary }}>{t.price}: </span>
-                            <span style={{ color: theme.colors.text }} className="font-semibold">€{product.price.toFixed(2)}</span>
+                            <span style={{ color: theme.colors.text }} className="font-semibold">£{product.price.toFixed(2)}</span>
                           </div>
                         </div>
                       </div>
@@ -597,7 +597,7 @@ export default function AdminPanel() {
                         className="px-4 lg:px-6 py-4 text-sm font-medium transition-colors duration-300"
                         style={{ color: theme.colors.text }}
                       >
-                        €{product.price.toFixed(2)}
+                        £{product.price.toFixed(2)}
                       </td>
                       <td className="px-4 lg:px-6 py-4">
                         <button

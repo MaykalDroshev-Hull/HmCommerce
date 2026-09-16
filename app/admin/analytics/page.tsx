@@ -98,7 +98,7 @@ export default function AnalyticsPage() {
               <div className="bg-white p-6 rounded-lg shadow">
                 <h3 className="text-lg font-semibold text-gray-900">{t.totalRevenue}</h3>
                 <p className="text-3xl font-bold text-green-600 mt-2">
-                  €{(analyticsData.totalRevenue || 0).toFixed(2)}
+                  £{(analyticsData.totalRevenue || 0).toFixed(2)}
                 </p>
               </div>
               <div className="bg-white p-6 rounded-lg shadow">
@@ -110,7 +110,7 @@ export default function AnalyticsPage() {
               <div className="bg-white p-6 rounded-lg shadow">
                 <h3 className="text-lg font-semibold text-gray-900">{t.averageOrderValue}</h3>
                 <p className="text-3xl font-bold text-orange-600 mt-2">
-                  €{(analyticsData.averageOrderValue || 0).toFixed(2)}
+                  £{(analyticsData.averageOrderValue || 0).toFixed(2)}
                 </p>
               </div>
             </div>
@@ -131,7 +131,7 @@ export default function AnalyticsPage() {
                          status.status}
                       </h4>
                       <p className="text-2xl font-bold text-blue-600">{status.count}</p>
-                      <p className="text-sm text-gray-500">€{status.revenue.toFixed(2)}</p>
+                      <p className="text-sm text-gray-500">£{status.revenue.toFixed(2)}</p>
                     </div>
                   ))}
                 </div>
@@ -149,7 +149,7 @@ export default function AnalyticsPage() {
                         <p className="font-medium text-gray-900">{product.name}</p>
                         <p className="text-sm text-gray-500">{product.quantity} {t.sold}</p>
                       </div>
-                      <p className="font-semibold text-green-600">€{product.revenue.toFixed(2)}</p>
+                      <p className="font-semibold text-green-600">£{product.revenue.toFixed(2)}</p>
                     </div>
                   ))}
                 </div>
@@ -166,7 +166,7 @@ export default function AnalyticsPage() {
                       <span className="text-sm text-gray-600">{new Date(day.date).toLocaleDateString()}</span>
                       <div className="text-right">
                         <span className="text-sm font-medium">{day.orders} {t.ordersText}</span>
-                        <span className="text-sm text-gray-500 ml-4">€{day.sales.toFixed(2)}</span>
+                        <span className="text-sm text-gray-500 ml-4">£{day.sales.toFixed(2)}</span>
                       </div>
                     </div>
                   ))}

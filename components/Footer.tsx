@@ -169,31 +169,13 @@ export default function Footer() {
             </h4>
             <div className="flex items-center gap-5 text-neutral-400">
               <a
-                href={settings?.xurl || 'https://x.com'}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Twitter / X"
-                className="hover:text-white transition-colors"
-              >
-                <XIcon className="w-4 h-4" />
-              </a>
-              <a
-                href={settings?.tiktokurl || 'https://tiktok.com'}
+                href={settings?.tiktokurl || 'https://www.tiktok.com/@mb.paws'}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="TikTok"
                 className="hover:text-white transition-colors"
               >
                 <TikTokIcon className="w-4 h-4" />
-              </a>
-              <a
-                href={settings?.instagramurl || 'https://instagram.com'}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram"
-                className="hover:text-white transition-colors"
-              >
-                <InstagramIcon className="w-4 h-4" />
               </a>
             </div>
           </div>
@@ -318,31 +300,13 @@ export default function Footer() {
                 </h4>
                 <div className="flex items-center gap-5 text-neutral-400">
                   <a
-                    href={settings?.xurl || 'https://x.com'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Twitter / X"
-                    className="hover:text-white transition-colors"
-                  >
-                    <XIcon className="w-4 h-4" />
-                  </a>
-                  <a
-                    href={settings?.tiktokurl || 'https://tiktok.com'}
+                    href={settings?.tiktokurl || 'https://www.tiktok.com/@mb.paws'}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="TikTok"
                     className="hover:text-white transition-colors"
                   >
                     <TikTokIcon className="w-4 h-4" />
-                  </a>
-                  <a
-                    href={settings?.instagramurl || 'https://instagram.com'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Instagram"
-                    className="hover:text-white transition-colors"
-                  >
-                    <InstagramIcon className="w-4 h-4" />
                   </a>
                 </div>
               </div>

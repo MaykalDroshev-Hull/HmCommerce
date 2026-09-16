@@ -46,8 +46,8 @@ const emptyForm: FormState = {
 function buildVariantLabel(variant: Record<string, unknown>, fallbackPrice: number): string {
   const props = getVariantPropertyValues(variant);
   const parts = props.map((p) => p.value);
-  const suffix = parts.length > 0 ? parts.join(' • ') : variant.sku || variant.productvariantid;
-  return `${suffix} — €${Number(fallbackPrice || variant.price || 0).toFixed(2)}`;
+  const suffix = parts.length > 0 ? parts.join(' ⣢ ') : variant.sku || variant.productvariantid;
+  return `${suffix} ⣔ £${Number(fallbackPrice || variant.price || 0).toFixed(2)}`;
 }
 
 export default function AdminSuperPromoPage() {
@@ -425,9 +425,9 @@ export default function AdminSuperPromoPage() {
                           {item.color}
                         </div>
                       </td>
-                      <td className="px-4 py-3">{item.size || '—'}</td>
-                      <td className="px-4 py-3">€{item.originalPrice.toFixed(2)}</td>
-                      <td className="px-4 py-3 font-semibold text-red-600">€{item.promoPrice.toFixed(2)}</td>
+                      <td className="px-4 py-3">{item.size || '⣔'}</td>
+                      <td className="px-4 py-3">£{item.originalPrice.toFixed(2)}</td>
+                      <td className="px-4 py-3 font-semibold text-red-600">£{item.promoPrice.toFixed(2)}</td>
                       <td className="px-4 py-3">{item.sortorder}</td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-2">
@@ -604,7 +604,7 @@ export default function AdminSuperPromoPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">
-                {'SUPER PROMO price (€)'}
+                {'SUPER PROMO price (£)'}
               </label>
               <input
                 type="number"

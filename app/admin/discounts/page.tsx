@@ -354,7 +354,7 @@ export default function DiscountsPage() {
                           </span>
                         </td>
                         <td className="px-4 xl:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {discount.type === 'percentage' ? `${discount.value}%` : `€${discount.value.toFixed(2)}`}
+                          {discount.type === 'percentage' ? `${discount.value}%` : `£${discount.value.toFixed(2)}`}
                         </td>
                         <td className="px-4 xl:px-6 py-4 whitespace-nowrap">
                           <Badge variant={discount.isactive ? 'success' : 'danger'}>
@@ -436,7 +436,7 @@ export default function DiscountsPage() {
                         <div>
                           <p className="text-xs text-gray-500">{t.valueHeader}</p>
                           <p className="text-sm font-medium text-gray-900">
-                            {discount.type === 'percentage' ? `${discount.value}%` : `€${discount.value.toFixed(2)}`}
+                            {discount.type === 'percentage' ? `${discount.value}%` : `£${discount.value.toFixed(2)}`}
                           </p>
                         </div>
                         {discount.expiresat && (
@@ -569,7 +569,7 @@ export default function DiscountsPage() {
                   <div className="bg-red-50 border border-red-200 rounded-md p-3">
                     <ul className="text-xs sm:text-sm text-red-600 space-y-1">
                       {formErrors.map((error, index) => (
-                        <li key={index}>• {error}</li>
+                        <li key={index}>⣢ {error}</li>
                       ))}
                     </ul>
                   </div>
@@ -639,7 +639,7 @@ export default function DiscountsPage() {
                       required
                     />
                     <span className="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-xs sm:text-sm rounded-r-md">
-                      {formData.type === 'percentage' ? '%' : '€'}
+                      {formData.type === 'percentage' ? '%' : '£'}
                     </span>
                   </div>
                 </div>

@@ -276,7 +276,7 @@ export default function ProductBulkControls({
         }
         subheader={
           bulkRestockModal === 'mark'
-            ? 'Selected products will appear greyed out with “Out of stock / Restock coming soon”.'
+            ? 'Selected products will appear greyed out with ⣜Out of stock / Restock coming soon⣝.'
             : 'Selected products will display normally (if they have stock).'
         }
         maxWidth="max-w-md"

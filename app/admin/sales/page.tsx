@@ -59,6 +59,10 @@ interface Order {
   updatedat?: string;
   internal_note?: string | null;
   customer_order_note?: string | null;
+  hasDropshipItems?: boolean;
+  aliexpress_order_id?: string | null;
+  aliexpress_status?: string | null;
+  aliexpress_tracking_number?: string | null;
 }
 
 const ALL_STATUS_KEYS = [
@@ -73,6 +77,7 @@ const ALL_STATUS_KEYS = [
   'picked_up',
   'returned',
   'waiting_for_stock',
+  'paid',
 ] as const;
 
 export default function SalesPage() {
@@ -100,6 +105,7 @@ export default function SalesPage() {
     'sent',
     'picked_up',
     'waiting_for_stock',
+    'paid',
   ]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -122,11 +128,15 @@ export default function SalesPage() {
   const [showClearAllModal, setShowClearAllModal] = useState(false);
   const [clearAllConfirmInput, setClearAllConfirmInput] = useState('');
   const [clearingAll, setClearingAll] = useState(false);
+  const [fulfillingOrderId, setFulfillingOrderId] = useState<string | null>(null);
+  const [orderActionMessage, setOrderActionMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   const getStatusTranslation = (status: string): string => {
     switch (status) {
       case 'pending':
         return t.pending;
+      case 'paid':
+        return 'Paid';
       case 'confirmed':
         return t.confirmed;
       case 'shipped':
@@ -434,7 +444,7 @@ export default function SalesPage() {
 
   const getCustomerFullName = (order: Order) => {
     const s = `${order.customerfirstname || ''} ${order.customerlastname || ''}`.trim();
-    return s || '—';
+    return s || '⣔';
   };
 
   const getInternalNote = (order: Order) => {
@@ -451,15 +461,18 @@ export default function SalesPage() {
         return item.quantity > 1 ? `${base} ×${item.quantity}` : base;
       })
       .filter(Boolean);
-    return chunks.length ? chunks.join(', ') : '—';
+    return chunks.length ? chunks.join(', ') : '⣔';
   };
 
   const getEcontOfficeCell = (order: Order) => {
     if (order.deliverytype === 'office' && order.econtoffice) {
       return getEcontOfficeName(order.econtoffice);
     }
+    if (order.deliverytype === 'address' && (order.deliverystreet || order.deliverystreetnumber)) {
+      return [order.deliverystreet, order.deliverystreetnumber].filter(Boolean).join(' ');
+    }
     if (order.econtoffice) return getEcontOfficeName(order.econtoffice);
-    return '—';
+    return '-';
   };
 
   // Handle status filter change
@@ -480,6 +493,46 @@ export default function SalesPage() {
   const closeOrderModal = () => {
     setShowOrderModal(false);
     setSelectedOrder(null);
+    setOrderActionMessage(null);
+  };
+
+  const handleFulfillOrder = async (orderId: string) => {
+    try {
+      setFulfillingOrderId(orderId);
+      setOrderActionMessage(null);
+
+      const res = await fetch('/api/aliexpress/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'fulfill', orderId })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setOrderActionMessage({ type: 'success', text: `Order successfully forwarded to AliExpress! (ID: ${data.aliexpressOrderId})` });
+        
+        // Update local state
+        setOrders((prev) => prev.map(o => 
+          o.orderid === orderId 
+            ? { ...o, aliexpress_order_id: data.aliexpressOrderId, aliexpress_status: 'placed' }
+            : o
+        ));
+        
+        if (selectedOrder && selectedOrder.orderid === orderId) {
+          setSelectedOrder({
+            ...selectedOrder,
+            aliexpress_order_id: data.aliexpressOrderId,
+            aliexpress_status: 'placed'
+          });
+        }
+      } else {
+        setOrderActionMessage({ type: 'error', text: `Failed to fulfill: ${data.error}` });
+      }
+    } catch (err: any) {
+      setOrderActionMessage({ type: 'error', text: `Error: ${err.message}` });
+    } finally {
+      setFulfillingOrderId(null);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -638,7 +691,7 @@ export default function SalesPage() {
                   onClick={() => confirmDeleteOrder()}
                 >
                   {deletingOrderId === orderPendingDelete.orderid
-                    ? 'Deleting…'
+                    ? 'Deleting⣦'
                     : 'Delete'}
                 </button>
               </div>
@@ -689,7 +742,7 @@ export default function SalesPage() {
                 disabled={clearingAll}
                 onClick={() => confirmClearAllOrders()}
               >
-                {clearingAll ? ('Deleting…') : 'Delete all'}
+                {clearingAll ? ('Deleting⣦') : 'Delete all'}
               </button>
             </div>
           </div>
@@ -730,7 +783,7 @@ export default function SalesPage() {
                   className="w-full border rounded-lg px-3 py-2 text-sm min-h-[80px]"
                   value={statusNote}
                   onChange={(e) => setStatusNote(e.target.value)}
-                  placeholder={'Reason / comment…'}
+                  placeholder={'Reason / comment⣦'}
                 />
               </div>
               <div className="flex gap-2 justify-end">
@@ -748,7 +801,7 @@ export default function SalesPage() {
                   onClick={() => confirmStatusChange()}
                 >
                   {updatingStatus === statusTargetOrder.orderid
-                    ? 'Saving…'
+                    ? 'Saving⣦'
                     : 'Save'}
                 </button>
               </div>
@@ -782,11 +835,59 @@ export default function SalesPage() {
                     {`${selectedOrder.customerfirstname || ''} ${selectedOrder.customerlastname || ''}`.trim() || 'N/A'}
                   </p>
                   <p className="text-xs text-gray-500 mt-2">{'Email'}</p>
-                  <p className="text-sm text-gray-900">{selectedOrder.customeremail || 'N/A'}</p>
+                  <p className="text-sm text-gray-900">{selectedOrder.customeremail && !selectedOrder.customeremail.endsWith('@checkout.local') ? selectedOrder.customeremail : 'Pending'}</p>
                   <p className="text-xs text-gray-500 mt-2">{'Phone'}</p>
                   <p className="text-sm text-gray-900">{selectedOrder.customertelephone || 'N/A'}</p>
                 </div>
               </div>
+
+              {selectedOrder.hasDropshipItems && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                  <h4 className="text-sm font-semibold text-emerald-900 mb-3 flex items-center gap-2">
+                    <Package className="w-4 h-4" />
+                    AliExpress Dropshipping
+                  </h4>
+                  
+                  {orderActionMessage && (
+                    <div className={`mb-3 p-2.5 rounded text-xs font-medium border ${orderActionMessage.type === 'error' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-green-50 text-green-700 border-green-200'}`}>
+                      {orderActionMessage.text}
+                    </div>
+                  )}
+
+                  {!selectedOrder.aliexpress_order_id ? (
+                    <div>
+                      <p className="text-sm text-emerald-800 mb-3">
+                        This order contains dropshipping items. You can automatically fulfill it with AliExpress.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleFulfillOrder(selectedOrder.orderid)}
+                        disabled={fulfillingOrderId === selectedOrder.orderid}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors disabled:opacity-50"
+                      >
+                        {fulfillingOrderId === selectedOrder.orderid ? 'Fulfilling...' : 'Fulfill via AliExpress'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs text-emerald-700 mb-1">AliExpress Order ID</p>
+                        <p className="text-sm font-mono font-medium text-emerald-950">{selectedOrder.aliexpress_order_id}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-emerald-700 mb-1">AliExpress Status</p>
+                        <p className="text-sm font-medium text-emerald-950 uppercase">{selectedOrder.aliexpress_status || 'Unknown'}</p>
+                      </div>
+                      {selectedOrder.aliexpress_tracking_number && (
+                        <div className="col-span-2 mt-1">
+                          <p className="text-xs text-emerald-700 mb-1">Tracking Number</p>
+                          <p className="text-sm font-mono font-medium text-emerald-950">{selectedOrder.aliexpress_tracking_number}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <h4 className="text-sm font-semibold text-gray-900 mb-3">
@@ -870,8 +971,8 @@ export default function SalesPage() {
                       </div>
                       <div className="text-sm text-gray-700">
                         <p>{'Qty'}: {item.quantity}</p>
-                        <p>€{item.price?.toFixed(2) || '0.00'}</p>
-                        <p className="font-medium">€{(item.price * item.quantity)?.toFixed(2) || '0.00'}</p>
+                        <p>£{item.price?.toFixed(2) || '0.00'}</p>
+                        <p className="font-medium">£{(item.price * item.quantity)?.toFixed(2) || '0.00'}</p>
                       </div>
                     </div>
                   ))}
@@ -881,21 +982,21 @@ export default function SalesPage() {
               <div className="bg-gray-50 rounded-lg p-4">
                 <div className="flex items-center justify-between text-sm text-gray-700">
                   <span>{'Subtotal'}</span>
-                  <span>€{selectedOrder.subtotal?.toFixed(2) || '0.00'}</span>
+                  <span>£{selectedOrder.subtotal?.toFixed(2) || '0.00'}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm text-gray-700 mt-2">
                   <span>{'Delivery'}</span>
-                  <span>€{selectedOrder.deliverycost?.toFixed(2) || '0.00'}</span>
+                  <span>£{selectedOrder.deliverycost?.toFixed(2) || '0.00'}</span>
                 </div>
                 {selectedOrder.discountamount && selectedOrder.discountamount > 0 && (
                   <div className="flex items-center justify-between text-sm text-green-700 mt-2">
                     <span>{'Discount'} {selectedOrder.discountcode ? `(${selectedOrder.discountcode})` : ''}</span>
-                    <span>-€{selectedOrder.discountamount.toFixed(2)}</span>
+                    <span>-£{selectedOrder.discountamount.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex items-center justify-between text-base font-semibold text-gray-900 mt-3">
                   <span>{'Total'}</span>
-                  <span>€{selectedOrder.total?.toFixed(2) || '0.00'}</span>
+                  <span>£{selectedOrder.total?.toFixed(2) || '0.00'}</span>
                 </div>
               </div>
 
@@ -928,7 +1029,7 @@ export default function SalesPage() {
           </div>
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
             <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">Total Revenue</h3>
-            <p className="text-2xl sm:text-3xl font-bold text-green-600 mt-1 sm:mt-2">€{totalRevenue.toFixed(2)}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-green-600 mt-1 sm:mt-2">£{totalRevenue.toFixed(2)}</p>
           </div>
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow sm:col-span-2 lg:col-span-1">
             <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">Pending Orders</h3>
@@ -955,11 +1056,11 @@ export default function SalesPage() {
           </div>
           <div className="bg-white p-4 rounded-lg shadow col-span-2 sm:col-span-1">
             <h3 className="text-xs font-semibold text-gray-700">Delivered Amount</h3>
-            <p className="text-lg font-bold text-gray-900 mt-1">€{pickedUpTotal.toFixed(2)}</p>
+            <p className="text-lg font-bold text-gray-900 mt-1">£{pickedUpTotal.toFixed(2)}</p>
           </div>
           <div className="bg-white p-4 rounded-lg shadow col-span-2 sm:col-span-1">
             <h3 className="text-xs font-semibold text-gray-700">Returned Amount</h3>
-            <p className="text-lg font-bold text-gray-900 mt-1">€{returnedTotal.toFixed(2)}</p>
+            <p className="text-lg font-bold text-gray-900 mt-1">£{returnedTotal.toFixed(2)}</p>
           </div>
           <div className="bg-white p-4 rounded-lg shadow col-span-2 lg:col-span-2">
             <h3 className="text-xs font-semibold text-gray-700">Total Units Sold</h3>
@@ -992,7 +1093,7 @@ export default function SalesPage() {
           <div className="flex flex-col lg:flex-row gap-3 flex-wrap">
             <input
               className="flex-1 min-w-[200px] border rounded-lg px-3 py-2.5 text-sm min-h-[44px]"
-              placeholder={'Customer, email, phone, city, order #…'}
+              placeholder={'Customer, email, phone, city, order #⣦'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -1034,7 +1135,7 @@ export default function SalesPage() {
                 e.target.value = '';
               }}
             >
-              <option value="">{'— load view —'}</option>
+              <option value="">{'⣔ load view ⣔'}</option>
               {savedViews.map((v) => (
                 <option key={v.id} value={v.id}>
                   {v.name}
@@ -1093,16 +1194,16 @@ export default function SalesPage() {
                     <th className="px-3 xl:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[180px]">
                       Items
                     </th>
-                    <th className="px-3 xl:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                       Amount
                     </th>
-                    <th className="px-3 xl:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                       Status
                     </th>
-                    <th className="px-3 xl:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                       Date
                     </th>
-                    <th className="px-3 xl:px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                       Actions
                     </th>
                   </tr>
@@ -1117,37 +1218,37 @@ export default function SalesPage() {
                     return (
                       <React.Fragment key={order.orderid}>
                         <tr className="hover:bg-gray-50">
-                          <td className="px-3 xl:px-4 py-3 align-top text-xs font-mono text-gray-800 whitespace-nowrap min-w-[11rem]">
+                          <td className="px-2 py-2 align-top text-xs font-mono text-gray-800 whitespace-nowrap min-w-[6rem]">
                             <span title={order.orderid}>{order.orderid}</span>
                           </td>
-                          <td className="px-3 xl:px-4 py-3 align-top text-sm text-gray-900 max-w-[160px]">
+                          <td className="px-2 py-2 align-top text-sm text-gray-900 max-w-[120px]">
                             <span className="line-clamp-2" title={getCustomerFullName(order)}>
                               {getCustomerFullName(order)}
                             </span>
                           </td>
-                          <td className="px-3 xl:px-4 py-3 align-top text-sm text-gray-700 whitespace-nowrap">
-                            {order.customertelephone || '—'}
+                          <td className="px-2 py-2 align-top text-xs text-gray-700 whitespace-nowrap">
+                            {order.customertelephone || '⣔'}
                           </td>
-                          <td className="px-3 xl:px-4 py-3 align-top text-sm text-gray-700 max-w-[100px]">
+                          <td className="px-2 py-2 align-top text-xs text-gray-700 max-w-[80px]">
                             <span className="truncate block" title={order.customercity || ''}>
-                              {order.customercity || '—'}
+                              {order.customercity || '⣔'}
                             </span>
                           </td>
-                          <td className="px-3 xl:px-4 py-3 align-top text-sm text-gray-700 max-w-[200px]">
+                          <td className="px-2 py-2 align-top text-xs text-gray-700 max-w-[120px]">
                             <span className="line-clamp-2" title={getEcontOfficeCell(order)}>
                               {getEcontOfficeCell(order)}
                             </span>
                           </td>
-                          <td className="px-3 xl:px-4 py-3 align-top text-sm text-gray-600 max-w-[200px]">
+                          <td className="px-2 py-2 align-top text-xs text-gray-600 max-w-[120px]">
                             {internalNote ? (
                               <span className="line-clamp-2" title={internalNote}>
                                 {internalNote}
                               </span>
                             ) : (
-                              <span className="text-gray-400">—</span>
+                              <span className="text-gray-400">⣔</span>
                             )}
                           </td>
-                          <td className="px-3 xl:px-4 py-3 align-top text-sm text-gray-800 max-w-[260px]">
+                          <td className="px-2 py-2 align-top text-xs text-gray-800 max-w-[200px]">
                             <div className="flex items-start gap-1">
                               <button
                                 type="button"
@@ -1162,19 +1263,30 @@ export default function SalesPage() {
                               </span>
                             </div>
                           </td>
-                          <td className="px-3 xl:px-4 py-3 align-top whitespace-nowrap text-sm font-medium text-gray-900">
-                            €{order.total?.toFixed(2) || '0.00'}
+                          <td className="px-2 py-2 align-top whitespace-nowrap text-sm font-medium text-gray-900">
+                            £{order.total?.toFixed(2) || '0.00'}
                           </td>
-                          <td className="px-3 xl:px-4 py-3 align-top whitespace-nowrap">
+                          <td className="px-2 py-2 align-top whitespace-nowrap">
                             <Badge variant={getOrderStatusVariant(order.status)}>
                               {getStatusTranslation(order.status)}
                             </Badge>
                           </td>
-                          <td className="px-3 xl:px-4 py-3 align-top whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-2 py-2 align-top whitespace-nowrap text-xs text-gray-500">
                             {new Date(order.createdat).toLocaleDateString()}
                           </td>
-                          <td className="px-3 xl:px-4 py-3 align-top text-right text-sm font-medium">
-                            <div className="flex items-center justify-end gap-2">
+                          <td className="px-2 py-2 align-top text-right text-sm font-medium">
+                            <div className="flex items-center justify-end gap-1">
+                              {order.hasDropshipItems && !order.aliexpress_order_id && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); handleFulfillOrder(order.orderid); }}
+                                  disabled={fulfillingOrderId === order.orderid}
+                                  className="p-1.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors disabled:opacity-50"
+                                  title="Fulfill via AliExpress"
+                                >
+                                  <Package className="w-4 h-4" />
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => openOrderModal(order)}
@@ -1201,9 +1313,6 @@ export default function SalesPage() {
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
-                              {updatingStatus === order.orderid && (
-                                <span className="ml-2 text-xs text-gray-500">Updating...</span>
-                              )}
                             </div>
                           </td>
                         </tr>
@@ -1310,13 +1419,13 @@ export default function SalesPage() {
                                       </div>
                                       <div className="text-left sm:text-right flex-shrink-0 sm:ml-4">
                                         <p className="text-xs sm:text-sm font-medium text-gray-900">
-                                          €{item.price?.toFixed(2) || '0.00'}
+                                          £{item.price?.toFixed(2) || '0.00'}
                                         </p>
                                         <p className="text-xs text-gray-500">
                                           Qty: {item.quantity}
                                         </p>
                                         <p className="text-xs text-gray-500 font-medium">
-                                          Subtotal: €{(item.price * item.quantity)?.toFixed(2) || '0.00'}
+                                          Subtotal: £{(item.price * item.quantity)?.toFixed(2) || '0.00'}
                                         </p>
                                       </div>
                                     </div>
@@ -1352,11 +1461,11 @@ export default function SalesPage() {
                             <p className="text-sm font-semibold text-gray-900">{getCustomerFullName(order)}</p>
                             <p className="text-xs text-gray-600 mt-1">
                               <span className="font-medium">{'Phone:'}</span>{' '}
-                              {order.customertelephone || '—'}
+                              {order.customertelephone || '⣔'}
                             </p>
                             <p className="text-xs text-gray-600">
                               <span className="font-medium">{'City:'}</span>{' '}
-                              {order.customercity || '—'}
+                              {order.customercity || '⣔'}
                             </p>
                             <p className="text-xs text-gray-600 line-clamp-2 mt-0.5">
                               <span className="font-medium">{'Econt:'}</span>{' '}
@@ -1383,7 +1492,7 @@ export default function SalesPage() {
                           <div className="flex items-center gap-4 text-sm">
                             <div>
                               <p className="text-xs text-gray-500">Amount</p>
-                              <p className="text-sm font-semibold text-gray-900">€{order.total?.toFixed(2) || '0.00'}</p>
+                              <p className="text-sm font-semibold text-gray-900">£{order.total?.toFixed(2) || '0.00'}</p>
                             </div>
                             <div>
                               <p className="text-xs text-gray-500">Date</p>
@@ -1539,7 +1648,7 @@ export default function SalesPage() {
                                     <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-200">
                                       <div>
                                         <p className="text-xs text-gray-500">Price</p>
-                                        <p className="text-sm font-medium text-gray-900">€{item.price?.toFixed(2) || '0.00'}</p>
+                                        <p className="text-sm font-medium text-gray-900">£{item.price?.toFixed(2) || '0.00'}</p>
                                       </div>
                                       <div>
                                         <p className="text-xs text-gray-500">Qty</p>
@@ -1547,7 +1656,7 @@ export default function SalesPage() {
                                       </div>
                                       <div className="text-right">
                                         <p className="text-xs text-gray-500">Subtotal</p>
-                                        <p className="text-sm font-semibold text-gray-900">€{(item.price * item.quantity)?.toFixed(2) || '0.00'}</p>
+                                        <p className="text-sm font-semibold text-gray-900">£{(item.price * item.quantity)?.toFixed(2) || '0.00'}</p>
                                       </div>
                                     </div>
                                   </div>

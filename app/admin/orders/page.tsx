@@ -252,7 +252,7 @@ export default function OrdersPage() {
             <p className="text-xs sm:text-sm font-medium opacity-75" style={{ color: theme.colors.textSecondary }}>
               {'Total Revenue'}
             </p>
-            <p className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">€{totalRevenue.toFixed(2)}</p>
+            <p className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2">£{totalRevenue.toFixed(2)}</p>
           </div>
         </div>
 
@@ -367,7 +367,7 @@ export default function OrdersPage() {
                       </div>
                     </td>
                     <td className="px-4 lg:px-6 py-4 text-sm font-medium" style={{ color: theme.colors.text }}>
-                      €{order.total.toFixed(2)}
+                      £{order.total.toFixed(2)}
                     </td>
                     <td className="px-4 lg:px-6 py-4 text-sm" style={{ color: theme.colors.textSecondary }}>
                       {formatDate(order.createdat)}
@@ -445,7 +445,7 @@ export default function OrdersPage() {
                   </h3>
                   <div className="space-y-1 text-sm" style={{ color: theme.colors.textSecondary }}>
                     <p><strong>{'Name:'}</strong> {selectedOrder.customerfirstname} {selectedOrder.customerlastname}</p>
-                    <p><strong>{'Email:'}</strong> {selectedOrder.customeremail}</p>
+                    <p><strong>{'Email:'}</strong> {selectedOrder.customeremail && !selectedOrder.customeremail.endsWith('@checkout.local') ? selectedOrder.customeremail : 'Pending'}</p>
                     <p><strong>{'Phone:'}</strong> {selectedOrder.customertelephone}</p>
                     <p><strong>{'City:'}</strong> {selectedOrder.customercity}</p>
                     <p><strong>{'Country:'}</strong> {selectedOrder.customercountry}</p>
@@ -473,15 +473,15 @@ export default function OrdersPage() {
                             {item.product?.brand && (
                               <p className="text-sm opacity-75">
                                 {item.product.brand} {item.product.model}
-                                {item.product.color && ` • ${item.product.color}`}
-                                {item.product.size && ` • ${item.product.size}`}
+                                {item.product.color && ` ⣢ ${item.product.color}`}
+                                {item.product.size && ` ⣢ ${item.product.size}`}
                               </p>
                             )}
                             <p className="text-sm opacity-75">
                               {'Quantity:'} {item.quantity}
                             </p>
                           </div>
-                          <p className="font-medium">€{(item.price * item.quantity).toFixed(2)}</p>
+                          <p className="font-medium">£{(item.price * item.quantity).toFixed(2)}</p>
                         </div>
                       </div>
                     ))}
@@ -501,19 +501,19 @@ export default function OrdersPage() {
                       <span style={{ color: theme.colors.textSecondary }}>
                         {'Subtotal:'}
                       </span>
-                      <span style={{ color: theme.colors.text }}>€{selectedOrder.subtotal.toFixed(2)}</span>
+                      <span style={{ color: theme.colors.text }}>£{selectedOrder.subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span style={{ color: theme.colors.textSecondary }}>
                         {'Delivery:'}
                       </span>
-                      <span style={{ color: theme.colors.text }}>€{selectedOrder.deliverycost.toFixed(2)}</span>
+                      <span style={{ color: theme.colors.text }}>£{selectedOrder.deliverycost.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between font-bold text-lg pt-2 border-t" style={{ borderColor: theme.colors.border }}>
                       <span style={{ color: theme.colors.text }}>
                         {'Total:'}
                       </span>
-                      <span style={{ color: theme.colors.primary }}>€{selectedOrder.total.toFixed(2)}</span>
+                      <span style={{ color: theme.colors.primary }}>£{selectedOrder.total.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>

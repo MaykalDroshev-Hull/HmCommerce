@@ -186,9 +186,9 @@ export default function ProductsPage() {
     return `Give your beloved furbaby the ultimate in tail-wagging comfort and charm! Designed with pure pet happiness in mind, the ${prodTitle || 'item'} delivers the perfect blend of cozy warmth, effortless dressing, and delightful style for daily strolls, family gatherings, and photo-ready celebrations.
 
 Why Devoted Pet Parents Love It:
-• Exceptionally Soft & Gentle: Crafted from skin-friendly, breathable fabric that won't pinch, rub, or tug against delicate fur.
-• Fuss-Free Dressing: Engineered with quick, secure fastenings for a snug fit that stays comfortably in place through running and playful romps.
-• Safe & Lightweight: Designed for unrestricted movement so your four-legged companion can strut and play happily.
+⣢ Exceptionally Soft & Gentle: Crafted from skin-friendly, breathable fabric that won't pinch, rub, or tug against delicate fur.
+⣢ Fuss-Free Dressing: Engineered with quick, secure fastenings for a snug fit that stays comfortably in place through running and playful romps.
+⣢ Safe & Lightweight: Designed for unrestricted movement so your four-legged companion can strut and play happily.
 
 Sizing & Fit Guide:
 We always recommend measuring your pet's neck and chest girth before ordering to ensure the most comfortable, tail-wagging fit. If in between sizes, we suggest choosing the larger size for maximum comfort.
@@ -2091,7 +2091,7 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                             </>
                           )}
                         </button>
-                        <span className="text-neutral-300">•</span>
+                        <span className="text-neutral-300">⣢</span>
                         <button
                           type="button"
                           onClick={() => {
@@ -2224,7 +2224,7 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                     <p className="text-xs text-gray-500 mb-2">
                       {language === 'bg'
                         ? `Upload up to ${MAX_PRODUCT_IMAGES} images. Add images of the same dimensions for consistent display.`
-                        : `Upload up to ${MAX_PRODUCT_IMAGES} images. Customers see exactly how many you upload (1–${MAX_PRODUCT_IMAGES}). Photos are compressed automatically on upload. Use matching sizes for best display.`}
+                        : `Upload up to ${MAX_PRODUCT_IMAGES} images. Customers see exactly how many you upload (1⣓${MAX_PRODUCT_IMAGES}). Photos are compressed automatically on upload. Use matching sizes for best display.`}
                     </p>
                     {productImages.length === 0 ? (
                       <p className="text-xs text-gray-400 mb-2">
@@ -2346,10 +2346,10 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                       />
                       <div>
                         <span className="text-xs sm:text-sm font-medium text-gray-700 block">
-                          {'Show as “Out of stock” (restock coming soon)'}
+                          {'Show as ⣜Out of stock⣝ (restock coming soon)'}
                         </span>
                         <p className="text-xs text-gray-500 mt-1">
-                          {'Product stays visible in the shop, but the card is greyed out with “Out of stock / Restock coming soon”. Add to cart is hidden.'}
+                          {'Product stays visible in the shop, but the card is greyed out with ⣜Out of stock / Restock coming soon⣝. Add to cart is hidden.'}
                         </p>
                       </div>
                     </label>
@@ -2387,7 +2387,7 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                       />
                       <div className="flex-1 min-w-0">
                         <span className="text-xs sm:text-sm font-medium text-gray-800 block">
-                          {'PROMOTION — product discount'}
+                          {'PROMOTION ⣔ product discount'}
                         </span>
                         <p className="text-xs text-gray-500 mt-1">
                           {'Set original price and discounted sale price. Apply to all options or customize per option below.'}
@@ -3720,7 +3720,7 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
           }
           subheader={
             bulkRestockModal === 'mark'
-              ? 'Selected products will appear greyed out with “Out of stock / Restock coming soon”.'
+              ? 'Selected products will appear greyed out with ⣜Out of stock / Restock coming soon⣝.'
               : 'Selected products will display normally (if they have stock).'
           }
           maxWidth="max-w-md"

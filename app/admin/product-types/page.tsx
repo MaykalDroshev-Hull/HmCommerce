@@ -427,7 +427,7 @@ export default function ProductTypesPage() {
                               <div className="truncate max-w-xs">
                                 {pt.parent_producttypeid ? (
                                   <div className="flex items-center gap-1">
-                                    <span className="text-xs text-gray-400">└─</span>
+                                    <span className="text-xs text-gray-400">└┣</span>
                                     <span className="font-medium">{pt.name}</span>
                                   </div>
                                 ) : (
@@ -530,7 +530,7 @@ export default function ProductTypesPage() {
                           <h3 className="text-base font-semibold text-gray-900 flex-1 min-w-0">
                             {pt.parent_producttypeid ? (
                               <div className="flex items-center gap-1">
-                                <span className="text-xs text-gray-400">└─</span>
+                                <span className="text-xs text-gray-400">└┣</span>
                                 <span>{pt.name}</span>
                               </div>
                             ) : (
