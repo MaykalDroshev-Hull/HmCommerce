@@ -445,152 +445,16 @@ export const adminSearchIndex: SearchableItem[] = [
     keywords: ['joined', 'registered', 'created', ]
   },
 
-  // Analytics
-  {
-    id: 'analytics',
-    type: 'page',
-    path: '/admin/analytics',
-    title: 'Analytics',
-    titleBg: '',
-    description: '',
-    keywords: ['analytics', 'reports', 'statistics', ]
-  },
-  {
-    id: 'analytics-total-orders',
-    type: 'field',
-    path: '/admin/analytics',
-    title: 'Total Orders',
-    titleBg: '',
-    parentPath: '/admin/analytics',
-    keywords: ['orders', 'total', ]
-  },
-  {
-    id: 'analytics-total-revenue',
-    type: 'field',
-    path: '/admin/analytics',
-    title: 'Total Revenue',
-    titleBg: '',
-    parentPath: '/admin/analytics',
-    keywords: ['revenue', 'income', 'total', ]
-  },
-  {
-    id: 'analytics-total-customers',
-    type: 'field',
-    path: '/admin/analytics',
-    title: 'Total Customers',
-    titleBg: '',
-    parentPath: '/admin/analytics',
-    keywords: ['customers', 'total', ]
-  },
-  {
-    id: 'analytics-average-order-value',
-    type: 'field',
-    path: '/admin/analytics',
-    title: 'Average Order Value',
-    titleBg: '',
-    parentPath: '/admin/analytics',
-    keywords: ['average', 'order value', 'mean', ]
-  },
 
-  // Visitors
+  // Pet Fashion Studio
   {
-    id: 'visitors',
+    id: 'pet-studio',
     type: 'page',
-    path: '/admin/visitors',
-    title: 'Visitors',
+    path: '/admin/pet-studio',
+    title: 'Pet Fashion Studio',
     titleBg: '',
-    description: '',
-    keywords: ['visitors', 'analytics', 'traffic', ]
-  },
-  {
-    id: 'visitors-summary',
-    type: 'section',
-    path: '/admin/visitors',
-    title: 'Visitor Summary',
-    titleBg: '',
-    parentPath: '/admin/visitors',
-    keywords: ['summary', 'overview', ]
-  },
-  {
-    id: 'visitors-total',
-    type: 'field',
-    path: '/admin/visitors',
-    title: 'Total Visitors',
-    titleBg: '',
-    parentPath: '/admin/visitors',
-    keywords: ['visitors', 'total', ]
-  },
-  {
-    id: 'visitors-sessions',
-    type: 'field',
-    path: '/admin/visitors',
-    title: 'Total Sessions',
-    titleBg: '',
-    parentPath: '/admin/visitors',
-    keywords: ['sessions', 'total', ]
-  },
-  {
-    id: 'visitors-page-views',
-    type: 'field',
-    path: '/admin/visitors',
-    title: 'Total Page Views',
-    titleBg: '',
-    parentPath: '/admin/visitors',
-    keywords: ['page views', 'views', ]
-  },
-  {
-    id: 'visitors-bounce-rate',
-    type: 'field',
-    path: '/admin/visitors',
-    title: 'Bounce Rate',
-    titleBg: '',
-    parentPath: '/admin/visitors',
-    keywords: ['bounce rate', 'bounce', ]
-  },
-  {
-    id: 'visitors-top-countries',
-    type: 'section',
-    path: '/admin/visitors',
-    title: 'Top Countries',
-    titleBg: '',
-    parentPath: '/admin/visitors',
-    keywords: ['countries', 'top', ]
-  },
-  {
-    id: 'visitors-device-types',
-    type: 'section',
-    path: '/admin/visitors',
-    title: 'Device Types',
-    titleBg: '',
-    parentPath: '/admin/visitors',
-    keywords: ['devices', 'types', ]
-  },
-  {
-    id: 'visitors-browsers',
-    type: 'section',
-    path: '/admin/visitors',
-    title: 'Browsers',
-    titleBg: '',
-    parentPath: '/admin/visitors',
-    keywords: ['browsers', ]
-  },
-  {
-    id: 'visitors-operating-systems',
-    type: 'section',
-    path: '/admin/visitors',
-    title: 'Operating Systems',
-    titleBg: '',
-    parentPath: '/admin/visitors',
-    keywords: ['operating systems', 'os', ]
-  },
-  {
-    id: 'visitors-referrer-sources',
-    type: 'section',
-    path: '/admin/visitors',
-    title: 'Referrer Sources',
-    titleBg: '',
-    parentPath: '/admin/visitors',
-    keywords: ['referrer', 'sources', 'traffic', ]
+    description: 'AI-powered pet fashion photography — dress pets in your products',
+    keywords: ['pet studio', 'fashion', 'ai', 'generate', 'image', 'tiktok', 'who wears it better', 'dress', ]
   },
 
   // Finance

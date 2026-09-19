@@ -13,19 +13,18 @@ import {
   DollarSign, 
   Percent, 
   Image as ImageIcon,
-  Eye,
   ArrowLeft,
   Menu,
   X,
   ChevronLeft,
   ChevronRight,
-  TrendingUp,
   Boxes,
   ClipboardList,
   ShoppingCart,
   Mail,
   MailCheck,
-  Truck
+  Truck,
+  Sparkles
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -198,18 +197,6 @@ export default function AdminSidebar({ currentPath, collapsed: externalCollapsed
       icon: MailCheck
     },
     {
-      id: 'analytics',
-      label: 'Analytics',
-      path: '/admin/analytics',
-      icon: TrendingUp
-    },
-    {
-      id: 'visitors',
-      label: t.visitors || 'Visitors',
-      path: '/admin/visitors',
-      icon: Eye
-    },
-    {
       id: 'finance',
       label: 'Finance',
       path: '/admin/finance',
@@ -222,16 +209,16 @@ export default function AdminSidebar({ currentPath, collapsed: externalCollapsed
       icon: Percent
     },
     {
-      id: 'super-promo',
-      label: 'SUPER PROMO',
-      path: '/admin/super-promo',
-      icon: Percent
-    },
-    {
       id: 'media',
       label: 'Media',
       path: '/admin/media',
       icon: ImageIcon
+    },
+    {
+      id: 'pet-studio',
+      label: 'Pet Studio',
+      path: '/admin/pet-studio',
+      icon: Sparkles
     },
     {
       id: 'settings',

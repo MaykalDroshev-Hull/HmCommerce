@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Search, X, Clock, LayoutDashboard, Package, Settings, Users, BarChart3, Tag, DollarSign, Percent, Image as ImageIcon, Eye, TrendingUp, ShoppingCart } from 'lucide-react';
+import { Search, X, Clock, LayoutDashboard, Package, Settings, Users, BarChart3, Tag, DollarSign, Percent, Image as ImageIcon, Eye, TrendingUp, ShoppingCart, Sparkles } from 'lucide-react';
 import { useAdminSearch } from '../lib/useAdminSearch';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -24,6 +24,7 @@ const iconMap: Record<string, any> = {
   finance: DollarSign,
   discounts: Percent,
   media: ImageIcon,
+  'pet-studio': Sparkles,
   settings: Settings,
   orders: ShoppingCart,
 };
