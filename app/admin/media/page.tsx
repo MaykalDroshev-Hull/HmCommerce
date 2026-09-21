@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AdminLayout from '../components/AdminLayout';
 import { getAdminSession } from '@/lib/auth';
@@ -82,7 +82,7 @@ function formatBytes(bytes?: number, decimals = 1): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }
 
-export default function MediaPage() {
+function MediaPageContent() {
   const router = useRouter();
   const { language } = useLanguage();
   const t = translations[language || 'en'];
@@ -979,5 +979,19 @@ export default function MediaPage() {
 
       </AdminPage>
     </AdminLayout>
+  );
+}
+
+export default function MediaPage() {
+  return (
+    <Suspense fallback={
+      <AdminLayout currentPath="/admin/media">
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-900 dark:border-white" />
+        </div>
+      </AdminLayout>
+    }>
+      <MediaPageContent />
+    </Suspense>
   );
 }
