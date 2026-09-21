@@ -289,3 +289,157 @@ Respond in exact valid JSON format:
     return generateLocalPetCopy(input);
   }
 }
+
+export interface RewriteReviewInput {
+  reviewText: string;
+  productName?: string;
+  petName?: string;
+  rating?: number;
+}
+
+export interface RewriteReviewOutput {
+  reviewText: string;
+  isAi: boolean;
+  modelUsed?: string;
+}
+
+/**
+ * Local fallback review rewriter to British pet parent tone
+ */
+export function rewriteLocalPetReview(input: RewriteReviewInput): RewriteReviewOutput {
+  const original = input.reviewText.trim();
+
+  // Convert common terms to warm British pet parent expressions
+  let text = original
+    .replace(/\bcolor\b/gi, 'colour')
+    .replace(/\bfavorite\b/gi, 'favourite')
+    .replace(/\bcozy\b/gi, 'cosy')
+    .replace(/\bcustomized\b/gi, 'customised')
+    .replace(/\bleash\b/gi, 'lead')
+    .replace(/\bthe animal\b/gi, 'our pup')
+    .replace(/\bthe pet\b/gi, 'our furbaby')
+    .replace(/\bthe dog\b/gi, 'our pup')
+    .replace(/\bsweater\b/gi, 'jumper')
+    .replace(/\bdiapers\b/gi, 'nappies');
+
+  // Polish grammar / sentence endings if needed
+  if (!text.endsWith('.') && !text.endsWith('!') && !text.endsWith('?')) {
+    text += '.';
+  }
+
+  // If brief, add an authentic British pet parent endorsement
+  if (text.length < 80 && !text.toLowerCase().includes('walk') && !text.toLowerCase().includes('rambl')) {
+    text += ' Handles our muddy weekend walks brilliantly — wonderful quality for devoted pet parents.';
+  }
+
+  return {
+    reviewText: text,
+    isAi: false
+  };
+}
+
+/**
+ * Re-write review text with the authentic website tone of voice aligning with British pet parents
+ */
+export async function rewritePetReview(input: RewriteReviewInput): Promise<RewriteReviewOutput> {
+  const apiKey = await getGeminiApiKey();
+
+  if (!apiKey) {
+    logger.info('No Gemini API key found, using local review rewriter');
+    return rewriteLocalPetReview(input);
+  }
+
+  const prompt = `You are a helpful assistant for "MB-Paws", a premium British pet brand.
+Task: Re-write the following customer review so that it sounds like an authentic, delighted British pet parent speaking warmly about their experience with this pet gear.
+
+Inputs:
+- Original Review: "${input.reviewText}"
+- Product Name: "${input.productName || 'Pet Gear'}"
+- Pet / Furbaby Info: "${input.petName || 'Our dog / cat'}"
+- Star Rating: ${input.rating || 5} Stars
+
+Tone & Persona Guidelines (MANDATORY):
+1. Target Audience / Persona: A loving, devoted British pet parent living in the UK (e.g. mentions UK weather, park walks, muddy woodlands, or cosy home naps).
+2. Voice: Warm, genuine, conversational, enthusiastic, and approachable. Must sound like an authentic customer review, NOT generic marketing copy.
+3. Spelling: British English exclusively (e.g., "colour", "favourite", "cosy", "lead" instead of leash).
+4. Zero Emojis: Do NOT use any emojis whatsoever.
+5. Length: Keep it natural and concise (2 to 4 snappy sentences, around 30 to 70 words).
+6. Naturally highlight comfort, fit, quality hardware, and how happy their furbaby is.
+
+Respond ONLY with valid JSON in this exact structure:
+{
+  "reviewText": "Your rewritten British pet parent review here"
+}`;
+
+  try {
+    const models = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-flash-latest'];
+    let lastError: any = null;
+
+    for (const model of models) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [{ text: prompt }]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              responseMimeType: 'application/json'
+            }
+          })
+        });
+
+        if (!response.ok) {
+          const errBody = await response.text();
+          lastError = new Error(`Gemini API HTTP ${response.status}: ${errBody}`);
+          continue;
+        }
+
+        const data = await response.json();
+        const rawContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (rawContent) {
+          try {
+            const parsed = JSON.parse(rawContent);
+            if (parsed.reviewText) {
+              return {
+                reviewText: parsed.reviewText.trim(),
+                isAi: true,
+                modelUsed: model
+              };
+            }
+          } catch (jsonErr) {
+            const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              const parsed = JSON.parse(jsonMatch[0]);
+              if (parsed.reviewText) {
+                return {
+                  reviewText: parsed.reviewText.trim(),
+                  isAi: true,
+                  modelUsed: model
+                };
+              }
+            }
+          }
+        }
+      } catch (modelErr) {
+        lastError = modelErr;
+      }
+    }
+
+    logger.warn('Gemini review rewrite unsuccessful, falling back to local rewriter:', lastError);
+    return rewriteLocalPetReview(input);
+  } catch (error) {
+    logger.error('Error rewriting review with Gemini:', error);
+    return rewriteLocalPetReview(input);
+  }
+}
+

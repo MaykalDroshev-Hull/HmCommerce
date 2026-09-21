@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Edit2, Trash2, X, Image as ImageIcon, ChevronDown, Upload, Eye, EyeOff, PackageX, PackageCheck, FileSpreadsheet, Sparkles, RefreshCw } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, ChevronDown, Upload, Eye, EyeOff, PackageX, PackageCheck, FileSpreadsheet, Sparkles, RefreshCw, Star, MessageSquare, Clipboard, CheckCircle2 } from 'lucide-react';
 import { ProductType, Property } from '@/lib/types/product-types';
 import AdminLayout from '../components/AdminLayout';
 import AdminModal from '../components/AdminModal';
@@ -161,6 +161,23 @@ export default function ProductsPage() {
   const [selectedRelatedProductIds, setSelectedRelatedProductIds] = useState<string[]>([]);
   const [relatedSearchQuery, setRelatedSearchQuery] = useState('');
   const [isExportingGoogle, setIsExportingGoogle] = useState(false);
+
+  // Product Reviews State
+  const [productReviews, setProductReviews] = useState<any[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [showAddReviewForm, setShowAddReviewForm] = useState(false);
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+  const [reviewAuthorName, setReviewAuthorName] = useState('');
+  const [reviewPetName, setReviewPetName] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState('');
+  const [reviewImageUrl, setReviewImageUrl] = useState('');
+  const [reviewShowOnHome, setReviewShowOnHome] = useState(true);
+  const [isSavingReview, setIsSavingReview] = useState(false);
+  const [isUploadingReviewImage, setIsUploadingReviewImage] = useState(false);
+  const [isRewritingReview, setIsRewritingReview] = useState(false);
+  const [reviewBadge, setReviewBadge] = useState<string | null>(null);
+  const reviewFileInputRef = useRef<HTMLInputElement>(null);
 
   // AI Copywriting (Title & Description) State & Handlers
   const [isSuggestingTitle, setIsSuggestingTitle] = useState(false);
@@ -836,6 +853,8 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
           setProductImages([]);
           setSelectedRelatedProductIds([]);
           setRelatedSearchQuery('');
+          setProductReviews([]);
+          resetReviewForm();
           setValidationErrors({});
           setTitleBadge(null);
           setDescBadge(null);
@@ -965,6 +984,9 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
         setSelectedRelatedProductIds([]);
       }
       setRelatedSearchQuery('');
+
+      // Load product reviews
+      fetchProductReviews(product.productid);
     } catch (error) {
       alert('Failed to load product details');
       return;
@@ -972,6 +994,306 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
     
     setShowModal(true);
   };
+
+  const fetchProductReviews = async (productId: string) => {
+    try {
+      setLoadingReviews(true);
+      const res = await fetch(`/api/products/${productId}/reviews?all=true`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.reviews)) {
+        setProductReviews(data.reviews);
+      } else {
+        setProductReviews([]);
+      }
+    } catch (err) {
+      console.error('Failed to load reviews:', err);
+      setProductReviews([]);
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+
+  const handleOpenReviewsForProduct = async (product: any) => {
+    await handleEdit(product);
+    setShowAddReviewForm(true);
+    setTimeout(() => {
+      const el = document.getElementById('product-reviews-section');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 300);
+  };
+
+  const resetReviewForm = () => {
+    setShowAddReviewForm(false);
+    setEditingReviewId(null);
+    setReviewAuthorName('');
+    setReviewPetName('');
+    setReviewRating(5);
+    setReviewText('');
+    setReviewImageUrl('');
+    setReviewShowOnHome(true);
+    setReviewBadge(null);
+  };
+
+  const handleAiRewriteReview = async () => {
+    if (!reviewText.trim()) {
+      alert('Please enter some review text first so AI can re-write it.');
+      return;
+    }
+
+    try {
+      setIsRewritingReview(true);
+      setReviewBadge(null);
+
+      const res = await fetch('/api/ai/generate-copy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          target: 'review',
+          reviewText: reviewText.trim(),
+          productName: formData.name || editingProduct?.name || 'Pet Gear',
+          petName: reviewPetName.trim() || undefined,
+          rating: reviewRating
+        })
+      });
+
+      const data = await res.json();
+      if (data.success && data.reviewText) {
+        setReviewText(data.reviewText);
+        setReviewBadge(
+          data.isAi
+            ? `Polished for British Pet Parents by Gemini AI (${data.modelUsed || 'Flash'})`
+            : 'Polished with British Pet Brand Persona'
+        );
+      } else {
+        alert(data.error || 'Failed to re-write review');
+      }
+    } catch (err) {
+      console.error('Error re-writing review:', err);
+      alert('Failed to re-write review');
+    } finally {
+      setIsRewritingReview(false);
+    }
+  };
+
+  const handleEditReviewClick = (review: any) => {
+    setEditingReviewId(review.review_id);
+    setReviewAuthorName(review.author_name || '');
+    setReviewPetName(review.pet_name || '');
+    setReviewRating(review.rating || 5);
+    setReviewText(review.review_text || '');
+    setReviewImageUrl(review.image_url || '');
+    setReviewShowOnHome(review.show_on_home !== false);
+    setShowAddReviewForm(true);
+  };
+
+  const handleSaveReview = async () => {
+    if (!editingProduct?.productid) {
+      alert('Please save the product first before adding reviews.');
+      return;
+    }
+    if (!reviewAuthorName.trim()) {
+      alert('Please enter a reviewer name.');
+      return;
+    }
+    if (!reviewText.trim()) {
+      alert('Please enter review text.');
+      return;
+    }
+
+    try {
+      setIsSavingReview(true);
+      const payload = {
+        author_name: reviewAuthorName.trim(),
+        pet_name: reviewPetName.trim() || null,
+        rating: reviewRating,
+        review_text: reviewText.trim(),
+        image_url: reviewImageUrl.trim() || null,
+        show_on_home: reviewShowOnHome,
+      };
+
+      let res;
+      if (editingReviewId) {
+        res = await fetch(`/api/products/${editingProduct.productid}/reviews`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ review_id: editingReviewId, ...payload }),
+        });
+      } else {
+        res = await fetch(`/api/products/${editingProduct.productid}/reviews`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      }
+
+      const data = await res.json();
+      if (data.success) {
+        resetReviewForm();
+        fetchProductReviews(editingProduct.productid);
+      } else {
+        alert(data.error || 'Failed to save review');
+      }
+    } catch (err) {
+      console.error('Error saving review:', err);
+      alert('Failed to save review');
+    } finally {
+      setIsSavingReview(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!editingProduct?.productid) return;
+    if (!confirm('Are you sure you want to delete this review?')) return;
+
+    try {
+      const res = await fetch(`/api/products/${editingProduct.productid}/reviews?review_id=${reviewId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchProductReviews(editingProduct.productid);
+      } else {
+        alert(data.error || 'Failed to delete review');
+      }
+    } catch (err) {
+      console.error('Error deleting review:', err);
+      alert('Failed to delete review');
+    }
+  };
+
+  const handleReviewImageUpload = async (file: File) => {
+    try {
+      setIsUploadingReviewImage(true);
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+      uploadFormData.append('folder', 'reviews');
+
+      const res = await fetch('/api/storage/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      const data = await res.json();
+      if (data.url || data.publicUrl || data.path) {
+        setReviewImageUrl(data.url || data.publicUrl || data.path);
+      } else {
+        alert(data.error || 'Failed to upload review image');
+      }
+    } catch (err) {
+      console.error('Failed to upload image:', err);
+      alert('Failed to upload image');
+    } finally {
+      setIsUploadingReviewImage(false);
+    }
+  };
+
+  const handlePasteReviewImageFromClipboard = async () => {
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.read) {
+        alert('Clipboard image access is not supported by your browser. Please click the upload area and press Ctrl+V directly.');
+        return;
+      }
+      setIsUploadingReviewImage(true);
+      const clipboardItems = await navigator.clipboard.read();
+      let imageFound = false;
+      for (const item of clipboardItems) {
+        const imageType = item.types.find((t) => t.startsWith('image/'));
+        if (imageType) {
+          imageFound = true;
+          const blob = await item.getType(imageType);
+          const ext = imageType.split('/')[1] || 'png';
+          const file = new File([blob], `clipboard-review-${Date.now()}.${ext}`, { type: imageType });
+          await handleReviewImageUpload(file);
+          break;
+        }
+      }
+      if (!imageFound) {
+        alert('No image found in clipboard. Please copy an image first or press Ctrl+V.');
+      }
+    } catch (err: any) {
+      console.warn('Clipboard read error:', err);
+      alert('Could not access clipboard automatically (browser permission may be required). You can press Ctrl+V directly to paste your image!');
+    } finally {
+      setIsUploadingReviewImage(false);
+    }
+  };
+
+  const handleReviewDropzonePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const file = items[i].getAsFile();
+        if (file) {
+          e.preventDefault();
+          e.stopPropagation();
+          handleReviewImageUpload(file);
+          return;
+        }
+      }
+    }
+  };
+
+  const handlePasteProductImageFromClipboard = async () => {
+    if (productImages.length >= MAX_PRODUCT_IMAGES) {
+      alert(`Maximum ${MAX_PRODUCT_IMAGES} images allowed.`);
+      return;
+    }
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.read) {
+        alert('Clipboard access is not directly supported by your browser.');
+        return;
+      }
+      const clipboardItems = await navigator.clipboard.read();
+      let imageFound = false;
+      for (const item of clipboardItems) {
+        const imageType = item.types.find((t) => t.startsWith('image/'));
+        if (imageType) {
+          imageFound = true;
+          const blob = await item.getType(imageType);
+          const ext = imageType.split('/')[1] || 'png';
+          const file = new File([blob], `clipboard-product-${Date.now()}.${ext}`, { type: imageType });
+          const url = await uploadImageFile(file);
+          if (url) {
+            addProductImages([url]);
+          }
+          break;
+        }
+      }
+      if (!imageFound) {
+        alert('No image found in clipboard. Please copy an image first.');
+      }
+    } catch (err: any) {
+      console.warn('Clipboard read error:', err);
+      alert('Could not access clipboard automatically. Please ensure permission is granted.');
+    }
+  };
+
+  // Window-level Ctrl+V paste listener when review form is open
+  useEffect(() => {
+    if (!showAddReviewForm) return;
+
+    const handleWindowPaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.startsWith('image/')) {
+          const file = items[i].getAsFile();
+          if (file) {
+            e.preventDefault();
+            handleReviewImageUpload(file);
+            return;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('paste', handleWindowPaste);
+    return () => window.removeEventListener('paste', handleWindowPaste);
+  }, [showAddReviewForm]);
 
   const handleDeleteClick = (product: Product) => {
     setProductToDelete(product);
@@ -1492,6 +1814,8 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
     setProductImages([]);
     setSelectedRelatedProductIds([]);
     setRelatedSearchQuery('');
+    setProductReviews([]);
+    resetReviewForm();
     setValidationErrors({});
     setTitleBadge(null);
     setDescBadge(null);
@@ -1730,7 +2054,7 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                         <TableHeaderCell align="center" columnId="shop" defaultWidth={180} minWidth={130}>
                           {'Price & Status'}
                         </TableHeaderCell>
-                        <TableHeaderCell align="right" columnId="actions" defaultWidth={160} resizable={false}>
+                        <TableHeaderCell align="right" columnId="actions" defaultWidth={180} resizable={false}>
                           {t.actions}
                         </TableHeaderCell>
                       </TableHeaderRow>
@@ -1738,6 +2062,12 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                     <TableBody>
                       {currentProducts.map((product) => {
                         const pricing = getProductCardPricing(product);
+                        const productThumbnail =
+                          (Array.isArray(product.images) && product.images.find(img => typeof img === 'string' && img.trim() && !img.includes('/image.png'))) ||
+                          (product.images && product.images[0] && typeof product.images[0] === 'string' && !product.images[0].includes('/image.png') ? product.images[0] : null) ||
+                          product.variants?.find((v: any) => v.images?.[0])?.images?.[0] ||
+                          product.variants?.find((v: any) => v.imageurl)?.imageurl ||
+                          (product.images?.[0] || null);
 
                         return (
                           <TableRow key={product.productid}>
@@ -1751,8 +2081,38 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                               />
                             </TableCell>
                             <TableCell columnId="name" defaultWidth={360}>
-                              <div className="font-medium whitespace-normal break-words leading-snug">
-                                {product.name}
+                              <div className="flex items-center gap-3 py-1">
+                                <div
+                                  onClick={() => handleEdit(product)}
+                                  className="w-11 h-11 rounded-lg border border-gray-200 bg-gray-50 overflow-hidden shrink-0 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                                  title="Click to edit product"
+                                >
+                                  {productThumbnail ? (
+                                    <img
+                                      src={productThumbnail}
+                                      alt={product.name}
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        (e.target as HTMLElement).style.display = 'none';
+                                      }}
+                                    />
+                                  ) : (
+                                    <ImageIcon size={18} className="text-gray-400" />
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div
+                                    onClick={() => handleEdit(product)}
+                                    className="font-medium text-gray-900 whitespace-normal break-words leading-snug line-clamp-2 cursor-pointer hover:text-indigo-600 transition-colors"
+                                  >
+                                    {product.name}
+                                  </div>
+                                  {product.sku && (
+                                    <div className="text-[11px] text-gray-400 font-mono mt-0.5 truncate">
+                                      {product.sku}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </TableCell>
                             <TableCell columnId="type" defaultWidth={220}>
@@ -1800,7 +2160,7 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                                 </div>
                               </div>
                             </TableCell>
-                          <TableCell align="right" columnId="actions" defaultWidth={160}>
+                          <TableCell align="right" columnId="actions" defaultWidth={180}>
                             <div className="flex justify-end gap-2">
                               <button
                                 onClick={() => window.open(`/products/${product.productid}`, '_blank', 'noopener,noreferrer')}
@@ -1808,6 +2168,13 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                                 title={'View'}
                               >
                                 <Eye className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleOpenReviewsForProduct(product)}
+                                className="p-1.5 sm:p-2 text-neutral-700 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors touch-manipulation"
+                                title="Customer Reviews"
+                              >
+                                <MessageSquare className="w-4 h-4" />
                               </button>
                               <button
                                 onClick={() => handleOpenAiStudioFromTable(product)}
@@ -1916,6 +2283,13 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                         title={'View'}
                       >
                         <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                      </button>
+                      <button
+                        onClick={() => handleOpenReviewsForProduct(product)}
+                        className="p-2 text-neutral-700 hover:text-emerald-700 hover:bg-emerald-50 active:bg-emerald-100 rounded transition-colors touch-manipulation"
+                        title="Customer Reviews"
+                      >
+                        <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
                       </button>
                       <button
                         onClick={() => handleOpenAiStudioFromTable(product)}
@@ -2059,6 +2433,43 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
           <div className="relative">
               <form onSubmit={handleSubmit}>
                 <div className={`space-y-4 transition-all duration-300 ${showCompleteAnimation ? 'blur-sm pointer-events-none' : ''}`}>
+                  {editingProduct && (
+                    <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-neutral-50 rounded-lg border border-neutral-200">
+                      <span className="text-xs font-semibold text-neutral-900 flex items-center gap-1.5">
+                        <Sparkles size={13} className="text-amber-500" />
+                        Quick Jump:
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const el = document.getElementById('product-reviews-section');
+                            el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md bg-white border border-neutral-300 text-neutral-800 hover:border-neutral-950 hover:bg-neutral-50 transition-colors shadow-2xs"
+                        >
+                          <MessageSquare size={13} className="text-neutral-600" />
+                          <span>Customer Reviews</span>
+                          {productReviews.length > 0 && (
+                            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-neutral-900 text-white">
+                              {productReviews.length}
+                            </span>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const el = document.getElementById('product-related-section');
+                            el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md bg-white border border-neutral-300 text-neutral-800 hover:border-neutral-950 hover:bg-neutral-50 transition-colors shadow-2xs"
+                        >
+                          <Package size={13} className="text-neutral-600" />
+                          <span>Related Products</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   <div>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1.5">
                       <div className="flex items-center gap-2">
@@ -2285,6 +2696,16 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                       >
                         <ImageIcon className="w-4 h-4" />
                         {'Select from media'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handlePasteProductImageFromClipboard}
+                        disabled={productImages.length >= MAX_PRODUCT_IMAGES}
+                        className="inline-flex items-center gap-2 px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Paste copied image from clipboard (or press Ctrl+V)"
+                      >
+                        <Clipboard className="w-4 h-4 text-neutral-600" />
+                        <span>{'Paste from clipboard'}</span>
                       </button>
                       <button
                         type="button"
@@ -3376,8 +3797,408 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                       </div>
                     </div>
                   )}
-                      {/* Related Products Section */}
-                      <div className="mt-6 pt-6 border-t border-gray-200">
+
+                  {/* Product Reviews (Pet Parent Feedback) Section */}
+                  <div id="product-reviews-section" className="mt-6 pt-6 border-t border-gray-200 scroll-mt-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-1.5">
+                            <MessageSquare size={16} className="text-neutral-700" />
+                            <span>{'Product Reviews (Pet Parent Feedback)'}</span>
+                          </h3>
+                          {productReviews.length > 0 && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                              {productReviews.length} {productReviews.length === 1 ? 'review' : 'reviews'}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {'Reviews added here will appear on this product\'s page and in "Verified Pet Parent Feedback" on the homepage.'}
+                        </p>
+                      </div>
+
+                      {!showAddReviewForm && editingProduct && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            resetReviewForm();
+                            setShowAddReviewForm(true);
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-neutral-950 text-white hover:bg-neutral-800 transition-colors self-start sm:self-auto shadow-xs"
+                        >
+                          <Plus size={14} />
+                          <span>{'Add Review'}</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {!editingProduct ? (
+                      <div className="p-4 rounded-xl border border-dashed border-gray-300 bg-gray-50 text-center text-xs text-gray-500">
+                        {'Please save this product first before adding reviews.'}
+                      </div>
+                    ) : showAddReviewForm ? (
+                      /* Add / Edit Review Subform */
+                      <div className="p-4 rounded-xl border border-neutral-300 bg-neutral-50/80 space-y-4 mb-4 shadow-2xs">
+                        <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-800">
+                            {editingReviewId ? 'Edit Review' : 'New Review'}
+                          </h4>
+                          <button
+                            type="button"
+                            onClick={resetReviewForm}
+                            className="text-xs text-neutral-500 hover:text-neutral-900"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              {'Pet Parent Name *'}
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g. James W. (Cotswolds)"
+                              value={reviewAuthorName}
+                              onChange={(e) => setReviewAuthorName(e.target.value)}
+                              className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-900 bg-white"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              {'Furbaby / Breed / Sizing (Optional)'}
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g. Golden Retriever • Size L"
+                              value={reviewPetName}
+                              onChange={(e) => setReviewPetName(e.target.value)}
+                              className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-900 bg-white"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Star Rating */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            {'Star Rating'}
+                          </label>
+                          <div className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                key={star}
+                                type="button"
+                                onClick={() => setReviewRating(star)}
+                                className="p-1 hover:scale-110 transition-transform"
+                              >
+                                <Star
+                                  size={18}
+                                  className={
+                                    star <= reviewRating
+                                      ? 'fill-amber-400 text-amber-400'
+                                      : 'fill-transparent text-gray-300'
+                                  }
+                                />
+                              </button>
+                            ))}
+                            <span className="text-xs font-semibold text-gray-700 ml-2">
+                              {reviewRating} / 5 Stars
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Review Text */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="block text-xs font-medium text-gray-700">
+                              {'Review Content *'}
+                            </label>
+                            <button
+                              type="button"
+                              onClick={handleAiRewriteReview}
+                              disabled={isRewritingReview || !reviewText.trim()}
+                              className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-neutral-800 hover:text-neutral-950 bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 px-2.5 py-1 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Re-write review text with UK pet parent expressions (en-GB, cosy, woodland rambles, wholesome)"
+                            >
+                              <Sparkles size={12} className={isRewritingReview ? 'animate-spin text-amber-500' : 'text-amber-500'} />
+                              <span>
+                                {isRewritingReview ? 'Polishing for UK Pet Parents...' : 'Re-write in British Pet Parent Tone'}
+                              </span>
+                            </button>
+                          </div>
+                          <textarea
+                            rows={3}
+                            placeholder="Share the pet parent's feedback..."
+                            value={reviewText}
+                            onChange={(e) => {
+                              setReviewText(e.target.value);
+                              if (reviewBadge) setReviewBadge(null);
+                            }}
+                            className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-900 bg-white"
+                          />
+                          {reviewBadge && (
+                            <p className="text-[11px] text-emerald-700 font-medium mt-1 flex items-center gap-1">
+                              <CheckCircle2 size={12} />
+                              <span>{reviewBadge}</span>
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Image Placeholder & Upload */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            {'Review Image (Pet Photo / Placeholder)'}
+                          </label>
+
+                          <div className="flex flex-col sm:flex-row items-start gap-3">
+                            {/* Image preview / placeholder dropzone */}
+                            <div
+                              tabIndex={0}
+                              onClick={() => reviewFileInputRef.current?.click()}
+                              onPaste={handleReviewDropzonePaste}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const file = e.dataTransfer.files?.[0];
+                                if (file && (file.type.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|avif|heic|heif)$/i.test(file.name))) {
+                                  handleReviewImageUpload(file);
+                                }
+                              }}
+                              className={`w-24 h-24 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer overflow-hidden relative transition-all focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:border-transparent ${
+                                reviewImageUrl
+                                  ? 'border-neutral-400 bg-neutral-100'
+                                  : 'border-gray-300 hover:border-neutral-900 bg-white hover:bg-neutral-50/50'
+                              }`}
+                              title="Click to browse, drag & drop, or press Ctrl+V to paste"
+                            >
+                              {reviewImageUrl ? (
+                                <>
+                                  <img
+                                    src={reviewImageUrl}
+                                    alt="Review photo"
+                                    className="w-full h-full object-cover"
+                                  />
+                                  <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-neutral-950/80 backdrop-blur-xs text-white tracking-wider uppercase shadow-xs">
+                                    AVIF
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setReviewImageUrl('');
+                                    }}
+                                    className="absolute top-1 right-1 p-0.5 bg-black/70 hover:bg-black text-white rounded-full transition-colors"
+                                    title="Remove image"
+                                  >
+                                    <X size={12} />
+                                  </button>
+                                </>
+                              ) : isUploadingReviewImage ? (
+                                <div className="text-center p-2">
+                                  <RefreshCw size={18} className="animate-spin text-neutral-600 mx-auto mb-1" />
+                                  <span className="text-[10px] text-gray-500 font-medium block leading-tight">Saving AVIF...</span>
+                                </div>
+                              ) : (
+                                <div className="text-center p-2">
+                                  <ImageIcon size={20} className="text-gray-400 mx-auto mb-1" />
+                                  <span className="text-[10px] text-gray-700 font-medium block leading-tight">
+                                    Upload Image
+                                  </span>
+                                  <span className="text-[9px] text-neutral-400 block mt-0.5 font-mono">
+                                    or Ctrl+V
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+
+                            <input
+                              ref={reviewFileInputRef}
+                              type="file"
+                              accept="image/*,.heic,.heif,.avif"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleReviewImageUpload(file);
+                              }}
+                              className="hidden"
+                            />
+
+                            <div className="flex-1 w-full space-y-2">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <input
+                                  type="text"
+                                  placeholder="Or paste image URL (https://...)"
+                                  value={reviewImageUrl}
+                                  onChange={(e) => setReviewImageUrl(e.target.value)}
+                                  className="flex-1 min-w-[160px] px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-900 bg-white"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => reviewFileInputRef.current?.click()}
+                                  disabled={isUploadingReviewImage}
+                                  className="px-3 py-2 text-xs font-medium rounded-lg border border-gray-300 hover:bg-gray-100 bg-white shrink-0 flex items-center gap-1.5 transition-colors"
+                                  title="Browse from computer"
+                                >
+                                  <Upload size={13} />
+                                  <span>Browse</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handlePasteReviewImageFromClipboard}
+                                  disabled={isUploadingReviewImage}
+                                  className="px-3 py-2 text-xs font-semibold rounded-lg bg-neutral-950 hover:bg-neutral-800 text-white shrink-0 flex items-center gap-1.5 transition-colors shadow-2xs disabled:opacity-50"
+                                  title="Paste image directly from clipboard (or press Ctrl+V)"
+                                >
+                                  <Clipboard size={13} className="text-white" />
+                                  <span>Paste Clipboard</span>
+                                </button>
+                              </div>
+                              <p className="text-[11px] text-gray-500 leading-relaxed">
+                                Paste directly from clipboard (<strong>Ctrl+V</strong>), drag & drop, browse files, or paste a URL. All images are automatically converted and saved to DB storage as high-efficiency <strong>AVIF</strong>.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Show on Homepage Checkbox */}
+                        <div className="pt-2 border-t border-gray-200">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={reviewShowOnHome}
+                              onChange={(e) => setReviewShowOnHome(e.target.checked)}
+                              className="w-4 h-4 text-neutral-900 border-gray-300 rounded focus:ring-neutral-900 cursor-pointer"
+                            />
+                            <span className="text-xs text-gray-700 font-medium">
+                              Show in &quot;Verified Pet Parent Feedback&quot; section on homepage
+                            </span>
+                          </label>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex items-center justify-end gap-2 pt-2">
+                          <button
+                            type="button"
+                            onClick={resetReviewForm}
+                            className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleSaveReview}
+                            disabled={isSavingReview}
+                            className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-neutral-950 text-white hover:bg-neutral-800 transition-colors disabled:opacity-50"
+                          >
+                            {isSavingReview ? 'Saving...' : editingReviewId ? 'Update Review' : 'Save Review'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {/* Reviews list */}
+                    {loadingReviews ? (
+                      <div className="p-4 text-center text-xs text-gray-500">
+                        Loading reviews...
+                      </div>
+                    ) : productReviews.length === 0 ? (
+                      <div className="p-4 rounded-xl border border-gray-200 bg-white text-center text-xs text-gray-500">
+                        No reviews added for this product yet. Click &quot;Add Review&quot; to add pet parent feedback.
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                        {productReviews.map((rev) => (
+                          <div
+                            key={rev.review_id}
+                            className="p-3 rounded-xl border border-gray-200 bg-white hover:border-gray-300 transition-colors flex items-start justify-between gap-3"
+                          >
+                            <div className="flex items-start gap-3 min-w-0">
+                              {rev.image_url ? (
+                                <img
+                                  src={rev.image_url}
+                                  alt={rev.author_name}
+                                  className="w-12 h-12 rounded-lg object-cover border border-gray-200 shrink-0"
+                                />
+                              ) : (
+                                <div className="w-12 h-12 rounded-lg bg-neutral-100 border border-gray-200 flex items-center justify-center shrink-0 text-neutral-400">
+                                  <ImageIcon size={18} />
+                                </div>
+                              )}
+
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="text-xs font-bold text-gray-900">
+                                    {rev.author_name}
+                                  </span>
+                                  {rev.pet_name && (
+                                    <span className="text-[11px] text-gray-500">
+                                      • {rev.pet_name}
+                                    </span>
+                                  )}
+                                  <div className="flex items-center gap-0.5 ml-1">
+                                    {Array.from({ length: rev.rating || 5 }).map((_, idx) => (
+                                      <Star
+                                        key={idx}
+                                        size={12}
+                                        className="fill-amber-400 text-amber-400"
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <p className="text-xs text-gray-600 line-clamp-2 mt-1 italic">
+                                  &ldquo;{rev.review_text}&rdquo;
+                                </p>
+
+                                <div className="flex items-center gap-2 mt-1.5">
+                                  {rev.show_on_home ? (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700">
+                                      Homepage visible
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600">
+                                      Product only
+                                    </span>
+                                  )}
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700">
+                                    Verified
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => handleEditReviewClick(rev)}
+                                className="p-1.5 text-gray-500 hover:text-neutral-900 hover:bg-gray-100 rounded-lg transition-colors"
+                                title="Edit review"
+                              >
+                                <Edit2 size={14} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteReview(rev.review_id)}
+                                className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Delete review"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Related Products Section */}
+                  <div id="product-related-section" className="mt-6 pt-6 border-t border-gray-200 scroll-mt-6">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                           <div>
                             <h3 className="text-sm font-semibold text-gray-900">
@@ -3489,6 +4310,8 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                             setNewPropertyValues({});
                             setSelectedRelatedProductIds([]);
                             setRelatedSearchQuery('');
+                            setProductReviews([]);
+                            resetReviewForm();
                             setValidationErrors({});
                             setShowCompleteAnimation(false);
                           }

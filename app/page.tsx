@@ -260,6 +260,27 @@ export default function Home() {
   const { products } = useProducts();
   const { settings } = useStoreSettings();
 
+  const [dynamicReviews, setDynamicReviews] = useState<any[]>([]);
+
+  useEffect(() => {
+    let isCancelled = false;
+    const loadHomeReviews = async () => {
+      try {
+        const res = await fetch('/api/reviews?homeOnly=true&limit=6');
+        const data = await res.json();
+        if (!isCancelled && data.success && Array.isArray(data.reviews) && data.reviews.length > 0) {
+          setDynamicReviews(data.reviews);
+        }
+      } catch (err) {
+        console.error('Failed to load homepage reviews:', err);
+      }
+    };
+    loadHomeReviews();
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
   useEffect(() => {
     const adminState = localStorage.getItem('isAdmin');
     if (adminState === 'true') {
@@ -769,7 +790,7 @@ export default function Home() {
                     />
                   ))}
                 </div>
-                <span className="font-bold text-base">
+                <span className="font-bold text-base whitespace-nowrap">
                   4.9 / 5.0 (Loved by 1,200+ Pet Parents)
                 </span>
               </div>
@@ -779,44 +800,84 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {REVIEWS.map((rev) => (
-                <div
-                  key={rev.author}
-                  className="p-6 rounded-2xl border border-neutral-200 bg-neutral-50/40 space-y-4 flex flex-col justify-between shadow-sm"
-                >
-                  <div className="space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-0.5 text-neutral-950">
-                        {Array.from({ length: rev.rating }).map((_, i) => (
-                          <Star
-                            key={i}
-                            size={14}
-                            className="fill-neutral-950 text-neutral-950"
-                          />
-                        ))}
-                      </div>
-                      <span className="text-[11px] font-semibold text-neutral-500">
-                        {rev.furbaby}
-                      </span>
-                    </div>
-                    <h4 className="font-bold text-sm text-neutral-950">
-                      {rev.title}
-                    </h4>
-                    <p className="text-xs text-neutral-600 leading-relaxed">
-                      &ldquo;{rev.comment}&rdquo;
-                    </p>
-                  </div>
+              {(dynamicReviews.length > 0 ? dynamicReviews : REVIEWS).map((rev: any, idx: number) => {
+                const isDynamic = Boolean(rev.review_id);
+                const rating = isDynamic ? (rev.rating || 5) : rev.rating;
+                const author = isDynamic ? rev.author_name : rev.author;
+                const furbaby = isDynamic ? (rev.pet_name || (rev.product?.name ? rev.product.name : 'Verified Pet Parent')) : rev.furbaby;
+                const comment = isDynamic ? rev.review_text : rev.comment;
+                const title = isDynamic ? (rev.product?.name ? `Review for ${rev.product.name}` : 'Loved by Pet Parents') : rev.title;
+                const imageUrl = isDynamic ? rev.image_url : null;
+                const productLink = isDynamic && rev.product?.productid ? `/products/${rev.product.productid}` : null;
 
-                  <div className="pt-3 border-t border-neutral-200/80 flex items-center justify-between text-[11px]">
-                    <span className="font-semibold text-neutral-900">
-                      {rev.author}
-                    </span>
-                    <span className="flex items-center gap-1 text-emerald-700 font-medium">
-                      <CheckCircle2 size={13} /> Verified Buyer
-                    </span>
+                return (
+                  <div
+                    key={isDynamic ? rev.review_id : (rev.author + idx)}
+                    className="p-6 rounded-2xl border border-neutral-200 bg-neutral-50/40 space-y-4 flex flex-col justify-between shadow-xs hover:border-neutral-300 transition-colors"
+                  >
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-0.5 text-neutral-950">
+                          {Array.from({ length: rating }).map((_, i) => (
+                            <Star
+                              key={i}
+                              size={14}
+                              className="fill-neutral-950 text-neutral-950"
+                            />
+                          ))}
+                        </div>
+                        <span className="text-[11px] font-semibold text-neutral-500 truncate max-w-[150px]">
+                          {furbaby}
+                        </span>
+                      </div>
+
+                      {title && (
+                        <h4 className="font-bold text-sm text-neutral-950">
+                          {title}
+                        </h4>
+                      )}
+
+                      <p className="text-xs text-neutral-600 leading-relaxed">
+                        &ldquo;{comment}&rdquo;
+                      </p>
+
+                      {imageUrl && (
+                        <div className="pt-2">
+                          <div className="w-full aspect-[4/3] max-h-72 rounded-xl overflow-hidden border border-neutral-200 bg-neutral-100 shadow-xs">
+                            <img
+                              src={imageUrl}
+                              alt={`Photo by ${author}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-3 border-t border-neutral-200/80 space-y-1.5">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-semibold text-neutral-900">
+                          {author}
+                        </span>
+                        <span className="flex items-center gap-1 text-emerald-700 font-medium">
+                          <CheckCircle2 size={13} /> Verified Buyer
+                        </span>
+                      </div>
+
+                      {productLink && rev.product?.name && (
+                        <div className="text-[11px] pt-0.5">
+                          <Link
+                            href={productLink}
+                            className="text-neutral-500 hover:text-neutral-950 underline flex items-center gap-1 truncate"
+                          >
+                            <span>Item: {rev.product.name}</span>
+                          </Link>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>

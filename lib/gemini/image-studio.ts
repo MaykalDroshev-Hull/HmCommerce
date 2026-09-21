@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import sharp from 'sharp';
 import { createServerClient } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
@@ -294,13 +295,28 @@ export async function uploadGeneratedImageToStorage(
   prefix: string = 'ai-studio'
 ): Promise<string> {
   const supabase = createServerClient();
-  const buffer = Buffer.from(base64Data, 'base64');
-  const ext = mimeType.includes('png') ? 'png' : 'jpg';
+  const rawBuffer = Buffer.from(base64Data, 'base64');
+  
+  // Convert AI generated image to AVIF for high compression & fidelity
+  let buffer = rawBuffer;
+  let ext = 'avif';
+  let contentType = 'image/avif';
+  try {
+    buffer = await sharp(rawBuffer)
+      .rotate()
+      .avif({ quality: 80, effort: 4, chromaSubsampling: '4:2:0' })
+      .toBuffer();
+  } catch (err) {
+    logger.warn('Failed to convert AI image to AVIF, saving original format', err);
+    ext = mimeType.includes('png') ? 'png' : 'jpg';
+    contentType = mimeType;
+  }
+
   const fileName = `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
   const filePath = `ai-generated/${fileName}`;
 
   const { data, error } = await supabase.storage.from('products').upload(filePath, buffer, {
-    contentType: mimeType,
+    contentType,
     cacheControl: '31536000',
     upsert: true
   });

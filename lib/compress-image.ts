@@ -3,8 +3,8 @@ import { logger } from '@/lib/logger';
 
 /** Longest side after resize — enough for retina product cards / zoom. */
 const MAX_DIMENSION = 1600;
-/** WebP quality balance: good detail, much smaller files. */
-const WEBP_QUALITY = 80;
+/** AVIF quality balance: industry-leading compression, crisp detail, significantly smaller than WebP & JPEG. */
+const AVIF_QUALITY = 75;
 
 export type CompressedImage = {
   /** Plain transferable bytes (never SharedArrayBuffer-backed). */
@@ -29,8 +29,8 @@ export function toPlainUint8Array(data: ArrayBuffer | Uint8Array): Uint8Array {
  * Compress and normalize an uploaded image for storage.
  * - Auto-orients from EXIF
  * - Resizes so the longest side is ≤ 1600px
- * - Converts to WebP
- * Returns null to keep the original file (SVG, failed decode, or no size win).
+ * - Converts to AVIF format (mandated for all DB storage)
+ * Returns null to keep vector formats (SVG) or if decoding completely fails.
  */
 export async function compressImageForUpload(
   input: Uint8Array,
@@ -38,8 +38,8 @@ export async function compressImageForUpload(
 ): Promise<CompressedImage | null> {
   const type = (mimeType || '').toLowerCase();
 
-  // Leave vector / already-tiny formats alone
-  if (type.includes('svg') || type === 'image/gif') {
+  // Leave vector formats alone
+  if (type.includes('svg')) {
     return null;
   }
 
@@ -62,25 +62,40 @@ export async function compressImageForUpload(
     }
 
     const compressedBuffer = await pipeline
-      .webp({ quality: WEBP_QUALITY, effort: 4 })
+      .avif({
+        quality: AVIF_QUALITY,
+        effort: 4,
+        chromaSubsampling: '4:2:0',
+      })
       .toBuffer();
 
     const compressed = toPlainUint8Array(compressedBuffer);
 
-    // Prefer original only if compression made the file larger
-    if (compressed.byteLength >= source.byteLength) {
-      return null;
-    }
-
     return {
       bytes: compressed,
-      contentType: 'image/webp',
-      extension: 'webp',
+      contentType: 'image/avif',
+      extension: 'avif',
       originalBytes: source.byteLength,
       compressedBytes: compressed.byteLength,
     };
   } catch (error) {
-    logger.warn('Image compression skipped, uploading original');
-    return null;
+    logger.warn('AVIF compression error, attempting basic AVIF fallback', error);
+    try {
+      const fallbackBuffer = await sharp(toPlainUint8Array(input), { failOn: 'none' })
+        .rotate()
+        .avif({ quality: AVIF_QUALITY })
+        .toBuffer();
+      const compressed = toPlainUint8Array(fallbackBuffer);
+      return {
+        bytes: compressed,
+        contentType: 'image/avif',
+        extension: 'avif',
+        originalBytes: input.byteLength,
+        compressedBytes: compressed.byteLength,
+      };
+    } catch (fallbackError) {
+      logger.error('Failed to convert image to AVIF', fallbackError);
+      return null;
+    }
   }
 }

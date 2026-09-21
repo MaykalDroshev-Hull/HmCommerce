@@ -1,12 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateGeminiPetCopy } from '@/lib/gemini/copywriter';
+import { generateGeminiPetCopy, rewritePetReview } from '@/lib/gemini/copywriter';
 import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, rawDescription, category, specifications, target = 'both' } = body;
+    const {
+      title,
+      rawDescription,
+      category,
+      specifications,
+      target = 'both',
+      reviewText,
+      petName,
+      productName,
+      rating
+    } = body;
 
+    // Review Re-writing Handler
+    if (target === 'review') {
+      if (!reviewText || typeof reviewText !== 'string' || !reviewText.trim()) {
+        return NextResponse.json(
+          { success: false, error: 'Review text is required to re-write' },
+          { status: 400 }
+        );
+      }
+
+      const result = await rewritePetReview({
+        reviewText: reviewText.trim(),
+        productName: productName || title,
+        petName,
+        rating: Number(rating) || 5
+      });
+
+      return NextResponse.json({
+        success: true,
+        reviewText: result.reviewText,
+        isAi: result.isAi,
+        modelUsed: result.modelUsed
+      });
+    }
+
+    // Product Title & Description Copywriting
     if (!title || typeof title !== 'string' || !title.trim()) {
       return NextResponse.json(
         { success: false, error: 'Product title is required' },

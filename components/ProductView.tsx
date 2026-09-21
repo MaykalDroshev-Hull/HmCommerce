@@ -6,6 +6,7 @@ import ProductMediaGallery from './ProductMediaGallery';
 import ProductDetails from './ProductDetails';
 import ProductStickyBanner from './ProductStickyBanner';
 import ProductCard from './ProductCard';
+import ProductReviewsSection from './ProductReviewsSection';
 import { Product } from '@/lib/data';
 import { ChevronRight } from 'lucide-react';
 
@@ -244,6 +245,14 @@ export default function ProductView({ product }: ProductViewProps) {
           </div>
         </div>
       </main>
+
+      {/* Verified Pet Parent Reviews for this product */}
+      {currentProductId && (
+        <ProductReviewsSection
+          productId={String(currentProductId)}
+          productName={productName}
+        />
+      )}
 
       {/* Related Products Section */}
       {(relatedProducts.length > 0 || isLoadingRelated) && (
