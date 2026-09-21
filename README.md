@@ -173,7 +173,7 @@ A modern, high-performance e-commerce platform built with Next.js 16 and Supabas
 
 ---
 
-## 🚀 Deployment
+## 🚀 Deployments
 
 The project is optimized for zero-config deployment on **Vercel**:
 
