@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, Upload, Settings as SettingsIcon, Image as ImageIcon, Trash2, ArrowUp, ArrowDown, Plus, Truck } from 'lucide-react';
+import { Save, Upload, Settings as SettingsIcon, Image as ImageIcon, Trash2, ArrowUp, ArrowDown, Plus, Truck, TrendingUp, Sparkles } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import RichTextEditor from '@/components/RichTextEditor';
 import { useTheme } from '@/context/ThemeContext';
@@ -42,6 +42,12 @@ interface StoreSettings {
   aboutustext: string | null;
   delivery_standard_price?: number | string | null;
   free_delivery_threshold?: number | string | null;
+  sales_today_override_enabled?: boolean | null;
+  sales_today_override_amount?: number | string | null;
+  sales_today_override_orders?: number | string | null;
+  sales_today_override_items?: number | string | null;
+  sales_today_target_amount?: number | string | null;
+  sales_today_override_mode?: 'replace' | 'add' | string | null;
   createdat: string;
   updatedat: string;
 }
@@ -268,6 +274,12 @@ export default function AdminSettingsPage() {
           aboutustext: settings.aboutustext,
           delivery_standard_price: settings.delivery_standard_price != null && settings.delivery_standard_price !== '' ? Number(settings.delivery_standard_price) : 3.99,
           free_delivery_threshold: settings.free_delivery_threshold != null && settings.free_delivery_threshold !== '' ? Number(settings.free_delivery_threshold) : 50.00,
+          sales_today_override_enabled: Boolean(settings.sales_today_override_enabled),
+          sales_today_override_amount: settings.sales_today_override_amount !== null && settings.sales_today_override_amount !== '' && settings.sales_today_override_amount !== undefined ? Number(settings.sales_today_override_amount) : null,
+          sales_today_override_orders: settings.sales_today_override_orders !== null && settings.sales_today_override_orders !== '' && settings.sales_today_override_orders !== undefined ? parseInt(String(settings.sales_today_override_orders), 10) : null,
+          sales_today_override_items: settings.sales_today_override_items !== null && settings.sales_today_override_items !== '' && settings.sales_today_override_items !== undefined ? parseInt(String(settings.sales_today_override_items), 10) : null,
+          sales_today_target_amount: settings.sales_today_target_amount !== null && settings.sales_today_target_amount !== '' && settings.sales_today_target_amount !== undefined ? Number(settings.sales_today_target_amount) : 1000,
+          sales_today_override_mode: settings.sales_today_override_mode || 'replace',
         })
       });
 
@@ -1413,6 +1425,268 @@ export default function AdminSettingsPage() {
                   placeholder="https://tiktok.com/@..."
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Daily Sales Display & Overrides */}
+          <div
+            id="settings-sales-today-overrides"
+            className="p-6 rounded-lg transition-colors duration-300"
+            style={{
+              backgroundColor: theme.colors.cardBg,
+              border: `1px solid ${theme.colors.border}`
+            }}
+          >
+            <div className="flex items-start justify-between flex-wrap gap-4 mb-6">
+              <div className="flex items-center gap-3">
+                <div 
+                  className="p-2.5 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: `${theme.colors.primary}15`, color: theme.colors.primary }}
+                >
+                  <TrendingUp size={22} />
+                </div>
+                <div>
+                  <h2
+                    className="text-xl font-semibold"
+                    style={{ color: theme.colors.text }}
+                  >
+                    Daily Sales Display & Overrides
+                  </h2>
+                  <p
+                    className="text-sm mt-0.5"
+                    style={{ color: theme.colors.textSecondary }}
+                  >
+                    Configure daily targets and optional figure overrides for the full-screen Sales Today tab.
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Link to Sales Today */}
+              <a
+                href="/admin/sales-today"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-colors"
+                style={{
+                  backgroundColor: theme.colors.background,
+                  border: `1px solid ${theme.colors.border}`,
+                  color: theme.colors.text
+                }}
+              >
+                <span>Open Sales Today Screen</span>
+                <span className="text-[10px] opacity-60">↗</span>
+              </a>
+            </div>
+
+            <div className="space-y-6">
+              {/* Daily Target Goal */}
+              <div>
+                <label
+                  className="block text-sm font-medium mb-1.5"
+                  style={{ color: theme.colors.text }}
+                >
+                  Daily Revenue Target (£ GBP)
+                </label>
+                <div className="relative max-w-md">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-neutral-400">£</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="50"
+                    value={settings.sales_today_target_amount ?? 1000}
+                    onChange={(e) => handleSettingChange('sales_today_target_amount', e.target.value ? Number(e.target.value) : 1000)}
+                    className="w-full pl-8 pr-3 py-2 rounded-md border text-sm transition-colors duration-300"
+                    style={{
+                      backgroundColor: theme.colors.background,
+                      borderColor: theme.colors.border,
+                      color: theme.colors.text
+                    }}
+                    placeholder="1000"
+                  />
+                </div>
+                <p className="text-xs mt-1" style={{ color: theme.colors.textSecondary }}>
+                  Used to calculate the progress bar and goal percentage on the Sales Today dashboard.
+                </p>
+              </div>
+
+              {/* Override Toggle */}
+              <div 
+                className="p-4 rounded-lg flex items-center justify-between gap-4 border"
+                style={{
+                  backgroundColor: settings.sales_today_override_enabled ? `${theme.colors.primary}08` : theme.colors.background,
+                  borderColor: settings.sales_today_override_enabled ? theme.colors.primary : theme.colors.border
+                }}
+              >
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold" style={{ color: theme.colors.text }}>
+                      Enable Manual Sales Override
+                    </span>
+                    {settings.sales_today_override_enabled && (
+                      <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs mt-0.5" style={{ color: theme.colors.textSecondary }}>
+                    When active, the Sales Today dashboard displays the custom figures below instead of (or added to) live database orders.
+                  </p>
+                </div>
+
+                <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(settings.sales_today_override_enabled)}
+                    onChange={(e) => handleSettingChange('sales_today_override_enabled', e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div 
+                    className="w-11 h-6 bg-neutral-300 peer-focus:outline-none rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"
+                  ></div>
+                </label>
+              </div>
+
+              {/* Override Inputs (Collapsible when enabled) */}
+              {settings.sales_today_override_enabled && (
+                <div 
+                  className="space-y-5 p-5 rounded-lg border transition-all"
+                  style={{
+                    backgroundColor: theme.colors.background,
+                    borderColor: theme.colors.border
+                  }}
+                >
+                  {/* Mode Selector */}
+                  <div>
+                    <label
+                      className="block text-xs font-semibold uppercase tracking-wider mb-2"
+                      style={{ color: theme.colors.textSecondary }}
+                    >
+                      Override Application Mode
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg">
+                      <button
+                        type="button"
+                        onClick={() => handleSettingChange('sales_today_override_mode', 'replace')}
+                        className={`p-3 rounded-lg border text-left text-xs transition-all ${
+                          (settings.sales_today_override_mode || 'replace') === 'replace'
+                            ? 'border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-neutral-900 font-semibold shadow-sm'
+                            : 'border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-400'
+                        }`}
+                      >
+                        <div className="font-medium text-sm mb-0.5">Replace Live Orders</div>
+                        <div className="text-[11px] opacity-80">Display exactly the custom numbers specified below.</div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSettingChange('sales_today_override_mode', 'add')}
+                        className={`p-3 rounded-lg border text-left text-xs transition-all ${
+                          settings.sales_today_override_mode === 'add'
+                            ? 'border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-neutral-900 font-semibold shadow-sm'
+                            : 'border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-400'
+                        }`}
+                      >
+                        <div className="font-medium text-sm mb-0.5">Add to Live Orders (Boost)</div>
+                        <div className="text-[11px] opacity-80">Add custom offset onto real database orders today.</div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Figure Inputs */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                    {/* Revenue */}
+                    <div>
+                      <label
+                        className="block text-sm font-medium mb-1.5"
+                        style={{ color: theme.colors.text }}
+                      >
+                        Override Revenue (£ GBP)
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-neutral-400">£</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={settings.sales_today_override_amount ?? ''}
+                          onChange={(e) => handleSettingChange('sales_today_override_amount', e.target.value === '' ? null : Number(e.target.value))}
+                          className="w-full pl-8 pr-3 py-2 rounded-md border text-sm transition-colors duration-300"
+                          style={{
+                            backgroundColor: theme.colors.background,
+                            borderColor: theme.colors.border,
+                            color: theme.colors.text
+                          }}
+                          placeholder="e.g. 1450.00"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Orders Count */}
+                    <div>
+                      <label
+                        className="block text-sm font-medium mb-1.5"
+                        style={{ color: theme.colors.text }}
+                      >
+                        Override Orders Count
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={settings.sales_today_override_orders ?? ''}
+                        onChange={(e) => handleSettingChange('sales_today_override_orders', e.target.value === '' ? null : parseInt(e.target.value, 10))}
+                        className="w-full px-3 py-2 rounded-md border text-sm transition-colors duration-300"
+                        style={{
+                          backgroundColor: theme.colors.background,
+                          borderColor: theme.colors.border,
+                          color: theme.colors.text
+                        }}
+                        placeholder="e.g. 24"
+                      />
+                    </div>
+
+                    {/* Items Sold */}
+                    <div>
+                      <label
+                        className="block text-sm font-medium mb-1.5"
+                        style={{ color: theme.colors.text }}
+                      >
+                        Override Items Sold (Units)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={settings.sales_today_override_items ?? ''}
+                        onChange={(e) => handleSettingChange('sales_today_override_items', e.target.value === '' ? null : parseInt(e.target.value, 10))}
+                        className="w-full px-3 py-2 rounded-md border text-sm transition-colors duration-300"
+                        style={{
+                          backgroundColor: theme.colors.background,
+                          borderColor: theme.colors.border,
+                          color: theme.colors.text
+                        }}
+                        placeholder="e.g. 38"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Summary / Preview */}
+                  <div 
+                    className="p-3 rounded border text-xs flex items-center justify-between flex-wrap gap-2"
+                    style={{
+                      backgroundColor: `${theme.colors.primary}05`,
+                      borderColor: `${theme.colors.primary}25`
+                    }}
+                  >
+                    <span style={{ color: theme.colors.text }}>
+                      Display Preview: <strong>£{(Number(settings.sales_today_override_amount) || 0).toFixed(2)}</strong> across <strong>{settings.sales_today_override_orders || 0} orders</strong> ({settings.sales_today_override_items || 0} items)
+                    </span>
+                    <span className="font-mono text-[11px] opacity-75" style={{ color: theme.colors.textSecondary }}>
+                      AOV: £{settings.sales_today_override_orders ? ((Number(settings.sales_today_override_amount) || 0) / Number(settings.sales_today_override_orders)).toFixed(2) : '0.00'}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

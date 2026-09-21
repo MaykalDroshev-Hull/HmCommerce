@@ -28,6 +28,12 @@ interface StoreSettings {
   aboutustext: string | null;
   delivery_standard_price?: number | string | null;
   free_delivery_threshold?: number | string | null;
+  sales_today_override_enabled?: boolean | null;
+  sales_today_override_amount?: number | string | null;
+  sales_today_override_orders?: number | string | null;
+  sales_today_override_items?: number | string | null;
+  sales_today_target_amount?: number | string | null;
+  sales_today_override_mode?: 'replace' | 'add' | string | null;
   createdat: string;
   updatedat: string;
 }

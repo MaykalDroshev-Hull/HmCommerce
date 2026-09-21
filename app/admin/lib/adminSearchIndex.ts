@@ -361,6 +361,15 @@ export const adminSearchIndex: SearchableItem[] = [
     description: '',
     keywords: ['sales', 'transactions', 'revenue', ]
   },
+  {
+    id: 'sales-today',
+    type: 'page',
+    path: '/admin/sales-today',
+    title: 'Sales Today',
+    titleBg: '',
+    description: "Today's live sales dashboard and full-screen wallboard display",
+    keywords: ['sales today', 'today', 'revenue', 'wallboard', 'daily sales', 'kiosk', 'fullscreen', 'override']
+  },
 
   // Customers
   {

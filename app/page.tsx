@@ -29,7 +29,7 @@ import {
 // DATA & ASSETS (Pet-Parent Brand Tone: Warm, Knowledgeable, British en-GB)
 // ============================================================================
 
-const HERO_BG = '/campaign/hero-index-banner.jpg';
+const HERO_BG = '/campaign/hero-index-banner.avif';
 
 
 // Animal categories cards (Dogs, Cats, New Season, Unipet)
@@ -38,7 +38,7 @@ const PET_CATEGORIES = [
     id: 'dogs',
     title: 'Dogs',
     subtitle: 'Engineered for big leaps & wet muddy trails',
-    image: '/campaign/card-dogs-neutral.jpg',
+    image: '/campaign/card-dogs-neutral.avif',
     link: '/products?search=Dog',
     buttonText: 'Shop Dogs',
   },
@@ -46,7 +46,7 @@ const PET_CATEGORIES = [
     id: 'cats',
     title: 'Cats',
     subtitle: 'Featherlight comfort for curious indoor & outdoor explorers',
-    image: '/campaign/card-cats-neutral.jpg',
+    image: '/campaign/card-cats-neutral.avif',
     link: '/products?search=Cat',
     buttonText: 'Shop Cats',
   },
@@ -54,7 +54,7 @@ const PET_CATEGORIES = [
     id: 'new-arrivals',
     title: 'New Season',
     subtitle: 'Fresh colourways and trail-ready gear pet parents love',
-    image: '/campaign/card-puppy-neutral.jpg',
+    image: '/campaign/card-puppy-neutral.avif',
     link: '/products?isfeatured=true',
     buttonText: 'Shop New',
   },
@@ -62,7 +62,7 @@ const PET_CATEGORIES = [
     id: 'unipet',
     title: 'Unipet (All Pets)',
     subtitle: 'Versatile travel & daily wellness gear for every furbaby',
-    image: '/campaign/card-unipet-neutral.jpg',
+    image: '/campaign/card-unipet-neutral.avif',
     link: '/products',
     buttonText: 'Shop Unipet',
   },
@@ -76,7 +76,7 @@ const ACTIVITIES = [
     headline: 'Misty Bridleways & Morning Walks',
     description:
       'Engineered with hydrophobic ripstop webbing and aircraft-grade alloy buckles so wet British weather never slows your daily strolls.',
-    image: '/campaign/activity-walking.jpg',
+    image: '/campaign/activity-walking.avif',
     exploreLinks: [
       { label: 'All-Weather Collars', href: '/products?search=Collar' },
       { label: 'Padded Leads', href: '/products?search=Lead' },
@@ -89,7 +89,7 @@ const ACTIVITIES = [
     headline: 'Zoomies, Scent Trails & High Bounces',
     description:
       'Keep your furbaby mentally stimulated and joyfully active with gear crafted for interactive play, training, and tail-wagging happiness.',
-    image: '/campaign/activity-fun.jpg',
+    image: '/campaign/activity-fun.avif',
     exploreLinks: [
       { label: 'Training Leads', href: '/products?search=Lead' },
       { label: 'Enrichment Toys', href: '/products' },
@@ -102,7 +102,7 @@ const ACTIVITIES = [
     headline: 'Deep Slumber & Restorative Naps',
     description:
       'After an energetic afternoon outside, treat your devoted pet to orthopaedic support, soothing fleece blankets, and warm, gentle comfort.',
-    image: '/campaign/activity-cosy.jpg',
+    image: '/campaign/activity-cosy.avif',
     exploreLinks: [
       { label: 'Orthopaedic Beds', href: '/products' },
       { label: 'Travel Snuggle Mats', href: '/products' },
@@ -131,7 +131,7 @@ const STORIES: StoryItem[] = [
     title: 'The 2-Finger Fit Rule: Sizing Your Dog’s Collar for Maximum Canine Comfort',
     teaser:
       'Can you slip two fingers comfortably under their collar? Here’s our pet-parent guide to preventing coat matting and keeping your furbaby secure.',
-    image: '/campaign/story-collar-fit.jpg',
+    image: '/campaign/story-collar-fit.avif',
     content: [
       'As pet parents, we want our dogs to feel secure without ever feeling constricted. A collar that’s even slightly too tight can cause friction, hair matting, and discomfort around sensitive neck muscles. Too loose, and a sudden squirrel pursuit might leave you holding an empty lead.',
       'That’s where the classic 2-Finger Test comes in. Wrap a soft measuring tape where the collar naturally rests—roughly midway between the base of their neck and their shoulders. Once fastened, you should be able to slide two flat fingers comfortably between the webbing and your dog’s fur.',
@@ -150,7 +150,7 @@ const STORIES: StoryItem[] = [
     title: 'Muddy Paws & Rainy Days: Our Pet Parent Trail Survival Guide',
     teaser:
       'British downpours won’t stop your daily zoomies! Here’s how hydrophobic ripstop gear and a simple post-walk routine keep your hallway spotless.',
-    image: '/campaign/story-muddy-paws.jpg',
+    image: '/campaign/story-muddy-paws.avif',
     content: [
       'Let’s be honest: in the UK, if you waited for dry weather to walk your dog, you’d never leave the house! Muddy puddles and soaked grass are pure joy for our dogs, but nobody loves soggy, smelly gear that stays damp for days.',
       'Traditional nylon collars act like sponges, absorbing dirty puddle water and trapping unpleasant bacteria against your dog’s skin. That’s why we engineered our gear with hydrophobic ripstop weave that repels water on contact.',
@@ -169,7 +169,7 @@ const STORIES: StoryItem[] = [
     title: 'Playtime That Builds Trust: 3 Fun Enrichment Games for Happy Tails',
     teaser:
       'Tired dogs are happy dogs, but mental workouts beat endless fetching. Discover 3 snappy sniffing games that strengthen your pet-parent bond.',
-    image: '/campaign/story-playtime-trust.jpg',
+    image: '/campaign/story-playtime-trust.avif',
     content: [
       'Did you know that 15 minutes of focused sniffing burns as much canine mental energy as an hour-long brisk walk? While physical exercise keeps muscles lean, sensory enrichment is what truly calms active minds and prevents restless chewing at home.',
       'Playing together is also the single fastest way to reinforce positive recall. When your furbaby associates you with thrilling games and wholesome rewards, they naturally check in with you more frequently during off-lead adventures.',
@@ -188,7 +188,7 @@ const STORIES: StoryItem[] = [
     title: 'Why Quality Sleep Matters for Your Furbaby’s Joints & Well-Being',
     teaser:
       'Adult dogs sleep up to 14 hours a day! From orthopaedic foam to quiet sleep sanctuaries, here’s how restorative rest protects their mobility.',
-    image: '/campaign/story-cosy-sleep.jpg',
+    image: '/campaign/story-cosy-sleep.avif',
     content: [
       'Watch your dog during a deep sleep and you’ll see twitching paws, gentle woofs, and tail flicks. Just like us, pets process their daily experiences during REM cycles and need undisturbed downtime to rebuild muscle tissue and rest growing joints.',
       'Active dogs, working breeds, and seniors in particular benefit tremendously from supportive orthopaedic bedding that cushions hips and elbows against cold, hard timber floors.',
@@ -610,7 +610,7 @@ export default function Home() {
         ====================================================================== */}
         <section className="relative w-full overflow-hidden bg-neutral-950 text-white min-h-[500px] sm:min-h-[580px] lg:min-h-[660px] flex items-center justify-center border-t border-b border-neutral-800 group">
           <Image
-            src="/campaign/banner-engineered-elements.jpg"
+            src="/campaign/banner-engineered-elements.avif"
             alt="MB-Paws – Engineered for the Elements"
             fill
             sizes="100vw"

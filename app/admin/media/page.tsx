@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import AdminLayout from '../components/AdminLayout';
 import { getAdminSession } from '@/lib/auth';
 import { useLanguage } from '@/context/LanguageContext';
@@ -18,9 +18,12 @@ import {
   RefreshCw, 
   Sliders, 
   HardDrive,
-  AlertCircle
+  AlertCircle,
+  Layers,
+  Sparkles
 } from 'lucide-react';
 import { AdminPage, PageHeader, Section, SectionSurface, EmptyState, Card } from '../components/layout';
+import DatabaseAssetOptimizer from './components/DatabaseAssetOptimizer';
 
 interface MediaFile {
   name: string;
@@ -94,6 +97,15 @@ export default function MediaPage() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<string>('images');
+  const searchParams = useSearchParams();
+  const [currentView, setCurrentView] = useState<'storage' | 'database'>('storage');
+
+  useEffect(() => {
+    const tab = searchParams?.get('tab');
+    if (tab === 'database' || tab === 'optimizer') {
+      setCurrentView('database');
+    }
+  }, [searchParams]);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -366,255 +378,325 @@ export default function MediaPage() {
           subtitle={t.manageImagesAndMediaFiles || 'Manage, upload, and optimize images for high-speed next-gen delivery.'}
         />
 
-        {/* Folder Selection Tabs */}
-        <Section>
-          <div className="flex gap-2 flex-wrap">
-            {folders.map(folder => (
-              <button
-                key={folder}
-                onClick={() => setSelectedFolder(folder)}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all ${
-                  selectedFolder === folder
-                    ? 'bg-neutral-900 text-white shadow-xs'
-                    : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900'
-                }`}
-              >
-                {getFolderDisplayName(folder)}
-              </button>
-            ))}
-          </div>
-        </Section>
+        {/* Main View Switcher Tabs */}
+        <div className="flex items-center gap-2 border-b border-neutral-200 pb-3 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setCurrentView('storage')}
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+              currentView === 'storage'
+                ? 'bg-neutral-900 text-white shadow-xs'
+                : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900'
+            }`}
+          >
+            <ImageIcon className="w-4 h-4" />
+            <span>Storage Files</span>
+          </button>
 
-        {/* Action Banners: Standard Upload & AVIF Optimizer Studio */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
-          {/* 1. Standard Multi-File Uploader */}
-          <div className="lg:col-span-6">
-            <Card className="h-full flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-2.5 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-800">
-                    <Upload className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-neutral-900">Upload Files</h3>
-                    <p className="text-xs text-neutral-500">Add photos to &ldquo;{getFolderDisplayName(selectedFolder)}&rdquo;</p>
-                  </div>
-                </div>
-
-                <div className="border-2 border-dashed border-neutral-200 hover:border-neutral-400 rounded-xl p-6 text-center transition-colors">
-                  <Upload className="mx-auto h-8 w-8 text-neutral-400 mb-2" />
-                  <div className="text-xs text-neutral-600 mb-1">
-                    <label htmlFor="file-upload" className="cursor-pointer font-semibold text-neutral-900 hover:underline">
-                      Click to upload
-                    </label>{' '}
-                    or drag and drop
-                    <input
-                      id="file-upload"
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
-                      disabled={uploading}
-                    />
-                  </div>
-                  <p className="text-[11px] text-neutral-400">JPG, PNG, WebP, AVIF up to 10MB</p>
-                  
-                  {uploading && (
-                    <div className="mt-3 flex items-center justify-center gap-2 text-xs text-neutral-700">
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      <span>Uploading to library...</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          {/* 2. AVIF Converter & Size Comparison Tool */}
-          <div className="lg:col-span-6">
-            <Card className="h-full border-emerald-900/20 bg-gradient-to-br from-white to-emerald-50/30 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-800">
-                      <Zap className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-bold text-neutral-900">AVIF Optimizer & Compressor</h3>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-600 text-white">
-                          Next-Gen
-                        </span>
-                      </div>
-                      <p className="text-xs text-neutral-500">Transform any image to AVIF with instant size comparison</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="border-2 border-dashed border-emerald-200/80 hover:border-emerald-500 bg-white/80 rounded-xl p-6 text-center transition-colors">
-                  <Zap className="mx-auto h-8 w-8 text-emerald-600 mb-2" />
-                  <div className="text-xs text-neutral-700 mb-1">
-                    <label htmlFor="avif-convert-upload" className="cursor-pointer font-bold text-emerald-700 hover:underline">
-                      Select image to convert
-                    </label>{' '}
-                    or drag & drop here
-                    <input
-                      id="avif-convert-upload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => handleDirectAvifUpload(e.target.files)}
-                    />
-                  </div>
-                  <p className="text-[11px] text-neutral-500">
-                    Typically cuts file size by <strong className="text-emerald-700">70% to 85%</strong> with zero visible quality loss
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-emerald-100 flex items-center justify-between text-xs text-neutral-600">
-                <span className="flex items-center gap-1.5 font-medium">
-                  <Check className="w-3.5 h-3.5 text-emerald-600" />
-                  AVIF 4:2:0 Chroma Subsampling
-                </span>
-                <span className="text-[11px] text-neutral-400">
-                  Or click &ldquo;Convert to AVIF&rdquo; on any image below
-                </span>
-              </div>
-            </Card>
-          </div>
-
+          <button
+            type="button"
+            onClick={() => setCurrentView('database')}
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+              currentView === 'database'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'bg-white border border-emerald-300 text-emerald-800 hover:bg-emerald-50'
+            }`}
+          >
+            <Zap className="w-4 h-4" />
+            <span>Database Asset Optimiser</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
+              currentView === 'database' ? 'bg-white text-emerald-800' : 'bg-emerald-100 text-emerald-800'
+            }`}>
+              Next-Gen AVIF
+            </span>
+          </button>
         </div>
 
-        {/* Media Grid Section */}
-        <Section
-          title={`${getFolderDisplayName(selectedFolder)} (${folderFiles.length} ${t.files || 'files'})`}
-          description="Hover any image to convert to AVIF or inspect file details."
-        >
-          {folderFiles.length === 0 ? (
-            <EmptyState
-              title={'No Files in this folder'}
-              description={`No images currently in "${getFolderDisplayName(selectedFolder)}". Upload or convert images above.`}
-              icon={ImageIcon}
-            />
-          ) : (
-            <SectionSurface tone="soft" padding="md">
-              {loading ? (
-                <div className="text-center py-16">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-900 mx-auto"></div>
-                  <p className="mt-3 text-xs text-neutral-500">Loading library files...</p>
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    {paginatedFiles.map((file, index) => {
-                      const ext = getFileExtension(file.name);
-                      const isAvif = ext === 'AVIF';
+        {currentView === 'database' ? (
+          <DatabaseAssetOptimizer />
+        ) : (
+          <>
+            {/* Folder Selection Tabs */}
+            <Section>
+              <div className="flex gap-2 flex-wrap">
+                {folders.map(folder => (
+                  <button
+                    key={folder}
+                    onClick={() => setSelectedFolder(folder)}
+                    className={`px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all ${
+                      selectedFolder === folder
+                        ? 'bg-neutral-900 text-white shadow-xs'
+                        : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900'
+                    }`}
+                  >
+                    {getFolderDisplayName(folder)}
+                  </button>
+                ))}
+              </div>
+            </Section>
 
-                      return (
-                        <div 
-                          key={index} 
-                          className="group relative aspect-square rounded-xl overflow-hidden bg-neutral-100 border border-neutral-200/80 shadow-2xs hover:shadow-md transition-all duration-200"
-                        >
-                          <img
-                            src={file.url}
-                            alt={file.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            loading="lazy"
-                          />
-
-                          {/* Format Badge (Top Left) */}
-                          <div className="absolute top-2 left-2 z-10">
-                            <span 
-                              className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-xs ${
-                                isAvif 
-                                  ? 'bg-emerald-600 text-white' 
-                                  : 'bg-neutral-900/85 text-white backdrop-blur-xs'
-                              }`}
-                            >
-                              {ext}
-                            </span>
-                          </div>
-
-                          {/* Top-Right Delete Action */}
-                          <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => deleteFile(file.path)}
-                              className="p-1.5 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-md transition-colors"
-                              title={t.deleteFile || 'Delete file'}
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-
-                          {/* Hover Overlay with Center "Convert to AVIF" Action */}
-                          <div className="absolute inset-0 bg-neutral-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-3 text-center">
-                            <button
-                              onClick={() => openAvifForMediaFile(file)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-neutral-950 hover:bg-neutral-100 shadow-md transition-all active:scale-95 mb-2"
-                              title="Convert to AVIF & View Size Savings"
-                            >
-                              <Zap className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>{isAvif ? 'Re-optimize' : 'To AVIF'}</span>
-                            </button>
-                            <span className="text-[10px] text-white/80 line-clamp-1 break-all px-1">
-                              {file.name}
-                            </span>
-                          </div>
-
-                          {/* Bottom Metadata Bar */}
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent text-white p-2 pt-4 flex items-center justify-between">
-                            <p className="text-[11px] truncate flex-1 pr-1 font-medium" title={file.name}>
-                              {file.name}
-                            </p>
-                            {file.size ? (
-                              <span className="text-[10px] text-neutral-300 shrink-0 font-mono">
-                                {formatBytes(file.size)}
-                              </span>
-                            ) : null}
-                          </div>
-                        </div>
-                      );
-                    })}
+            {/* Quick Callout in Images Tab to optimize database assets */}
+            {selectedFolder === 'images' && (
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50/60 border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <Zap className="w-5 h-5 fill-current" />
                   </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-emerald-950 flex items-center gap-2">
+                      <span>Database Image Asset Optimiser</span>
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-emerald-600 text-white">
+                        Recommended
+                      </span>
+                    </h4>
+                    <p className="text-[11px] text-emerald-800">
+                      Review, analyze real-time compression gains, and replace uncompressed database images with next-gen AVIF.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCurrentView('database')}
+                  className="shrink-0 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 active:scale-95"
+                >
+                  <span>Open Database Optimiser</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
 
-                  {/* Pagination Controls */}
-                  {totalPages > 1 && (
-                    <div className="bg-white rounded-xl px-4 py-3 mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 border border-neutral-200">
-                      <div className="text-xs text-neutral-600">
-                        Showing <span className="font-semibold text-neutral-900">{startIndex + 1}</span> to{' '}
-                        <span className="font-semibold text-neutral-900">{Math.min(endIndex, folderFiles.length)}</span> of{' '}
-                        <span className="font-semibold text-neutral-900">{folderFiles.length}</span> files
+            {/* Action Banners: Standard Upload & AVIF Optimizer Studio */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              
+              {/* 1. Standard Multi-File Uploader */}
+              <div className="lg:col-span-6">
+                <Card className="h-full flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-2.5 mb-3">
+                      <div className="w-8 h-8 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-800">
+                        <Upload className="w-4 h-4" />
                       </div>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                          disabled={currentPage === 1}
-                          className="px-3 py-1.5 rounded-lg border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                        >
-                          Previous
-                        </button>
-                        <span className="text-xs font-medium text-neutral-600 px-2">
-                          Page {currentPage} of {totalPages}
-                        </span>
-                        <button
-                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                          disabled={currentPage === totalPages}
-                          className="px-3 py-1.5 rounded-lg border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                        >
-                          Next
-                        </button>
+                      <div>
+                        <h3 className="text-sm font-bold text-neutral-900">Upload Files</h3>
+                        <p className="text-xs text-neutral-500">Add photos to &ldquo;{getFolderDisplayName(selectedFolder)}&rdquo;</p>
                       </div>
                     </div>
+
+                    <div className="border-2 border-dashed border-neutral-200 hover:border-neutral-400 rounded-xl p-6 text-center transition-colors">
+                      <Upload className="mx-auto h-8 w-8 text-neutral-400 mb-2" />
+                      <div className="text-xs text-neutral-600 mb-1">
+                        <label htmlFor="file-upload" className="cursor-pointer font-semibold text-neutral-900 hover:underline">
+                          Click to upload
+                        </label>{' '}
+                        or drag and drop
+                        <input
+                          id="file-upload"
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
+                          disabled={uploading}
+                        />
+                      </div>
+                      <p className="text-[11px] text-neutral-400">JPG, PNG, WebP, AVIF up to 10MB</p>
+                      
+                      {uploading && (
+                        <div className="mt-3 flex items-center justify-center gap-2 text-xs text-neutral-700">
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          <span>Uploading to library...</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              {/* 2. AVIF Converter & Size Comparison Tool */}
+              <div className="lg:col-span-6">
+                <Card className="h-full border-emerald-900/20 bg-gradient-to-br from-white to-emerald-50/30 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-800">
+                          <Zap className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-sm font-bold text-neutral-900">AVIF Optimizer & Compressor</h3>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-600 text-white">
+                              Next-Gen
+                            </span>
+                          </div>
+                          <p className="text-xs text-neutral-500">Transform any image to AVIF with instant size comparison</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-2 border-dashed border-emerald-200/80 hover:border-emerald-500 bg-white/80 rounded-xl p-6 text-center transition-colors">
+                      <Zap className="mx-auto h-8 w-8 text-emerald-600 mb-2" />
+                      <div className="text-xs text-neutral-700 mb-1">
+                        <label htmlFor="avif-convert-upload" className="cursor-pointer font-bold text-emerald-700 hover:underline">
+                          Select image to convert
+                        </label>{' '}
+                        or drag & drop here
+                        <input
+                          id="avif-convert-upload"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleDirectAvifUpload(e.target.files)}
+                        />
+                      </div>
+                      <p className="text-[11px] text-neutral-500">
+                        Typically cuts file size by <strong className="text-emerald-700">70% to 85%</strong> with zero visible quality loss
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-emerald-100 flex items-center justify-between text-xs text-neutral-600">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      AVIF 4:2:0 Chroma Subsampling
+                    </span>
+                    <span className="text-[11px] text-neutral-400">
+                      Or click &ldquo;Convert to AVIF&rdquo; on any image below
+                    </span>
+                  </div>
+                </Card>
+              </div>
+
+            </div>
+
+            {/* Media Grid Section */}
+            <Section
+              title={`${getFolderDisplayName(selectedFolder)} (${folderFiles.length} ${t.files || 'files'})`}
+              description="Hover any image to convert to AVIF or inspect file details."
+            >
+              {folderFiles.length === 0 ? (
+                <EmptyState
+                  title={'No Files in this folder'}
+                  description={`No images currently in "${getFolderDisplayName(selectedFolder)}". Upload or convert images above.`}
+                  icon={ImageIcon}
+                />
+              ) : (
+                <SectionSurface tone="soft" padding="md">
+                  {loading ? (
+                    <div className="text-center py-16">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-900 mx-auto"></div>
+                      <p className="mt-3 text-xs text-neutral-500">Loading library files...</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        {paginatedFiles.map((file, index) => {
+                          const ext = getFileExtension(file.name);
+                          const isAvif = ext === 'AVIF';
+
+                          return (
+                            <div 
+                              key={index} 
+                              className="group relative aspect-square rounded-xl overflow-hidden bg-neutral-100 border border-neutral-200/80 shadow-2xs hover:shadow-md transition-all duration-200"
+                            >
+                              <img
+                                src={file.url}
+                                alt={file.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                loading="lazy"
+                              />
+
+                              {/* Format Badge (Top Left) */}
+                              <div className="absolute top-2 left-2 z-10">
+                                <span 
+                                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-xs ${
+                                    isAvif 
+                                      ? 'bg-emerald-600 text-white' 
+                                      : 'bg-neutral-900/85 text-white backdrop-blur-xs'
+                                  }`}
+                                >
+                                  {ext}
+                                </span>
+                              </div>
+
+                              {/* Top-Right Delete Action */}
+                              <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  onClick={() => deleteFile(file.path)}
+                                  className="p-1.5 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-md transition-colors"
+                                  title={t.deleteFile || 'Delete file'}
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+
+                              {/* Hover Overlay with Center "Convert to AVIF" Action */}
+                              <div className="absolute inset-0 bg-neutral-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-3 text-center">
+                                <button
+                                  onClick={() => openAvifForMediaFile(file)}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-neutral-950 hover:bg-neutral-100 shadow-md transition-all active:scale-95 mb-2"
+                                  title="Convert to AVIF & View Size Savings"
+                                >
+                                  <Zap className="w-3.5 h-3.5 text-emerald-600" />
+                                  <span>{isAvif ? 'Re-optimize' : 'To AVIF'}</span>
+                                </button>
+                                <span className="text-[10px] text-white/80 line-clamp-1 break-all px-1">
+                                  {file.name}
+                                </span>
+                              </div>
+
+                              {/* Bottom Metadata Bar */}
+                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent text-white p-2 pt-4 flex items-center justify-between">
+                                <p className="text-[11px] truncate flex-1 pr-1 font-medium" title={file.name}>
+                                  {file.name}
+                                </p>
+                                {file.size ? (
+                                  <span className="text-[10px] text-neutral-300 shrink-0 font-mono">
+                                    {formatBytes(file.size)}
+                                  </span>
+                                ) : null}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Pagination Controls */}
+                      {totalPages > 1 && (
+                        <div className="bg-white rounded-xl px-4 py-3 mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 border border-neutral-200">
+                          <div className="text-xs text-neutral-600">
+                            Showing <span className="font-semibold text-neutral-900">{startIndex + 1}</span> to{' '}
+                            <span className="font-semibold text-neutral-900">{Math.min(endIndex, folderFiles.length)}</span> of{' '}
+                            <span className="font-semibold text-neutral-900">{folderFiles.length}</span> files
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                              disabled={currentPage === 1}
+                              className="px-3 py-1.5 rounded-lg border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                            >
+                              Previous
+                            </button>
+                            <span className="text-xs font-medium text-neutral-600 px-2">
+                              Page {currentPage} of {totalPages}
+                            </span>
+                            <button
+                              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                              disabled={currentPage === totalPages}
+                              className="px-3 py-1.5 rounded-lg border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                            >
+                              Next
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
-                </>
+                </SectionSurface>
               )}
-            </SectionSurface>
-          )}
-        </Section>
+            </Section>
+          </>
+        )}
 
         {/* =====================================================================
             AVIF CONVERSION & SIZE COMPARISON MODAL
