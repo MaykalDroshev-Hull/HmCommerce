@@ -8,7 +8,17 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://mb-paws.co.uk';
 
 function stripHtml(text: string): string {
   if (!text) return '';
-  return text.replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim();
+  return text
+    .replace(/\\n/g, ' ')           // escaped newlines from DB
+    .replace(/<[^>]*>?/gm, '')      // strip HTML tags
+    .replace(/&amp;/gi, '&')        // decode common HTML entities
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')           // collapse whitespace
+    .trim();
 }
 
 export async function GET() {

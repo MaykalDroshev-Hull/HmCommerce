@@ -161,6 +161,8 @@ export default function ProductsPage() {
   const [selectedRelatedProductIds, setSelectedRelatedProductIds] = useState<string[]>([]);
   const [relatedSearchQuery, setRelatedSearchQuery] = useState('');
   const [isExportingGoogle, setIsExportingGoogle] = useState(false);
+  const [isSftpUploading, setIsSftpUploading] = useState(false);
+  const [sftpResult, setSftpResult] = useState<{ success: boolean; message: string; stats?: any } | null>(null);
 
   // Product Reviews State
   const [productReviews, setProductReviews] = useState<any[]>([]);
@@ -418,6 +420,24 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
       alert(err.message || 'Failed to export Google Merchant Center feed');
     } finally {
       setIsExportingGoogle(false);
+    }
+  };
+
+  const handleSftpUploadGoogleMerchant = async () => {
+    try {
+      setIsSftpUploading(true);
+      setSftpResult(null);
+      const res = await fetch('/api/admin/export/google-merchant-sftp', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'SFTP upload failed');
+      }
+      setSftpResult(data);
+      setTimeout(() => setSftpResult(null), 8000);
+    } catch (err: any) {
+      alert(err.message || 'Failed to upload feed via SFTP');
+    } finally {
+      setIsSftpUploading(false);
     }
   };
 
@@ -1960,6 +1980,19 @@ Gentle hand or machine wash on cold cycle (30°C). Air dry naturally to keep the
                 <span className="whitespace-nowrap">
                   {isExportingGoogle ? 'Exporting...' : 'Export Google Feed (.xlsx)'}
                 </span>
+              </button>
+              <button
+                type="button"
+                onClick={handleSftpUploadGoogleMerchant}
+                disabled={isSftpUploading}
+                title="Upload product feed directly to Google Merchant Center via SFTP"
+                className="inline-flex shrink-0 items-center gap-2 rounded-md border border-blue-600 bg-blue-50 px-2.5 py-1.5 text-xs sm:text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-colors shadow-sm disabled:opacity-50 touch-manipulation cursor-pointer"
+              >
+                <Upload className="h-4 w-4 shrink-0 text-blue-600" />
+                <span className="whitespace-nowrap">
+                  {isSftpUploading ? 'Uploading to Google...' : (sftpResult?.success ? `Uploaded ${sftpResult.stats?.totalVariants || ''} items` : 'SFTP to Google')}
+                </span>
+                {sftpResult?.success && <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />}
               </button>
               {headerActionButton({
                 label: t.addProduct || 'Add item',
