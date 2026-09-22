@@ -3,7 +3,8 @@
 export interface StitchOptions {
   imageA: string;
   imageB?: string | null;
-  mode: 'single' | 'versus';
+  backgroundImage?: string | null;
+  mode: 'single' | 'versus' | 'dog_cat_scene';
   layout: 'horizontal' | 'vertical';
   aspectRatio: string;
 }
@@ -123,7 +124,92 @@ export async function stitchPhotos(options: StitchOptions): Promise<string> {
 
   const imgA = await loadImageSafe(imageA);
 
-  if (mode === 'versus' && imageB) {
+  if (mode === 'dog_cat_scene') {
+    // 1. Draw background image
+    if (options.backgroundImage) {
+      try {
+        const bgImg = await loadImageSafe(options.backgroundImage);
+        drawImageCover(ctx, bgImg, 0, 0, width, height);
+      } catch {
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(0, 0, width, height);
+      }
+    } else {
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(0, 0, width, height);
+    }
+
+    // 2. Render Pet A (Dog) and Pet B (Cat) onto the background scene
+    if (imageB) {
+      const imgB = await loadImageSafe(imageB);
+      const cardW = Math.round(width * 0.44);
+      const cardH = Math.round(cardW * 1.25);
+      const margin = Math.round(width * 0.04);
+      const cardY = Math.round(height - cardH - (height * 0.06));
+
+      // Pet A (Dog) - Left
+      const dogX = margin;
+      ctx.save();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+      ctx.shadowBlur = Math.round(width * 0.02);
+      ctx.shadowOffsetY = Math.round(height * 0.01);
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.roundRect(dogX, cardY, cardW, cardH, Math.round(width * 0.02));
+      ctx.fill();
+      ctx.clip();
+      drawImageCover(ctx, imgA, dogX, cardY, cardW, cardH);
+      ctx.restore();
+
+      // Dog badge
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+      ctx.beginPath();
+      ctx.roundRect(dogX + 10, cardY + 10, 80, 26, 6);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `bold ${Math.round(width * 0.016)}px sans-serif`;
+      ctx.fillText('🐶 DOG', dogX + 22, cardY + 28);
+
+      // Pet B (Cat) - Right
+      const catX = width - cardW - margin;
+      ctx.save();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+      ctx.shadowBlur = Math.round(width * 0.02);
+      ctx.shadowOffsetY = Math.round(height * 0.01);
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.roundRect(catX, cardY, cardW, cardH, Math.round(width * 0.02));
+      ctx.fill();
+      ctx.clip();
+      drawImageCover(ctx, imgB, catX, cardY, cardW, cardH);
+      ctx.restore();
+
+      // Cat badge
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+      ctx.beginPath();
+      ctx.roundRect(catX + 10, cardY + 10, 80, 26, 6);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `bold ${Math.round(width * 0.016)}px sans-serif`;
+      ctx.fillText('🐱 CAT', catX + 22, cardY + 28);
+    } else {
+      // Single pet over background
+      const cardW = Math.round(width * 0.6);
+      const cardH = Math.round(cardW * 1.3);
+      const cardX = Math.round((width - cardW) / 2);
+      const cardY = Math.round(height - cardH - (height * 0.06));
+      ctx.save();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+      ctx.shadowBlur = Math.round(width * 0.025);
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.roundRect(cardX, cardY, cardW, cardH, Math.round(width * 0.02));
+      ctx.fill();
+      ctx.clip();
+      drawImageCover(ctx, imgA, cardX, cardY, cardW, cardH);
+      ctx.restore();
+    }
+  } else if (mode === 'versus' && imageB) {
     const imgB = await loadImageSafe(imageB);
 
     if (layout === 'vertical') {

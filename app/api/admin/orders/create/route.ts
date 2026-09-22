@@ -10,19 +10,34 @@ import { logger } from '@/lib/logger';
 interface CreateAdminOrderBody {
   customer: {
     fullName: string;
-    phone: string;
+    phone?: string;
     email?: string;
+    addressLine1?: string;
+    addressLine2?: string;
     city: string;
-    region?: string;
-    econtOfficeId?: string;
+    county?: string;
+    postcode?: string;
+    country?: string;
+    socialHandle?: string;
+    socialPlatform?: string;
+    petName?: string;
+    petBreed?: string;
     customerNote?: string;
+    econtOfficeId?: string;
+    region?: string;
   };
-  internalNote?: string;
+  orderSource?: string;
+  paymentMethod?: string;
+  paymentStatus?: 'paid' | 'pending';
+  paymentReference?: string;
   deliveryType?: string;
   deliveryNotes?: string;
   subtotal: number;
   deliveryCost: number;
+  discountAmount?: number;
+  discountNote?: string;
   total: number;
+  internalNote?: string;
   items: Array<{
     productVariantId: string;
     quantity: number;
@@ -41,9 +56,13 @@ function splitName(fullName: string): { first: string; last: string } {
 async function getOrCreateCustomerForAdmin(c: CreateAdminOrderBody['customer']): Promise<string> {
   const phone = c.phone?.trim();
   const emailInput = c.email?.trim();
+  const socialKey = c.socialHandle ? c.socialHandle.replace(/[@\s]/g, '') : null;
   const syntheticEmail =
     emailInput ||
-    (phone ? `phone-${phone.replace(/\W/g, '')}@admin-orders.local` : `guest-${Date.now()}@admin-orders.local`);
+    (socialKey ? `${socialKey}@dm-orders.local` : null) ||
+    (phone ? `phone-${phone.replace(/\W/g, '')}@admin-orders.local` : `dm-${Date.now()}@admin-orders.local`);
+
+  const country = c.country?.trim() || 'United Kingdom';
 
   const { data: byEmail } = await supabaseAdmin
     .from('customers')
@@ -59,6 +78,7 @@ async function getOrCreateCustomerForAdmin(c: CreateAdminOrderBody['customer']):
         firstname: first,
         lastname: last,
         telephone: phone || null,
+        country: country,
         city: c.city,
         updatedat: new Date().toISOString(),
       })
@@ -80,6 +100,7 @@ async function getOrCreateCustomerForAdmin(c: CreateAdminOrderBody['customer']):
           firstname: first,
           lastname: last,
           email: emailInput || byPhone.email,
+          country: country,
           city: c.city,
           updatedat: new Date().toISOString(),
         })
@@ -96,7 +117,7 @@ async function getOrCreateCustomerForAdmin(c: CreateAdminOrderBody['customer']):
       lastname: last,
       email: syntheticEmail,
       telephone: phone || '',
-      country: 'Bulgaria',
+      country: country,
       city: c.city,
     })
     .select('customerid')
@@ -130,9 +151,9 @@ async function insertStatusHistory(params: {
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as CreateAdminOrderBody;
-    if (!body.customer?.fullName || !body.customer?.phone || !body.customer?.city) {
+    if (!body.customer?.fullName?.trim() || !body.customer?.city?.trim()) {
       return NextResponse.json(
-        { success: false, error: 'Missing required customer fields (name, phone, city).' },
+        { success: false, error: 'Customer name and city/town are required.' },
         { status: 400 }
       );
     }
@@ -144,19 +165,54 @@ export async function POST(request: NextRequest) {
     const orderId = await generateUniqueOrderId(supabaseAdmin);
     const now = new Date().toISOString();
 
+    const deliveryAddressFormatted = [
+      body.customer.addressLine1,
+      body.customer.addressLine2,
+      body.customer.city,
+      body.customer.county || body.customer.region,
+      body.customer.postcode,
+      body.customer.country || 'United Kingdom',
+    ].filter(Boolean).join(', ');
+
+    const combinedDeliveryNotes = [
+      deliveryAddressFormatted ? `Delivery Address: ${deliveryAddressFormatted}` : null,
+      body.deliveryNotes?.trim() || null,
+    ].filter(Boolean).join('\n');
+
+    const combinedCustomerNote = [
+      body.customer.petName ? `🐾 Pet: ${body.customer.petName}${body.customer.petBreed ? ` (${body.customer.petBreed})` : ''}` : null,
+      body.customer.socialHandle ? `💬 Social: ${body.customer.socialHandle}${body.customer.socialPlatform ? ` (${body.customer.socialPlatform})` : ''}` : null,
+      body.customer.customerNote?.trim() || null,
+    ].filter(Boolean).join('\n');
+
+    const combinedInternalNote = [
+      body.orderSource ? `Channel: ${body.orderSource}` : null,
+      body.paymentReference ? `Payment Ref: ${body.paymentReference}` : null,
+      body.paymentMethod ? `Payment Method: ${body.paymentMethod}` : null,
+      body.discountNote ? `Discount Note: ${body.discountNote}` : null,
+      body.internalNote?.trim() || null,
+    ].filter(Boolean).join('\n');
+
+    const initialStatus = body.paymentStatus === 'paid' ? 'confirmed' : 'new';
+
     const orderRecord: Record<string, unknown> = {
       orderid: orderId,
       customerid: customerId,
-      deliverytype: body.deliveryType || 'office',
-      deliverynotes: body.deliveryNotes?.trim() || null,
+      deliverytype: body.deliveryType || 'standard_uk',
+      deliverystreet: body.customer.addressLine1 || null,
+      deliveryapartment: body.customer.addressLine2 || null,
+      deliverystreetnumber: body.customer.postcode || null,
+      delivery_region: body.customer.county || body.customer.region || null,
+      deliverynotes: combinedDeliveryNotes || null,
       econtoffice: body.customer.econtOfficeId || null,
-      delivery_region: body.customer.region?.trim() || null,
-      customer_order_note: body.customer.customerNote?.trim() || null,
-      internal_note: body.internalNote?.trim() || null,
+      customer_order_note: combinedCustomerNote || null,
+      internal_note: combinedInternalNote || null,
       subtotal: body.subtotal,
       deliverycost: body.deliveryCost,
+      discountamount: body.discountAmount || 0,
       total: body.total,
-      status: 'new',
+      paymentmethod: body.paymentMethod || 'bank_transfer',
+      status: initialStatus,
       return_stock_applied: false,
       createdat: now,
       updatedat: now,

@@ -11,8 +11,21 @@ export const maxDuration = 120;
  * Supports single-pet and 50/50 "Who Wears It Better" dual-pet mode.
  */
 export async function POST(req: NextRequest) {
+  let body: any;
   try {
-    const body = await req.json();
+    body = await req.json();
+  } catch (parseErr: any) {
+    logger.error('Failed to parse pet-studio request JSON', { error: parseErr.message });
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'The uploaded image payload was too large or truncated. Please re-upload your photos (they will be automatically compressed), or use the "Copy Prompt" button to run the scene for free directly in gemini.google.com!'
+      },
+      { status: 413 }
+    );
+  }
+
+  try {
     const {
       mode,
       petImages,
@@ -20,16 +33,18 @@ export async function POST(req: NextRequest) {
       productName,
       productImageUrlB,
       productNameB,
+      backgroundImage,
       customInstructions,
       aspectRatio,
       versusLayout
     } = body as {
-      mode: 'single' | 'versus' | 'dual_costume';
+      mode: 'single' | 'versus' | 'dual_costume' | 'dog_cat_scene';
       petImages: string[];  // base64 data URIs or URLs
       productImageUrl: string;
       productName: string;
       productImageUrlB?: string;
       productNameB?: string;
+      backgroundImage?: string;
       customInstructions?: string;
       aspectRatio?: string;
       versusLayout?: 'horizontal' | 'vertical';
@@ -41,20 +56,27 @@ export async function POST(req: NextRequest) {
     if (!petImages || petImages.length === 0) {
       return NextResponse.json({ success: false, error: 'At least one pet photo is required.' }, { status: 400 });
     }
-    if ((mode === 'versus' || mode === 'dual_costume') && petImages.length < 2) {
-      return NextResponse.json({ success: false, error: 'Two pet photos are required for comparison mode.' }, { status: 400 });
+    if ((mode === 'versus' || mode === 'dual_costume' || mode === 'dog_cat_scene') && petImages.length < 2) {
+      return NextResponse.json({ success: false, error: 'Two pet photos (Dog and Cat) are required.' }, { status: 400 });
+    }
+    if (mode === 'dog_cat_scene' && !backgroundImage) {
+      return NextResponse.json({ success: false, error: 'A background image is required for Dog & Cat Scene mode.' }, { status: 400 });
     }
     if (!productImageUrl) {
-      return NextResponse.json({ success: false, error: 'A product image is required.' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'A costume image for the dog is required.' }, { status: 400 });
     }
-    if (mode === 'dual_costume' && !productImageUrlB) {
-      return NextResponse.json({ success: false, error: 'A second product image (Product B) is required for Dual Costume mode.' }, { status: 400 });
+    if ((mode === 'dual_costume' || mode === 'dog_cat_scene') && !productImageUrlB) {
+      return NextResponse.json({ success: false, error: 'A costume image for the cat is required.' }, { status: 400 });
     }
 
     const apiKey = (await getGeminiApiKey()) || process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { success: false, error: 'Gemini API key is not configured. Please add it in Settings & API or .env.local' },
+        {
+          success: false,
+          error: 'Gemini API key is not configured. You can use the "Copy Prompt" button to run it directly in gemini.google.com for free!',
+          requiresBilling: true
+        },
         { status: 400 }
       );
     }
@@ -62,7 +84,37 @@ export async function POST(req: NextRequest) {
     // Build the multimodal parts array
     const parts: any[] = [];
 
-    if (mode === 'dual_costume') {
+    if (mode === 'dog_cat_scene') {
+      // Scene composition: Dog & Cat in Custom Background with separate costumes
+      const dogOutfit = productName || 'Dog Costume';
+      const catOutfit = productNameB || 'Cat Costume';
+
+      parts.push({
+        text: `You are an elite commercial pet photographer and creative digital artist for the luxury British pet brand "Meow Bark".
+
+TASK: Create a single seamless, realistic, high-converting commercial photograph featuring BOTH a dog and a cat together inside the provided background environment.
+
+I am providing you with 5 reference images in this exact sequence:
+1. Photo of the DOG (preserve the exact dog breed, facial features, fur texture, eye color, and unique markings).
+2. Photo of the CAT (preserve the exact cat breed, face, eye color, and coat pattern).
+3. Photo of the BACKGROUND ENVIRONMENT (the dog and cat must be naturally placed together inside this exact environment/scene).
+4. Photo of the DOG'S COSTUME: "${dogOutfit}" (dress the dog in this exact outfit; faithfully preserve its colors, pattern, hood/accents, fabric texture, and details).
+5. Photo of the CAT'S COSTUME: "${catOutfit}" (dress the cat in this exact outfit; faithfully preserve its colors, pattern, hood/accents, fabric texture, and details).
+
+MANDATORY DIRECTIVES:
+- NATURAL INTEGRATION: Position both the dog and cat naturally together within the background environment provided in Image 3. They should look like they are genuinely in that physical space, sitting or standing comfortably side by side.
+- LIGHTING & SHADOWS: The lighting, ambient reflections, floor contact shadows, and depth of field on both pets must perfectly match the lighting, color temperature, and perspective of the background image.
+- PET FIDELITY: Maintain the authentic identities of both animals. The dog must look like the dog in Image 1. The cat must look like the cat in Image 2. Do not swap species or alter breeds.
+- COSTUME ACCURACY: The dog is wearing Outfit 1 ("${dogOutfit}"), and the cat is wearing Outfit 2 ("${catOutfit}"). Both costumes must fit naturally on the animals' bodies with realistic folds and fabric draping.
+- COMPOSITION: Both pets should be prominently visible, harmonious in scale, looking joyful, confident, stylish, and adorable.
+- CLEAN FINISH: Absolutely NO watermarks, garbled letters, text overlays, or digital artifacts.
+${customInstructions ? `\nADDITIONAL INSTRUCTIONS: ${customInstructions}` : ''}
+
+IMAGE DIMENSIONS: The output image MUST be in ${ratio} aspect ratio.
+
+Output a single finished photograph.`
+      });
+    } else if (mode === 'dual_costume') {
       // 50/50 split — two pets, TWO DIFFERENT products (for final Call To Action slide)
       const prodA = productName || 'First Pet Outfit';
       const prodB = productNameB || productName || 'Second Pet Outfit';
@@ -156,40 +208,87 @@ Output a single finished photograph.`
       });
     }
 
-    // Attach pet images
-    for (const petImage of petImages) {
-      const imgData = await resolveImageToBase64(petImage);
-      if (imgData) {
+    // Attach reference images in strict sequential order
+    if (mode === 'dog_cat_scene') {
+      // 1. Dog photo
+      const dogData = await resolveImageToBase64(petImages[0]);
+      if (dogData) {
+        parts.push({
+          inline_data: { mime_type: dogData.mimeType, data: dogData.base64 }
+        });
+      }
+
+      // 2. Cat photo
+      const catData = await resolveImageToBase64(petImages[1]);
+      if (catData) {
+        parts.push({
+          inline_data: { mime_type: catData.mimeType, data: catData.base64 }
+        });
+      }
+
+      // 3. Background photo
+      if (backgroundImage) {
+        const bgData = await resolveImageToBase64(backgroundImage);
+        if (bgData) {
+          parts.push({
+            inline_data: { mime_type: bgData.mimeType, data: bgData.base64 }
+          });
+        }
+      }
+
+      // 4. Dog costume
+      const dogCostumeData = await resolveImageToBase64(productImageUrl);
+      if (dogCostumeData) {
+        parts.push({
+          inline_data: { mime_type: dogCostumeData.mimeType, data: dogCostumeData.base64 }
+        });
+      }
+
+      // 5. Cat costume
+      if (productImageUrlB) {
+        const catCostumeData = await resolveImageToBase64(productImageUrlB);
+        if (catCostumeData) {
+          parts.push({
+            inline_data: { mime_type: catCostumeData.mimeType, data: catCostumeData.base64 }
+          });
+        }
+      }
+    } else {
+      // Single pet or comparison modes
+      for (const petImage of petImages) {
+        const imgData = await resolveImageToBase64(petImage);
+        if (imgData) {
+          parts.push({
+            inline_data: {
+              mime_type: imgData.mimeType,
+              data: imgData.base64
+            }
+          });
+        }
+      }
+
+      // Attach product image A
+      const productImgData = await resolveImageToBase64(productImageUrl);
+      if (productImgData) {
         parts.push({
           inline_data: {
-            mime_type: imgData.mimeType,
-            data: imgData.base64
+            mime_type: productImgData.mimeType,
+            data: productImgData.base64
           }
         });
       }
-    }
 
-    // Attach product image A
-    const productImgData = await resolveImageToBase64(productImageUrl);
-    if (productImgData) {
-      parts.push({
-        inline_data: {
-          mime_type: productImgData.mimeType,
-          data: productImgData.base64
+      // Attach product image B (if dual_costume mode)
+      if (mode === 'dual_costume' && productImageUrlB) {
+        const productImgDataB = await resolveImageToBase64(productImageUrlB);
+        if (productImgDataB) {
+          parts.push({
+            inline_data: {
+              mime_type: productImgDataB.mimeType,
+              data: productImgDataB.base64
+            }
+          });
         }
-      });
-    }
-
-    // Attach product image B (if dual_costume mode)
-    if (mode === 'dual_costume' && productImageUrlB) {
-      const productImgDataB = await resolveImageToBase64(productImageUrlB);
-      if (productImgDataB) {
-        parts.push({
-          inline_data: {
-            mime_type: productImgDataB.mimeType,
-            data: productImgDataB.base64
-          }
-        });
       }
     }
 
@@ -271,7 +370,8 @@ Output a single finished photograph.`
 
     return NextResponse.json({
       success: false,
-      error: 'Image generation failed across all models. Please check your Gemini API key and billing status.'
+      error: 'Image generation could not be completed via API. If you have no Gemini API credits, please use the "Copy Prompt" button and paste it into the free Gemini app (gemini.google.com) with your images.',
+      requiresBilling: true
     });
   } catch (error: any) {
     logger.error('Error in /api/admin/pet-studio:', error);
@@ -289,9 +389,12 @@ async function resolveImageToBase64(src: string): Promise<{ base64: string; mime
   try {
     // Handle data URIs (from file uploads)
     if (src.startsWith('data:')) {
-      const match = src.match(/^data:(image\/\w+);base64,(.+)$/);
-      if (match) {
-        return { mimeType: match[1], base64: match[2] };
+      const commaIdx = src.indexOf(',');
+      if (commaIdx !== -1) {
+        const meta = src.slice(5, commaIdx);
+        const base64 = src.slice(commaIdx + 1);
+        const mimeType = meta.split(';')[0] || 'image/jpeg';
+        return { mimeType, base64 };
       }
       return null;
     }

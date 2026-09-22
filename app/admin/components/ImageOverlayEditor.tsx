@@ -17,6 +17,7 @@ import {
   Check,
   FolderOpen,
   X,
+  Upload,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -51,9 +52,10 @@ export interface OverlayTemplate {
 
 interface ImageOverlayEditorProps {
   imageUrl: string;
-  mode?: 'single' | 'versus' | 'dual_costume';
+  mode?: 'single' | 'versus' | 'dual_costume' | 'dog_cat_scene';
   versusLayout?: 'horizontal' | 'vertical';
   onDownload?: (dataUrl: string) => void;
+  onUploadImage?: (dataUrl: string) => void;
 }
 
 const TEMPLATES_STORAGE_KEY = 'pet_studio_overlay_templates';
@@ -305,6 +307,96 @@ const BUILT_IN_TEMPLATES: OverlayTemplate[] = [
     ]
   },
   {
+    id: 'builtin-dog-cat-dynamic-duo',
+    name: 'Dog & Cat: "Dynamic Duo / Besties"',
+    createdAt: 0,
+    isBuiltIn: true,
+    overlays: [
+      {
+        type: 'text',
+        x: 50,
+        y: 8,
+        text: 'THE DYNAMIC DUO',
+        fontFamily: 'Impact, Arial Black, sans-serif',
+        fontSize: 48,
+        fontColor: '#ffffff',
+        fontWeight: 'bold',
+        hasOutline: true,
+        outlineColor: '#000000',
+      },
+      {
+        type: 'text',
+        x: 50,
+        y: 86,
+        text: 'MEOW & BARK • BEST FRIENDS',
+        fontFamily: 'Impact, Arial Black, sans-serif',
+        fontSize: 32,
+        fontColor: '#fde047',
+        fontWeight: 'bold',
+        hasOutline: true,
+        outlineColor: '#000000',
+      },
+      {
+        type: 'logo',
+        x: 50,
+        y: 94,
+        logoVariant: 'white',
+        logoScale: 18,
+      }
+    ]
+  },
+  {
+    id: 'builtin-dog-cat-costume-party',
+    name: 'Dog & Cat: "Costume Party / Who Wore It Better"',
+    createdAt: 0,
+    isBuiltIn: true,
+    overlays: [
+      {
+        type: 'text',
+        x: 50,
+        y: 8,
+        text: 'COSTUME PARTY',
+        fontFamily: 'Impact, Arial Black, sans-serif',
+        fontSize: 50,
+        fontColor: '#ffffff',
+        fontWeight: 'bold',
+        hasOutline: true,
+        outlineColor: '#000000',
+      },
+      {
+        type: 'text',
+        x: 25,
+        y: 16,
+        text: 'DOG',
+        fontFamily: 'Impact, Arial Black, sans-serif',
+        fontSize: 36,
+        fontColor: '#38bdf8',
+        fontWeight: 'bold',
+        hasOutline: true,
+        outlineColor: '#000000',
+      },
+      {
+        type: 'text',
+        x: 75,
+        y: 16,
+        text: 'CAT',
+        fontFamily: 'Impact, Arial Black, sans-serif',
+        fontSize: 36,
+        fontColor: '#f472b6',
+        fontWeight: 'bold',
+        hasOutline: true,
+        outlineColor: '#000000',
+      },
+      {
+        type: 'logo',
+        x: 50,
+        y: 93,
+        logoVariant: 'white',
+        logoScale: 20,
+      }
+    ]
+  },
+  {
     id: 'builtin-brand-watermark',
     name: 'Meow Bark Official Watermark Only',
     createdAt: 0,
@@ -330,10 +422,13 @@ export default function ImageOverlayEditor({
   mode = 'single',
   versusLayout = 'vertical',
   onDownload,
+  onUploadImage,
 }: ImageOverlayEditorProps) {
   const { theme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const editorUploadInputRef = useRef<HTMLInputElement>(null);
+  const [isEditorDragOver, setIsEditorDragOver] = useState(false);
 
   const [overlays, setOverlays] = useState<OverlayItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -769,6 +864,42 @@ export default function ImageOverlayEditor({
           White Logo
         </button>
 
+        {/* Upload / Swap Base Image Button */}
+        {onUploadImage && (
+          <>
+            <button
+              onClick={() => editorUploadInputRef.current?.click()}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-colors"
+              style={btnSecondary}
+              title="Upload your own photo to apply these overlays onto"
+            >
+              <Upload size={14} />
+              Upload Image
+            </button>
+            <input
+              ref={editorUploadInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onload = (ev) => {
+                    const res = ev.target?.result as string;
+                    if (res) {
+                      onUploadImage(res);
+                      showToast('Photo uploaded! You can now adjust or apply overlay templates.');
+                    }
+                  };
+                  reader.readAsDataURL(file);
+                }
+                e.target.value = '';
+              }}
+            />
+          </>
+        )}
+
         {/* Quick CTA Template */}
         <button
           onClick={() => {
@@ -995,10 +1126,46 @@ export default function ImageOverlayEditor({
       {/* Canvas preview area */}
       <div
         ref={containerRef}
-        className="relative rounded-xl overflow-hidden border select-none max-w-full"
+        className={`relative rounded-xl overflow-hidden border select-none max-w-full transition-all ${
+          isEditorDragOver ? 'ring-4 ring-primary scale-[1.005]' : ''
+        }`}
         style={{ borderColor: theme.colors.border, touchAction: 'none' }}
         onClick={() => setSelectedId(null)}
+        onDragOver={(e) => {
+          if (onUploadImage) {
+            e.preventDefault();
+            setIsEditorDragOver(true);
+          }
+        }}
+        onDragLeave={() => setIsEditorDragOver(false)}
+        onDrop={(e) => {
+          if (onUploadImage) {
+            e.preventDefault();
+            setIsEditorDragOver(false);
+            const file = e.dataTransfer.files?.[0];
+            if (file) {
+              const reader = new FileReader();
+              reader.onload = (ev) => {
+                const res = ev.target?.result as string;
+                if (res) {
+                  onUploadImage(res);
+                  showToast('Photo updated! Overlays and template positions preserved.');
+                }
+              };
+              reader.readAsDataURL(file);
+            }
+          }
+        }}
       >
+        {/* Drag over indicator overlay */}
+        {isEditorDragOver && (
+          <div className="absolute inset-0 z-50 bg-black/70 backdrop-blur-xs flex flex-col items-center justify-center text-white pointer-events-none p-4 text-center">
+            <Upload size={40} className="animate-bounce mb-2 text-primary" />
+            <span className="font-bold text-sm">Drop image here to replace base photo</span>
+            <span className="text-xs opacity-75 mt-1">All your overlay text & templates will stay in place</span>
+          </div>
+        )}
+
         {/* Base generated or stitched image */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
